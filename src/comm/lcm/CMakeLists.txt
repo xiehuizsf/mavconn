@@ -13,6 +13,7 @@ SET_SOURCE_FILES(LCMEXT_SRC_FILES
   gl_overlay_message_t.c
   obstacle_map_message_t.c
   point_cloud_message_t.c
+  rgbd_camera_image_message_t.c
   virtual_scan_message_t.c
 )
 PIXHAWK_LIBRARY(mavconn_lcm SHARED ${LCMEXT_SRC_FILES})
