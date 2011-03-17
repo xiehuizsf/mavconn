@@ -667,6 +667,8 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
                     memcpy(newwp, &wp, sizeof(mavlink_waypoint_t));
                     waypoints_receive_buffer->push_back(newwp);
 
+                    if (verbose) printf ("Added new waypoint to list. X= %f\t Y= %f\t Z= %f\t Yaw= %f\n", newwp->x, newwp->y, newwp->z, newwp->param4);
+
                     if(protocol_current_wp_id == protocol_current_count && current_state == PX_WPP_GETLIST_GETWPS)
                     {
                         if (verbose) printf("Got all %u waypoints, changing state to PX_WPP_IDLE\n", protocol_current_count);
