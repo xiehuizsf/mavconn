@@ -206,23 +206,16 @@ void send_waypoint(uint8_t target_systemid, uint8_t target_compid, uint16_t seq)
 
 void send_waypoint_request(uint8_t target_systemid, uint8_t target_compid, uint16_t seq)
 {
-    if (seq < waypoints->size())
-    {
-        mavlink_message_t msg;
-        mavlink_waypoint_request_t wpr;
-        wpr.target_system = target_systemid;
-        wpr.target_component = target_compid;
-        wpr.seq = seq;
-        mavlink_msg_waypoint_request_encode(systemid, compid, &msg, &wpr);
-        mavlink_message_t_publish(lcm, "MAVLINK", &msg);
-        if (verbose) printf("Sent waypoint request %u to ID %u\n", wpr.seq, wpr.target_system);
+	mavlink_message_t msg;
+	mavlink_waypoint_request_t wpr;
+	wpr.target_system = target_systemid;
+	wpr.target_component = target_compid;
+	wpr.seq = seq;
+	mavlink_msg_waypoint_request_encode(systemid, compid, &msg, &wpr);
+	mavlink_message_t_publish(lcm, "MAVLINK", &msg);
+	if (verbose) printf("Sent waypoint request %u to ID %u\n", wpr.seq, wpr.target_system);
 
-        usleep(paramClient->getParamValue("PROTOCOLDELAY"));
-    }
-    else
-    {
-        if (verbose) printf("ERROR: index out of bounds\n");
-    }
+	usleep(paramClient->getParamValue("PROTOCOLDELAY"));
 }
 
 /*
@@ -673,6 +666,8 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
                     mavlink_waypoint_t* newwp = new mavlink_waypoint_t;
                     memcpy(newwp, &wp, sizeof(mavlink_waypoint_t));
                     waypoints_receive_buffer->push_back(newwp);
+
+                    if (verbose) printf ("Added new waypoint to list. X= %f\t Y= %f\t Z= %f\t Yaw= %f\n", newwp->x, newwp->y, newwp->z, newwp->param4);
 
                     if(protocol_current_wp_id == protocol_current_count && current_state == PX_WPP_GETLIST_GETWPS)
                     {
