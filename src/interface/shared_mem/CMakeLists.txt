@@ -1,0 +1,6 @@
+PIXHAWK_LIBRARY(mavconn_shm SHARED
+  PxSHM.cc
+  PxSHMImageClient.cc
+  PxSHMImageServer.cc
+)
+SET_TARGET_PROPERTIES(mavconn_shm PROPERTIES COMPILE_FLAGS "-D_REENTRANT")

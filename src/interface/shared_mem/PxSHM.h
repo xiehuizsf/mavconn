@@ -4,56 +4,77 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <string>
-
-const int PxSHM_SERVER_MODE = 0x00;
-const int PxSHM_CLIENT_MODE = 0x01;
+#include <vector>
 
 class PxSHM
 {
 public:
 	typedef enum
 	{
-		SERVER_MODE = 0,
-		CLIENT_MODE = 1
-	} Mode;
+		CAMERA_FORWARD_LEFT = 0x01,
+		CAMERA_FORWARD_RIGHT = 0x02,
+		CAMERA_DOWNWARD_LEFT = 0x04,
+		CAMERA_DOWNWARD_RIGHT = 0x08,
+		CAMERA_NONE = 0x10
+	} CameraPosition;
+
+	typedef enum
+	{
+		CAMERA_MONO_8 = 0,
+		CAMERA_MONO_24 = 1,
+		CAMERA_STEREO_8 = 2,
+		CAMERA_STEREO_24 = 3,
+		CAMERA_KINECT = 4
+	} CameraType;
+
+	typedef enum
+	{
+		SERVER_TYPE = 0,
+		CLIENT_TYPE = 1
+	} Type;
 
 	PxSHM();
 	~PxSHM();
 
-	bool init(int key, Mode mode, int infoSize, int dataSize);
+	bool init(int key, Type type, int infoPacketSize, int infoQueueLength,
+			  int dataPacketSize, int dataQueueLength);
 
-	int hashKey(std::string str);
+	int hashKey(const std::string& str) const;
 
-	int write(unsigned int num, unsigned char *s);
+	int readInfoPacket(std::vector<uint8_t>& data);
 
-	int read(unsigned char *s);
+	int writeInfoPacket(const std::vector<uint8_t>& data);
 
-	int nread(int len, unsigned char *s);
+	int readDataPacket(std::vector<uint8_t>& data);
 
-	bool bytesWaiting(void);
+	int writeDataPacket(const std::vector<uint8_t>& data);
 
-	int addInfo(unsigned int num, unsigned char *s);
+	bool bytesWaiting(void) const;
 
-	int getInfo(unsigned char *s);
+	long long getMax(void) const;
 
-	long long getMax(void);
+	bool setMax(long long max) const;
 
-	bool setMax(long long max);
-
-	Mode getMode(void);
+	Type getType(void) const;
 
 private:
-	unsigned char shmcrc(int num, unsigned char *bytes);
+	typedef enum {
+		READ_INFO = 0,
+		WRITE_INFO = 1,
+		READ_DATA = 2,
+		WRITE_DATA = 3
+	} Mode;
 
-	int shmpos(int num, int mode);
+	uint8_t crc(const std::vector<uint8_t>& data) const;
 
-	void shmcpy(unsigned char *data, int len, int off, int mode);
+	int pos(int num, Mode mode) const;
 
-	int writeInfoPacket(int num, unsigned char *data);
+	void copyToSHM(const uint8_t* data, int len, int off);
+	void copyToSHM(const std::vector<uint8_t>& data, int off);
+	void copyFromSHM(uint8_t* data, int len, int off) const;
+	void copyFromSHM(std::vector<uint8_t>& data, int len, int off) const;
 
-	int writeDataPacket(int num, unsigned char *data);
-
-	Mode              mode;      /* server/client mode */
+	Type              type;      /* server/client type */
 	unsigned char   * mem;       /* shared memory segment */
 	unsigned int      key;       /* shared memory key */
 	unsigned int      i_size;    /* size of the (static) info buffer */
