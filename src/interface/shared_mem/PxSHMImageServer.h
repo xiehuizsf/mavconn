@@ -1,3 +1,36 @@
+/*=====================================================================
+
+PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
+
+(c) 2009-2011 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
+
+This file is part of the PIXHAWK project
+
+    PIXHAWK is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    PIXHAWK is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+
+/**
+* @file
+*   @brief Shared memory interface for writing images.
+*
+*   This interface is a wrapper around PxSHM.
+*
+*   @author Lionel Heng  <hengli@inf.ethz.ch>
+*
+*/
+
 #ifndef PXSHMIMAGESERVER_H
 #define PXSHMIMAGESERVER_H
 
@@ -12,8 +45,7 @@ public:
 	PxSHMImageServer();
 	
 	bool init(int sysid, int compid, lcm_t* lcm,
-			  PxSHM::CameraPosition cam1,
-			  PxSHM::CameraPosition cam2 = PxSHM::CAMERA_NONE);
+			  PxSHM::Camera cam1, PxSHM::Camera cam2 = PxSHM::CAMERA_NONE);
 	
 	void writeMonoImage(const cv::Mat& img, uint64_t camId, uint32_t camNo,
 						uint64_t timestamp, float roll, float pitch, float yaw,
@@ -31,7 +63,8 @@ public:
 						  float z, float lon, float lat, float alt);
 	
 private:
-	bool writeCameraProperties(void);
+	bool writeCameraProperties(PxSHM::CameraType cameraType,
+							   int imageWidth, int imageHeight, int imageType);
 	
 	int sysid;
 	int compid;

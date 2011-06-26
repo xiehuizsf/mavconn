@@ -1,3 +1,36 @@
+/*=====================================================================
+
+PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
+
+(c) 2009-2011 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
+
+This file is part of the PIXHAWK project
+
+    PIXHAWK is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    PIXHAWK is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+
+/**
+* @file
+*   @brief Shared memory interface for reading images.
+*
+*   This interface is a wrapper around PxSHM.
+*
+*   @author Lionel Heng  <hengli@inf.ethz.ch>
+*
+*/
+
 #include "PxSHMImageClient.h"
 
 PxSHMImageClient::PxSHMImageClient()
@@ -7,13 +40,20 @@ PxSHMImageClient::PxSHMImageClient()
 
 bool
 PxSHMImageClient::init(bool subscribeLatest,
-					   PxSHM::CameraPosition cam1, PxSHM::CameraPosition cam2)
+					   PxSHM::Camera cam1, PxSHM::Camera cam2)
 {
-	initCameraProperties = false;
 	this->subscribeLatest = subscribeLatest;
 	
-	shm.init(cam1 | cam2, PxSHM::CLIENT_TYPE, 16, 1, 1024 * 1024, 10);
-	
+	if (!shm.init(cam1 | cam2, PxSHM::CLIENT_TYPE, 128, 1, 1024 * 1024, 10))
+	{
+		return false;
+	}
+
+	if (!readCameraProperties(cameraType, imageWidth, imageHeight, imageType))
+	{
+		return false;
+	}
+
 	return true;
 }
 
@@ -181,15 +221,8 @@ PxSHMImageClient::getGPS(const mavlink_message_t* msg, float& lat, float& lon, f
 bool
 PxSHMImageClient::readMonoImage(const mavlink_message_t* msg, cv::Mat& img)
 {
-	if (!initCameraProperties)
-	{
-		readCameraProperties();
-		initCameraProperties = true;
-	}
-	
 	if (!(cameraType == PxSHM::CAMERA_MONO_8 || cameraType == PxSHM::CAMERA_MONO_24))
 	{
-		fprintf(stderr, "# WARNING: Images of a different type are stored in shared memory. Aborting...\n");
 		return false;
 	}
 	
@@ -223,15 +256,8 @@ PxSHMImageClient::readMonoImage(const mavlink_message_t* msg, cv::Mat& img)
 bool
 PxSHMImageClient::readStereoImage(const mavlink_message_t* msg, cv::Mat& imgLeft, cv::Mat& imgRight)
 {
-	if (!initCameraProperties)
-	{
-		readCameraProperties();
-		initCameraProperties = true;
-	}
-	
 	if (!(cameraType == PxSHM::CAMERA_STEREO_8 || cameraType == PxSHM::CAMERA_STEREO_24))
 	{
-		fprintf(stderr, "# WARNING: Images of a different type are stored in shared memory. Aborting...\n");
 		return false;
 	}
 	
@@ -269,15 +295,8 @@ PxSHMImageClient::readStereoImage(const mavlink_message_t* msg, cv::Mat& imgLeft
 bool
 PxSHMImageClient::readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBayer, cv::Mat& imgDepth)
 {
-	if (!initCameraProperties)
-	{
-		readCameraProperties();
-		initCameraProperties = true;
-	}
-	
 	if (cameraType != PxSHM::CAMERA_KINECT)
 	{
-		fprintf(stderr, "# WARNING: Images of a different type are stored in shared memory. Aborting...\n");
 		return false;
 	}
 	
@@ -313,10 +332,12 @@ PxSHMImageClient::readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBaye
 }
 
 bool
-PxSHMImageClient::readCameraProperties(void)
+PxSHMImageClient::readCameraProperties(int& cameraType, int& imageWidth,
+									   int& imageHeight, int& imageType)
 {
 	std::vector<uint8_t> data;
-	if (shm.readInfoPacket(data) <= 0)
+
+	if (shm.readInfoPacket(data) != 16)
 	{
 		return false;
 	}
@@ -330,6 +351,6 @@ PxSHMImageClient::readCameraProperties(void)
 	memcpy(&imageWidth, &(data[4]), 4);
 	memcpy(&imageHeight, &(data[8]), 4);
 	memcpy(&imageType, &(data[12]), 4);
-	
+
 	return true;
 }

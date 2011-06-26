@@ -1,3 +1,36 @@
+/*=====================================================================
+
+PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
+
+(c) 2009-2011 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
+
+This file is part of the PIXHAWK project
+
+    PIXHAWK is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    PIXHAWK is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+
+/**
+* @file
+*   @brief Shared memory interface for reading images.
+*
+*   This interface is a wrapper around PxSHM.
+*
+*   @author Lionel Heng  <hengli@inf.ethz.ch>
+*
+*/
+
 #ifndef PXSHMIMAGECLIENT_H
 #define PXSHMIMAGECLIENT_H
 
@@ -12,8 +45,7 @@ public:
 	PxSHMImageClient();
 	
 	bool init(bool subscribeLatest,
-			  PxSHM::CameraPosition cam1,
-			  PxSHM::CameraPosition cam2 = PxSHM::CAMERA_NONE);
+			  PxSHM::Camera cam1, PxSHM::Camera cam2 = PxSHM::CAMERA_NONE);
 	
 	static uint64_t getTimestamp(const mavlink_message_t* msg);
 	static uint64_t getValidUntil(const mavlink_message_t* msg);
@@ -29,17 +61,16 @@ public:
 	bool readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBayer, cv::Mat& imgDepth);
 
 private:	
-	bool readCameraProperties(void);
+	bool readCameraProperties(int& cameraType, int& imageWidth,
+							  int& imageHeight, int& imageType);
 	
 	bool subscribeLatest;
-	
-	PxSHM shm;
-	
-	bool initCameraProperties;
-	PxSHM::CameraType cameraType;
+	int cameraType;
 	int imageWidth;
 	int imageHeight;
 	int imageType;
+	
+	PxSHM shm;
 };
 
 #endif
