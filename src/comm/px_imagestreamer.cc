@@ -1,30 +1,29 @@
 /*=====================================================================
 
-MAVCONN Micro Air Vehicle Flying Robotics Toolkit
-Please see our website at <http://MAVCONN.ethz.ch>
+PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
 
-(c) 2009 MAVCONN PROJECT  <http://MAVCONN.ethz.ch>
+(c) 2009, 2010 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
 
-This file is part of the MAVCONN project
+This file is part of the PIXHAWK project
 
-    MAVCONN is free software: you can redistribute it and/or modify
+    PIXHAWK is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    MAVCONN is distributed in the hope that it will be useful,
+    PIXHAWK is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with MAVCONN. If not, see <http://www.gnu.org/licenses/>.
+    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
 
 ======================================================================*/
 
 /**
  * @file
- *   @brief Process for capturing an image and send it to the groundstation.
+ *   @brief Process for capturing images from the camera and send it over MAVlink to the groundstation.
  *
  *   @author Fabian Brun <mavteam@pixhawk.ethz.ch>
  */
@@ -37,40 +36,40 @@ This file is part of the MAVCONN project
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
-#include <fstream>
 #include <glib.h>
-// BOOST includes
+// BOOST include
 #include <boost/program_options.hpp>
-#include <boost/filesystem.hpp>
 // OpenCV includes
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
 // Latency Benchmarking
-// #include <sys/time.h>
 #include <time.h>
-
-#include "PxSharedMemClient.h"
-#include "mavconn.h"
-
+// mavconn core includes
+#include <mavconn.h>
+#include <interface/shared_mem/PxSharedMemClient.h>
 
 namespace config = boost::program_options;
-namespace bfs = boost::filesystem;
+using namespace std;
 
-int sysid;
-int compid;
+int sysid, compid;
 uint64_t camno;
 bool silent, verbose, debug;
 
-using namespace std;
-
-#define PACKET_PAYLOAD		253
+#define PACKET_PAYLOAD		252
 bool captureImage = false;
+uint8_t id = NULL;
+uint8_t freq = NULL;
+uint8_t jpg_quality = NULL;
+bool acked = false;
+uint64_t timelast = NULL;
+uint64_t timenext = 1000000;
 
 lcm_t* lcmImage;
 lcm_t* lcmMavlink;
 mavlink_message_t tmp;
 mavlink_data_transmission_handshake_t req, ack;
+
+
 
 /**
  * @brief Handle incoming MAVLink packets containing images
@@ -93,58 +92,73 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 			cout << "No image could be retrieved, even camera ID was set." << endl;
 			exit(1);
 		}
-		captureImage = false;
 
 		// Check for valid jpg_quality in request and adjust if necessary
-		if (req.jpg_quality < 1 && req.jpg_quality > 100)
+                if (jpg_quality < 1 || jpg_quality > 100)
 		{
-			req.jpg_quality = 50;
+                        jpg_quality = 50;
 		}
+                // Check for valid freq in request and adjust if necessary
+                if(freq < 1 || freq > 25)
+                {
+                        freq = 5; // arbitrarily chosen
+                }
+                timenext = client->getTimestamp(msg);
 
-		// Encode image as JPEG
-		vector<uint8_t> jpg; ///< container for JPEG image data
-		vector<int> p (2); ///< params for cv::imencode. Sets the JPEG quality.
-		p[0] = CV_IMWRITE_JPEG_QUALITY;
-		p[1] = req.jpg_quality;
-		cv::imencode(".jpg", img, jpg, p);
+                // only prepare&send image, if enough time between images
+                if(timenext >= timelast + (1000000/freq))
+                {
+                        timelast = timenext;
 
-		// Prepare and send acknowledgment packet
-		ack.type = static_cast<uint8_t>( DATA_TYPE_JPEG_IMAGE );
-		ack.size = static_cast<uint32_t>( jpg.size() );
-		ack.packets = static_cast<uint8_t>( ack.size/PACKET_PAYLOAD );
-		if (ack.size % PACKET_PAYLOAD) { ++ack.packets; } // one more packet with the rest of data
-		ack.payload = static_cast<uint8_t>( PACKET_PAYLOAD );
-		ack.jpg_quality = req.jpg_quality;
+                        // Encode image as JPEG
+                        vector<uint8_t> jpg; ///< container for JPEG image data
+                        vector<int> p (2); ///< params for cv::imencode. Sets the JPEG quality.
+                        p[0] = CV_IMWRITE_JPEG_QUALITY;
+                        p[1] = jpg_quality;
+                        cv::imencode(".jpg", img, jpg, p);
 
-		mavlink_msg_data_transmission_handshake_encode(sysid, compid, &tmp, &ack);
-		mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &tmp);
+                        // Prepare and send acknowledgment packet
+                        //ack.state = 1;
+                        ack.type = static_cast<uint8_t>( DATA_STREAM_TYPE_IMG_JPEG );
+                        //ack.id = id;
+                        ack.size = static_cast<uint32_t>( jpg.size() );
+                        ack.packets = static_cast<uint8_t>( ack.size/PACKET_PAYLOAD );
+                        if (ack.size % PACKET_PAYLOAD) { ++ack.packets; } // one more packet with the rest of data
+                        ack.payload = static_cast<uint8_t>( PACKET_PAYLOAD );
+                        //ack.freq = freq;
+                        ack.jpg_quality = jpg_quality;
 
-		// Send image data (split up into smaller chunks first, then sent over MAVLink)
-		uint8_t data[PACKET_PAYLOAD];
-		uint16_t byteIndex = 0;
-		if (verbose) printf("there are %02d packets waiting to be sent (%05d bytes). start sending...\n", ack.packets, ack.size);
+                        mavlink_msg_data_transmission_handshake_encode(sysid, compid, &tmp, &ack);
+                        mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &tmp);
 
-		for (uint8_t i = 0; i < ack.packets; ++i)
-		{
-			// Copy PACKET_PAYLOAD bytes of image data to send buffer
-			for (uint8_t j = 0; j < PACKET_PAYLOAD; ++j)
-			{
-				if (byteIndex < ack.size)
-				{
-					data[j] = (uint8_t)jpg[byteIndex];
-				}
-				// fill packet data with padding bits
-				else
-				{
-					data[j] = 0;
-				}
-				++byteIndex;
-			}
-			// Send ENCAPSULATED_IMAGE packet
-			mavlink_msg_encapsulated_data_pack(sysid, compid, &tmp, i, data);
-			mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &tmp);
-			if (verbose) printf("sent packet %02d successfully\n", i+1);
-		}
+                        // Send image data (split up into smaller chunks first, then sent over MAVLink)
+                        uint8_t data[PACKET_PAYLOAD];
+                        uint16_t byteIndex = 0;
+                        if (verbose) printf("there are %02d packets waiting to be sent (%05d bytes). start sending...\n", ack.packets, ack.size);
+
+                        for (uint8_t i = 0; i < ack.packets; ++i)
+                        {
+                                // Copy PACKET_PAYLOAD bytes of image data to send buffer
+                                for (uint8_t j = 0; j < PACKET_PAYLOAD; ++j)
+                                {
+                                        if (byteIndex < ack.size)
+                                        {
+                                                data[j] = (uint8_t)jpg[byteIndex];
+                                        }
+                                        // fill packet data with padding bits
+                                        else
+                                        {
+                                                data[j] = 0;
+                                        }
+                                        ++byteIndex;
+                                }
+                                // Send ENCAPSULATED_IMAGE packet
+                                mavlink_msg_encapsulated_data_pack(sysid, compid, &tmp, i, ack.id, data);
+                                mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &tmp);
+                                if (verbose) printf("sent packet %02d successfully\n", i+1);
+                        }
+                }
+
 	}
 }
 
@@ -153,15 +167,25 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
  */
 static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, const mavlink_message_t* msg, void * user)
 {
-	if (msg->msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE)
+        if (msg->msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE)
 	{
-		mavlink_msg_data_transmission_handshake_decode(msg, &req);
+                mavlink_msg_data_transmission_handshake_decode(msg, &req);
 
-		if (req.type == DATA_TYPE_JPEG_IMAGE && msg->sysid != 42) // TODO: use getSystemID()
+                if (/*req.state == 0 &&*/ req.type == DATA_STREAM_TYPE_IMG_JPEG)
 		{
+                        // copy request data
+                        //freq = req.freq;
+                        jpg_quality = req.jpg_quality;
+                        // generate ID - for now, just use the data type as an ID
+                        id = DATA_STREAM_TYPE_IMG_JPEG;
+
 			// start recording image data
 			captureImage = true;
 		}
+		/*else if (req.state == -1)
+		{
+				captureImage = false;
+		}*/
 	}
 }
 
