@@ -119,7 +119,7 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 
                         // Prepare and send acknowledgment packet
                         //ack.state = 1;
-                        ack.type = static_cast<uint8_t>( DATA_STREAM_TYPE_IMG_JPEG );
+                        ack.type = static_cast<uint8_t>( MAVLINK_DATA_STREAM_IMG_JPEG );
                         //ack.id = id;
                         ack.size = static_cast<uint32_t>( jpg.size() );
                         ack.packets = static_cast<uint8_t>( ack.size/PACKET_PAYLOAD );
@@ -171,13 +171,13 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 	{
                 mavlink_msg_data_transmission_handshake_decode(msg, &req);
 
-                if (/*req.state == 0 &&*/ req.type == DATA_STREAM_TYPE_IMG_JPEG)
+                if (req.state == 0 && req.type == MAVLINK_DATA_STREAM_IMG_JPEG)
 		{
                         // copy request data
-                        //freq = req.freq;
+                        freq = req.freq;
                         jpg_quality = req.jpg_quality;
                         // generate ID - for now, just use the data type as an ID
-                        id = DATA_STREAM_TYPE_IMG_JPEG;
+                        id = MAVLINK_DATA_STREAM_IMG_JPEG;
 
 			// start recording image data
 			captureImage = true;
