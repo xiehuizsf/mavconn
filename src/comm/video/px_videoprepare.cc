@@ -48,26 +48,29 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
     // Pointer to shared memory data
     PxSharedMemClient* client = static_cast<PxSharedMemClient*>(user);
 
+    // TODO remove safely
+    //mavlink_image_available_t image;
+    //mavlink_msg_image_available_decode(msg, &image);
     // check if there are images
-    uint64_t camId = client->getCameraID(msg);
-    if (camId != 0)
+    //uint64_t camId = client->getCameraID(msg);
+    //if (camId != 0)
+    //{
+    // copy one image from shared buffer
+    IplImage* img = cvCreateImage(cvSize(640, 480),IPL_DEPTH_8U, 1);
+    if (!client->sharedMemCopyImage(msg, img))
     {
-        // copy one image from shared buffer
-        IplImage* img = cvCreateImage(cvSize(640, 480),IPL_DEPTH_8U, 1);
-        if (!client->sharedMemCopyImage(msg, img))
-        {
-            exit(EXIT_FAILURE);
-        }
-
-        // write to stdout, but first flush the stream
-        fflush(stdout);
-        write(1, img->imageData, img->imageSize);
-        // fill unused (Y)UV channels
-        for (int i=0; i < img->imageSize/2; i++)
-        {
-            putchar(0x80);
-        }
+        exit(EXIT_FAILURE);
     }
+
+    // write to stdout, but first flush the stream
+    fflush(stdout);
+    write(1, img->imageData, img->imageSize);
+    // fill unused (Y)UV channels
+    for (int i=0; i < img->imageSize/2; i++)
+    {
+        putchar(0x80);
+    }
+    //}
 }
 
 /**
@@ -76,7 +79,7 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 int main(int argc, char* argv[])
 {
     // creating LCM network provider
-    lcm_t* lcmImage = lcm_create ("udpm://");
+    lcm_t* lcmImage = lcm_create(NULL);
     if (!lcmImage)
     {
         exit(EXIT_FAILURE);

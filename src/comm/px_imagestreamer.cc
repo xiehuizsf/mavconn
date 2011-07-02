@@ -260,7 +260,7 @@ int main(int argc, char* argv[])
 	// Start the image transmission
 	while (true)
 	{
-		if (captureImage)
+                if (captureImage)
 		{
 			// blocking wait for image channel
 			lcm_handle(lcmImage);
