@@ -62,11 +62,8 @@ uint64_t camno;
 bool startCapture = false;
 bool captureSingleImage = false;
 
-//uint8_t id = 0;
-//uint8_t freq = 0;
-//uint8_t jpg_quality = 0;
-//bool acked = false;
-bool ackDataSet = false;
+uint64_t timelast, timenext;
+int interval;
 
 lcm_t* lcmImage;
 lcm_t* lcmMavlink;
@@ -79,47 +76,40 @@ mavlink_data_transmission_handshake_t ack;
  */
 static void image_handler(const lcm_recv_buf_t *rbuf, const char * channel, const mavlink_message_t* msg, void * user)
 {
-    uint64_t timelast = 0;
-    uint64_t timenext = 1000000;
-
-    // Pointer to shared memory data
-    PxSharedMemClient* client = static_cast<PxSharedMemClient*>(user);
-    // new interface, TODO FIXME does not work yet
-    //PxSHMImageClient client;
-    //if (!client.init(false, PxSHM::CAMERA_FORWARD_RIGHT))
-    //{
-    //    cout << "something went wrong..." << endl;
-    //    exit(1);
-    //}
-
     // Temporary memory for raw camera image
     cv::Mat img( 480, 640, CV_8UC1 );
 
-    // Check if there are images
-    //uint64_t camId = client->getCameraID(msg);
-    //if (camId != 0)
-    //{
-
+    // Pointer to shared memory data
+    PxSharedMemClient* client = static_cast<PxSharedMemClient*>(user);
     // Copy one image from shared buffer
     if (!client->sharedMemCopyImage(msg, img))
     {
         cout << "No image could be retrieved, exiting." << endl;
         exit(1);
     }
-    // new interface
-    //if (!client.readMonoImage(msg, img))
-    //{
-    //    cout << "No image could be retrieved, exiting." << endl;
-    //    exit(1);
-    //}
-
     timenext = client->getTimestamp(msg);
-    //timenext = client.getTimestamp(msg);
+
+    /*
+    // TODO switch to new interface
+    // FIXME crashes on init
+    PxSHMImageClient client;
+    if (!client.init(false, PxSHM::CAMERA_FORWARD_RIGHT))
+    {
+        cout << "something went wrong..." << endl;
+        exit(1);
+    }
+    if (!client.readMonoImage(msg, img))
+    {
+        cout << "No image could be retrieved, exiting." << endl;
+        exit(1);
+    }
+    timenext = client.getTimestamp(msg);
+    */
 
     // only prepare and send an image, if there is enough time between images
-    if (timenext >= timelast + (1000000/ack.freq))
+    if (timenext >= timelast + interval)
     {
-        if (verbose) cout << "An image is ready! Preparing to send... ";
+        if (verbose) cout << "An image is ready!" << endl;
 
         timelast = timenext;
 
@@ -135,12 +125,25 @@ static void image_handler(const lcm_recv_buf_t *rbuf, const char * channel, cons
         ack.packets = static_cast<uint8_t>( ack.size/PACKET_PAYLOAD );
         if (ack.size % PACKET_PAYLOAD) { ++ack.packets; } // one more packet with the rest of data
         ack.payload = static_cast<uint8_t>( PACKET_PAYLOAD );
-        ackDataSet = true;
+
+        // ack message was set, can now be sent
+        if (verbose) cout << "Sending back an ACK message..."<< endl;
+        if (debug) cout   << "   target:  " << (int)ack.target  << endl
+                          << "   state:   " << (int)ack.state   << endl
+                          << "   type:    " << (int)ack.type    << endl
+                          << "   size:    " << (int)ack.size    << endl
+                          << "   packets: " << (int)ack.packets << endl
+                          << "   time:    " << timelast         << endl;
+        mavlink_msg_data_transmission_handshake_encode(sysid, compid, &tmp, &ack);
+        mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &tmp);
+        if (verbose) cout << "Sending image data..." << endl;
+
+        usleep(150);
 
         // Send image data (split up into smaller chunks first, then sent over MAVLink)
         uint8_t data[PACKET_PAYLOAD];
         uint16_t byteIndex = 0;
-        if (verbose) printf("sending... (%02d packets, %05d bytes)\n", ack.packets, ack.size);
+        //if (verbose) printf("Preparing to send... sending... (%02d packets, %05d bytes)\n", ack.packets, ack.size);
 
         for (uint8_t i = 0; i < ack.packets; ++i)
         {
@@ -159,13 +162,10 @@ static void image_handler(const lcm_recv_buf_t *rbuf, const char * channel, cons
                 ++byteIndex;
             }
             // Send ENCAPSULATED_IMAGE packet
-            mavlink_msg_encapsulated_data_pack(sysid, compid, &tmp, i, ack.id, data);
+            mavlink_msg_encapsulated_data_pack(sysid, compid, &tmp, ack.id, i, data);
             mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &tmp);
-            //if (verbose) printf("sent packet %02d successfully\n", i+1);
         }
     }
-    //}
-
 }
 
 
@@ -179,12 +179,13 @@ static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel, co
         mavlink_data_transmission_handshake_t req;
         mavlink_msg_data_transmission_handshake_decode(msg, &req);
 
-        if (verbose) cout << "msg (transmission_handshake): " << (int)req.target << " / " << (int)req.state << " / " << (int)req.type << " " << (int)MAVLINK_DATA_STREAM_IMG_JPEG << endl;
-        //if (verbose) cout << "other approach: " << req->get
-
         if (req.target == sysid && !req.state && req.type == MAVLINK_DATA_STREAM_IMG_JPEG)
         {
             cout << "A handshake message arrived!" << endl;
+            if (verbose) cout   << "   target:  " << (int)req.target  << endl
+                                << "   state:   " << (int)req.state   << endl
+                                << "   type:    " << (int)req.type    << endl
+                                << "   freq:    " << (int)req.freq    << endl;
 
             // prepare ACK packet
             ack.target = msg->sysid;
@@ -203,36 +204,32 @@ static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel, co
                 ack.jpg_quality = 50;
             }
 
+            timelast = 0;
+            interval = 0;
             // start/stop image stream
-            // frequency of 0 means "take a single picture
-            if (ack.freq)
+            // frequency of 0 means "take a single picture"
+            //             -1 means "stop any transmission"
+            if (ack.freq > 0)
             {
-                startCapture = true;
+                interval = 1000000/(int)ack.freq;
+                timenext = timelast + interval;
                 if (verbose) cout << "It is a request to start the stream: starting..." << endl;
+                startCapture = true;
             }
-            if (ack.freq == 0)
+            else
             {
-                captureSingleImage = true;
-                if (verbose) cout << "It is a request to capture a single image: capturing..." << endl;
+                timenext = timelast + interval;
+                if (ack.freq == 0)
+                {
+                    if (verbose) cout << "It is a request to capture a single image: capturing..." << endl;
+                    captureSingleImage = true;
+                }
+                if (ack.freq < 0)
+                {
+                    if (verbose) cout << "It is a request to stop the stream: stopping..." << endl;
+                    startCapture = false;
+                }
             }
-            if (ack.freq < 0)
-            {
-                startCapture = false;
-                if (verbose) cout << "It is a request to stop the stream: stopping..." << endl;
-            }
-
-            // wait for image handler to set the data for the ack packet
-            if (verbose) cout << "Waiting for the image handler do calculate sizing data..." << endl;
-            while(!ackDataSet)
-            {
-                // do nothing
-                usleep(1);
-            }
-
-            // ack message was set, can now be sent
-            if (verbose) cout << "Sending back an ACK message..." << endl;
-            mavlink_msg_data_transmission_handshake_encode(sysid, compid, &tmp, &ack);
-            mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &tmp);
         }
     }
 }
@@ -307,6 +304,7 @@ int main(int argc, char* argv[])
     }
     if (verbose) cout << "MAVLINK client ready, waiting for requests..." << endl;
 
+    /*
     if (debug)
     {
         mavlink_message_t testmsg;
@@ -319,24 +317,25 @@ int main(int argc, char* argv[])
         test.size = 0;
         test.packets = 0;
         test.payload = 0;
-        test.freq = 15;
+        test.freq = 5;
         test.jpg_quality = 50;
 
         mavlink_msg_data_transmission_handshake_encode(sysid, compid, &testmsg, &test);
         mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &testmsg);
         sleep(1);
-    }
+    }*/
 
     // start the image transmission
-    while (true)
+    while (1)
     {
-        //if (debug) cout << (int)startCapture << " / " << (int)captureSingleImage << endl;
+        //if (debug) cout << "booleans: " << (int)startCapture << " / " << (int)captureSingleImage << endl;
         if (startCapture || captureSingleImage)
         {
             // blocking wait for image channel
             lcm_handle(lcmImage);
         }
         captureSingleImage = false;
+        usleep(1);
     }
 
     // clean up
