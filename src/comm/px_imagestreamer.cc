@@ -61,6 +61,7 @@ uint64_t camno;
 #define PACKET_PAYLOAD		252
 bool startCapture = false;
 bool captureSingleImage = false;
+//int streams = 0;
 
 uint64_t timelast, timenext;
 int interval;
@@ -138,32 +139,36 @@ static void image_handler(const lcm_recv_buf_t *rbuf, const char * channel, cons
         mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &tmp);
         if (verbose) cout << "Sending image data..." << endl;
 
-        usleep(150);
+        //usleep(150);
 
         // Send image data (split up into smaller chunks first, then sent over MAVLink)
         uint8_t data[PACKET_PAYLOAD];
         uint16_t byteIndex = 0;
         //if (verbose) printf("Preparing to send... sending... (%02d packets, %05d bytes)\n", ack.packets, ack.size);
 
-        for (uint8_t i = 0; i < ack.packets; ++i)
+        if (startCapture)
         {
-            // Copy PACKET_PAYLOAD bytes of image data to send buffer
-            for (uint8_t j = 0; j < PACKET_PAYLOAD; ++j)
+            for (uint8_t i = 0; i < ack.packets; ++i) // && startCapture
             {
-                if (byteIndex < ack.size)
+                // Copy PACKET_PAYLOAD bytes of image data to send buffer
+                for (uint8_t j = 0; j < PACKET_PAYLOAD; ++j)
                 {
-                    data[j] = (uint8_t)jpg[byteIndex];
+                    if (byteIndex < ack.size)
+                    {
+                        data[j] = (uint8_t)jpg[byteIndex];
+                    }
+                    // fill packet data with padding bits
+                    else
+                    {
+                        data[j] = 0;
+                    }
+                    ++byteIndex;
                 }
-                // fill packet data with padding bits
-                else
-                {
-                    data[j] = 0;
-                }
-                ++byteIndex;
+                // Send ENCAPSULATED_IMAGE packet
+                // only send, if stream is still active
+                mavlink_msg_encapsulated_data_pack(sysid, compid, &tmp, ack.id, i, data);
+                mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &tmp);
             }
-            // Send ENCAPSULATED_IMAGE packet
-            mavlink_msg_encapsulated_data_pack(sysid, compid, &tmp, ack.id, i, data);
-            mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &tmp);
         }
     }
 }
@@ -174,6 +179,7 @@ static void image_handler(const lcm_recv_buf_t *rbuf, const char * channel, cons
  */
 static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel, const mavlink_message_t* msg, void * user)
 {
+    //streams = max(streams, 0);
     if (msg->msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE)
     {
         mavlink_data_transmission_handshake_t req;
@@ -214,6 +220,7 @@ static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel, co
                 interval = 1000000/(int)ack.freq;
                 timenext = timelast + interval;
                 if (verbose) cout << "It is a request to start the stream: starting..." << endl;
+                //++streams;
                 startCapture = true;
             }
             else
@@ -226,8 +233,13 @@ static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel, co
                 }
                 if (ack.freq < 0)
                 {
-                    if (verbose) cout << "It is a request to stop the stream: stopping..." << endl;
-                    startCapture = false;
+                    if (verbose) cout << "It is a request to stop the stream: stopping stream..." << endl;
+                    //--streams;
+                    //if(streams <= 0)
+                    //{
+                    //    if (verbose) cout << "This was the last active stream! Stopping completely..." << endl;
+                        startCapture = false;
+                    //}
                 }
             }
         }
