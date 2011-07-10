@@ -111,7 +111,7 @@ PxSHMImageClient::getCameraID(const mavlink_message_t* msg)
 	}
 }
 
-int
+uint32_t
 PxSHMImageClient::getCameraNo(const mavlink_message_t* msg)
 {
 	// Decode message

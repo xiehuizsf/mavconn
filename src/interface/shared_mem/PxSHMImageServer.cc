@@ -45,6 +45,8 @@ PxSHMImageServer::init(int sysid, int compid, lcm_t* lcm,
 	this->sysid = sysid;
 	this->compid = compid;
 	this->lcm = lcm;
+	this->cam1 = cam1;
+	this->cam2 = cam2;
 	key = cam1 | cam2;
 	
 	initCameraProperties = false;
@@ -55,7 +57,7 @@ PxSHMImageServer::init(int sysid, int compid, lcm_t* lcm,
 }
 	
 void
-PxSHMImageServer::writeMonoImage(const cv::Mat& img, uint64_t camId, uint32_t camNo,
+PxSHMImageServer::writeMonoImage(const cv::Mat& img, uint64_t camId,
 								 uint64_t timestamp, float roll, float pitch, float yaw,
 								 float z, float lon, float lat, float alt,
 								 uint32_t exposure)
@@ -81,7 +83,7 @@ PxSHMImageServer::writeMonoImage(const cv::Mat& img, uint64_t camId, uint32_t ca
 	
 	mavlink_image_available_t imginfo;
 	imginfo.cam_id = camId;
-	imginfo.cam_no = camNo;
+	imginfo.cam_no = cam1;
 	imginfo.timestamp = timestamp;
 	imginfo.valid_until = valid_until;
 	imginfo.img_seq = this->img_seq;
@@ -109,8 +111,8 @@ PxSHMImageServer::writeMonoImage(const cv::Mat& img, uint64_t camId, uint32_t ca
 }
 	
 void
-PxSHMImageServer::writeStereoImage(const cv::Mat& imgLeft, uint64_t camIdLeft, uint32_t camNoLeft,
-								   const cv::Mat& imgRight, uint64_t camIdRight, uint32_t camNoRight,
+PxSHMImageServer::writeStereoImage(const cv::Mat& imgLeft, uint64_t camIdLeft,
+								   const cv::Mat& imgRight, uint64_t camIdRight,
 								   uint64_t timestamp, float roll, float pitch, float yaw,
 								   float z, float lon, float lat, float alt,
 								   uint32_t exposure)
@@ -137,7 +139,7 @@ PxSHMImageServer::writeStereoImage(const cv::Mat& imgLeft, uint64_t camIdLeft, u
 	
 	mavlink_image_available_t imginfo;
 	imginfo.cam_id = camIdLeft;
-	imginfo.cam_no = camNoLeft;
+	imginfo.cam_no = cam1 | cam2;
 	imginfo.timestamp = timestamp;
 	imginfo.valid_until = valid_until;
 	imginfo.img_seq = this->img_seq;
@@ -191,7 +193,7 @@ PxSHMImageServer::writeKinectImage(const cv::Mat& imgBayer, const cv::Mat& imgDe
 	
 	mavlink_image_available_t imginfo;
 	imginfo.cam_id = 0;
-	imginfo.cam_no = 40;
+	imginfo.cam_no = cam1;
 	imginfo.timestamp = timestamp;
 	imginfo.valid_until = valid_until;
 	imginfo.img_seq = this->img_seq;
