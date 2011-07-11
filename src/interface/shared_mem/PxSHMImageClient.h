@@ -64,7 +64,7 @@ public:
 	static uint64_t getTimestamp(const mavlink_message_t* msg);
 	static uint64_t getValidUntil(const mavlink_message_t* msg);
 	static uint64_t getCameraID(const mavlink_message_t* msg);
-	static int getCameraNo(const mavlink_message_t* msg);
+	static uint32_t getCameraNo(const mavlink_message_t* msg);
 	static bool getRollPitch(const mavlink_message_t* msg, float& roll, float& pitch);
 	static bool getRollPitchYaw(const mavlink_message_t* msg, float& roll, float& pitch, float& yaw);
 	static bool getLocalHeight(const mavlink_message_t* msg, float& height);
