@@ -1,5 +1,5 @@
 #!/bin/sh
-echo $$ > ~/videostreamer.pid
+#echo $$ > ~/videostreamer.pid
 
 # check if ffserver is already running (just in case)
 if [ -z `pidof ffserver` ]
@@ -10,9 +10,12 @@ fi
 #if []
 
 # feed the image stream to ffmpeg and send it to the ffserver
+#px_videoprepare | ffmpeg -r 15 -s 640x480 -f rawvideo -i pipe: http://localhost:8090/feed.ffm
+px_videoprepare | ffmpeg -r 30 -s 640x480 -f rawvideo -i pipe: udp://192.168.0.2:1337/live.mpg
+
+
 #px_videoprepare | ffmpeg -r 15 -s 640x480 -f rawvideo -i pipe: /home/pixhawk/feed.avi
 #px_videoprepare | ffmpeg -r 15 -s 640x480 -f rawvideo -i pipe: /tmp/feed.ffm
-px_videoprepare | ffmpeg -r 15 -s 640x480 -f rawvideo -i pipe: http://localhost:8090/feed.ffm
 #px_videoprepare | ffmpeg -r 30 -s 640x480 -f rawvideo -i pipe: /var/www/feed.mpg
 
 

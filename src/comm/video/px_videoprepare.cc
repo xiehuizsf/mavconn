@@ -48,13 +48,6 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
     // Pointer to shared memory data
     PxSharedMemClient* client = static_cast<PxSharedMemClient*>(user);
 
-    // TODO remove safely
-    //mavlink_image_available_t image;
-    //mavlink_msg_image_available_decode(msg, &image);
-    // check if there are images
-    //uint64_t camId = client->getCameraID(msg);
-    //if (camId != 0)
-    //{
     // copy one image from shared buffer
     IplImage* img = cvCreateImage(cvSize(640, 480),IPL_DEPTH_8U, 1);
     if (!client->sharedMemCopyImage(msg, img))

@@ -53,24 +53,38 @@ mavlink_video_stream_t req, ack;
 /**
  * @brief Handle incoming MAVLink message packets
  */
-static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, const mavlink_message_t* msg, void * user)
+static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel, const mavlink_message_t* msg, void * user)
 {
+    if (verbose) cout << "0" << endl;
     if (msg->msgid == MAVLINK_MSG_ID_VIDEO_STREAM)
     {
         mavlink_msg_video_stream_decode(msg, &req);
         // check if we are the targeted system
         if (req.target == sysid)
         {
+            // send ACK back: use same message, just change target
+            ack.target = static_cast<uint8_t>(msg->sysid);
+            ack.start_stop = static_cast<uint8_t>(req.start_stop);
+
             // start video streaming
             if(req.start_stop)
             {
-                system("/bin/sh ~/px_videostreamer.sh");
+                if (verbose) cout << "starting videostream..." << endl;
+                system("/bin/sh ~/px_videostreamer.sh &");
+                if (verbose) cout << "started..." << endl;
             }
             // stop video streaming
             else
             {
-                system("kill `cat ~/videostreamer.pid`");
+                if (verbose) cout << "stopping videostream..." << endl;
+                //system("kill `cat ~/videostreamer.pid`");
+                system("kill `pidof px_videoprepare`");
             }
+            if (verbose) cout << "1" << endl;
+            mavlink_msg_video_stream_encode(sysid, compid, &tmp, &ack);
+            if (verbose) cout << "2" << endl;
+            mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &tmp);
+            if (verbose) cout << "3" << endl;
         }
     }
 }
@@ -80,45 +94,48 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
  */
 int main(int argc, char* argv[])
 {
-        // handling Program options
-	config::options_description desc("Allowed options");
-	desc.add_options()
-		("help", "produce help message")
-		("sysid,a", config::value<int>(&sysid)->default_value(42), "ID of this system, 1-256")
-		("compid,c", config::value<int>(&compid)->default_value(30), "ID of this component")
-		("camno,c", config::value<uint64_t>(&camno)->default_value(0), "ID of the camera to read")
-		("silent,s", config::bool_switch(&silent)->default_value(false), "suppress outputs")
-		("verbose,v", config::bool_switch(&verbose)->default_value(false), "verbose output")
-		("debug,d", config::bool_switch(&debug)->default_value(false), "Emit debug information")
-		;
-	config::variables_map vm;
-	config::store(config::parse_command_line(argc, argv, desc), vm);
-	config::notify(vm);
+    // handling Program options
+    config::options_description desc("Allowed options");
+    desc.add_options()
+        ("help", "produce help message")
+        ("sysid,a", config::value<int>(&sysid)->default_value(42), "ID of this system, 1-256")
+        ("compid,c", config::value<int>(&compid)->default_value(30), "ID of this component")
+        ("camno,c", config::value<uint64_t>(&camno)->default_value(0), "ID of the camera to read")
+        ("silent,s", config::bool_switch(&silent)->default_value(false), "suppress outputs")
+        ("verbose,v", config::bool_switch(&verbose)->default_value(false), "verbose output")
+        ("debug,d", config::bool_switch(&debug)->default_value(false), "Emit debug information")
+    ;
+    config::variables_map vm;
+    config::store(config::parse_command_line(argc, argv, desc), vm);
+    config::notify(vm);
 
-	if (vm.count("help")) {
-		std::cout << desc << std::endl;
-		return 1;
-	}
+    if (vm.count("help"))
+    {
+        std::cout << desc << std::endl;
+        return 1;
+    }
 
-        // creating LCM network provider
-        lcm_t* lcmMavlink = lcm_create ("udpm://");
-        if (!lcmMavlink)
-        {
-            exit(EXIT_FAILURE);
-        }
+    // creating LCM network provider
+    lcmMavlink = lcm_create(NULL); //"udpm://");
+    if (!lcmMavlink)
+    {
+        exit(EXIT_FAILURE);
+    }
 
-        PxSharedMemClient* cam = new PxSharedMemClient();
-        mavlink_message_t_subscription_t * comm_sub = mavlink_message_t_subscribe (lcmMavlink, "MAVLINK", &mavlink_handler, lcmMavlink);
+    PxSharedMemClient* cam = new PxSharedMemClient();
+    mavlink_message_t_subscription_t * comm_sub = mavlink_message_t_subscribe(lcmMavlink, "MAVLINK", &mavlink_handler, lcmMavlink);
 
-	while (true)
-	{
-                // blocking wait for mavlink channel
-                lcm_handle(lcmMavlink);
-	}
+    while (true)
+    {
+        // blocking wait for mavlink channel
+        lcm_handle(lcmMavlink);
+        if (verbose) cout << "4" << endl;
+    }
+    if (verbose) cout << "5" << endl;
 
-        // clean up
-        mavlink_message_t_unsubscribe (lcmMavlink, comm_sub);
-        lcm_destroy (lcmMavlink);
-	delete cam;
-	exit(EXIT_SUCCESS);
+    // clean up
+    mavlink_message_t_unsubscribe(lcmMavlink, comm_sub);
+    lcm_destroy(lcmMavlink);
+    delete cam;
+    exit(EXIT_SUCCESS);
 }

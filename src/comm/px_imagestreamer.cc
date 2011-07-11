@@ -139,7 +139,7 @@ static void image_handler(const lcm_recv_buf_t *rbuf, const char * channel, cons
         mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &tmp);
         if (verbose) cout << "Sending image data..." << endl;
 
-        //usleep(150);
+        usleep(50);
 
         // Send image data (split up into smaller chunks first, then sent over MAVLink)
         uint8_t data[PACKET_PAYLOAD];
