@@ -79,9 +79,28 @@ public:
 
 	int writeInfoPacket(const std::vector<uint8_t>& data);
 
+	/**
+	 * Read data packet up to a specific length without removing it from the
+	 * shared memory buffer.
+	 *
+	 * @param data Container to write data to.
+	 * @param length Length of data packet to read.
+	 *
+	 * @return Number of bytes read.
+	 */
+	int readDataPacket(std::vector<uint8_t>& data, int length);
+
+	/**
+	 * Read data packet and remove it from the shared memory buffer.
+	 *
+	 * @param data Container to write data to.
+	 *
+	 * @return Number of bytes read.
+	 */
 	int readDataPacket(std::vector<uint8_t>& data);
 
-	int writeDataPacket(const std::vector<uint8_t>& data);
+	uint32_t writeDataPacket(const std::vector<uint8_t>& data);
+	uint32_t writeDataPacket(const uint8_t* data, uint32_t length);
 
 	bool bytesWaiting(void) const;
 
@@ -100,6 +119,7 @@ private:
 	} Mode;
 
 	uint8_t crc(const std::vector<uint8_t>& data) const;
+	uint8_t crc(const uint8_t* data, uint32_t length) const;
 
 	int pos(int num, Mode mode) const;
 

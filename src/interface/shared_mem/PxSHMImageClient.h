@@ -74,15 +74,14 @@ public:
 	bool readStereoImage(const mavlink_message_t* msg, cv::Mat& imgLeft, cv::Mat& imgRight);
 	bool readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBayer, cv::Mat& imgDepth);
 
-private:	
-	bool readCameraProperties(int& cameraType, int& imageWidth,
-							  int& imageHeight, int& imageType);
-	
+private:
+	bool readCameraType(PxSHM::CameraType& cameraType);
+
+	bool readImage(cv::Mat& img);
+	bool readImage(cv::Mat& img, cv::Mat& img2);
+
 	bool subscribeLatest;
-	int cameraType;
-	int imageWidth;
-	int imageHeight;
-	int imageType;
+	std::vector<uint8_t> data;
 	
 	PxSHM shm;
 };
