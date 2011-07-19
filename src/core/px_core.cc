@@ -97,6 +97,7 @@ int systemType = MAV_QUADROTOR;		///< The system type
 bool silent = false;				///< Wether console output should be enabled
 bool verbose = false;				///< Enable verbose output
 bool emitHeartbeat = false;			///< Generate a heartbeat with this process
+bool emitLoad = false;				///< Emit CPU load as debug message 101
 bool debug = false;					///< Enable debug functions and output
 
 uint64_t currTime;
@@ -204,6 +205,7 @@ int main (int argc, char ** argv)
 			{ "sysid", 'a', 0, G_OPTION_ARG_INT, &systemid, "ID of this system", NULL },
 			{ "compid", 'c', 0, G_OPTION_ARG_INT, &compid, "ID of this component", NULL },
 			{ "heartbeat", NULL, 0, G_OPTION_ARG_NONE, &emitHeartbeat, "Emit Heartbeat", (emitHeartbeat) ? "on" : "off" },
+			{ "load", 'l', 0, G_OPTION_ARG_NONE, &emitLoad, "Emit CPU load as debug message 101", NULL },
 			{ "silent", 's', 0, G_OPTION_ARG_NONE, &silent, "Be silent", NULL },
 			{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose, "Be verbose", NULL },
 			{ "debug", 'd', 0, G_OPTION_ARG_NONE, &debug, "Debug mode, changes behaviour", NULL },
@@ -288,53 +290,59 @@ int main (int argc, char ** argv)
 				mavlink_msg_heartbeat_pack(systemid, compid, &msg, systemType, MAV_AUTOPILOT_PIXHAWK);
 				mavlink_message_t_publish (lcm, "MAVLINK", &msg);
 
-				// GET SYSTEM INFORMATION
-				glibtop_get_cpu (&cpu);
-				glibtop_get_mem(&memory);
-
-				if (verbose)
+				if (emitLoad)
 				{
-					printf("CPU TYPE INFORMATIONS \n\n"
-							"Cpu Total : %ld \n"
-							"Cpu User : %ld \n"
-							"Cpu Nice : %ld \n"
-							"Cpu Sys : %ld \n"
-							"Cpu Idle : %ld \n"
-							"Cpu Frequences : %ld \n",
-							(unsigned long)cpu.total,
-							(unsigned long)cpu.user,
-							(unsigned long)cpu.nice,
-							(unsigned long)cpu.sys,
-							(unsigned long)cpu.idle,
-							(unsigned long)cpu.frequency);
+					// GET SYSTEM INFORMATION
+					glibtop_get_cpu (&cpu);
+					glibtop_get_mem(&memory);
 
 					float load = ((float)(unsigned long)cpu.total-(float)(unsigned long)cpu.idle) / (float)(unsigned long)cpu.total;
-					printf("\nLOAD: %f %%\n\n", load*100.0f);
+					mavlink_msg_debug_pack(systemid, compid, &msg, 101, load);
+					mavlink_message_t_publish(lcm, "MAVLINK", &msg);
 
-					printf("\nMEMORY USING\n\n"
-							"Memory Total : %ld MB\n"
-							"Memory Used : %ld MB\n"
-							"Memory Free : %ld MB\n"
-							"Memory Shared: %ld MB\n"
-							"Memory Buffered : %ld MB\n"
-							"Memory Cached : %ld MB\n"
-							"Memory user : %ld MB\n"
-							"Memory Locked : %ld MB\n",
-							(unsigned long)memory.total/(1024*1024),
-							(unsigned long)memory.used/(1024*1024),
-							(unsigned long)memory.free/(1024*1024),
-							(unsigned long)memory.shared/(1024*1024),
-							(unsigned long)memory.buffer/(1024*1024),
-							(unsigned long)memory.cached/(1024*1024),
-							(unsigned long)memory.user/(1024*1024),
-							(unsigned long)memory.locked/(1024*1024));
+					if (verbose)
+					{
+						printf("CPU TYPE INFORMATIONS \n\n"
+								"Cpu Total : %ld \n"
+								"Cpu User : %ld \n"
+								"Cpu Nice : %ld \n"
+								"Cpu Sys : %ld \n"
+								"Cpu Idle : %ld \n"
+								"Cpu Frequences : %ld \n",
+								(unsigned long)cpu.total,
+								(unsigned long)cpu.user,
+								(unsigned long)cpu.nice,
+								(unsigned long)cpu.sys,
+								(unsigned long)cpu.idle,
+								(unsigned long)cpu.frequency);
 
-					int which = 0, arg = 0;
-					glibtop_get_proclist(&proclist,which,arg);
-					printf("%ld\n%ld\n%ld\n",
-							(unsigned long)proclist.number,
-							(unsigned long)proclist.total,
-							(unsigned long)proclist.size);
+						printf("\nLOAD: %f %%\n\n", load*100.0f);
+
+						printf("\nMEMORY USING\n\n"
+								"Memory Total : %ld MB\n"
+								"Memory Used : %ld MB\n"
+								"Memory Free : %ld MB\n"
+								"Memory Shared: %ld MB\n"
+								"Memory Buffered : %ld MB\n"
+								"Memory Cached : %ld MB\n"
+								"Memory user : %ld MB\n"
+								"Memory Locked : %ld MB\n",
+								(unsigned long)memory.total/(1024*1024),
+								(unsigned long)memory.used/(1024*1024),
+								(unsigned long)memory.free/(1024*1024),
+								(unsigned long)memory.shared/(1024*1024),
+								(unsigned long)memory.buffer/(1024*1024),
+								(unsigned long)memory.cached/(1024*1024),
+								(unsigned long)memory.user/(1024*1024),
+								(unsigned long)memory.locked/(1024*1024));
+
+						int which = 0, arg = 0;
+						glibtop_get_proclist(&proclist,which,arg);
+						printf("%ld\n%ld\n%ld\n",
+								(unsigned long)proclist.number,
+								(unsigned long)proclist.total,
+								(unsigned long)proclist.size);
+					}
 				}
 			}
 		}
