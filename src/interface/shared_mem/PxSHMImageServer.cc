@@ -49,10 +49,9 @@ PxSHMImageServer::init(int sysid, int compid, lcm_t* lcm,
 	this->cam2 = cam2;
 	key = cam1 | cam2;
 	
-	initCameraProperties = false;
+	imgSeq = 0;
 	
-	img_seq = 0;
-	
+	data.reserve(1024 * 1024);
 	return shm.init(key, PxSHM::SERVER_TYPE, 128, 1, 1024 * 1024, 10);
 }
 	
@@ -62,19 +61,17 @@ PxSHMImageServer::writeMonoImage(const cv::Mat& img, uint64_t camId,
 								 float z, float lon, float lat, float alt,
 								 uint32_t exposure)
 {
-	if (!initCameraProperties)
+	PxSHM::CameraType cameraType;
+	if (img.channels() == 1)
 	{
-		writeCameraProperties(img.channels() == 1 ? PxSHM::CAMERA_MONO_8 : PxSHM::CAMERA_MONO_24,
-							  img.cols, img.rows, img.type());
-		initCameraProperties = false;
+		cameraType = PxSHM::CAMERA_MONO_8;
 	}
-	
-	std::vector<uint8_t> data;
-	int imageSize = img.elemSize() * img.rows * img.cols;
-	data.resize(imageSize);
-	memcpy(&(data[0]), img.data, imageSize);
-	
-	shm.writeDataPacket(data);
+	else
+	{
+		cameraType = PxSHM::CAMERA_MONO_24;
+	}
+
+	writeImage(cameraType, img);
 	
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
@@ -86,7 +83,7 @@ PxSHMImageServer::writeMonoImage(const cv::Mat& img, uint64_t camId,
 	imginfo.cam_no = cam1;
 	imginfo.timestamp = timestamp;
 	imginfo.valid_until = valid_until;
-	imginfo.img_seq = this->img_seq;
+	imginfo.img_seq = this->imgSeq;
 	imginfo.img_buf_index = 1;	//FIXME
 	imginfo.width = img.cols;
 	imginfo.height = img.rows;
@@ -107,7 +104,7 @@ PxSHMImageServer::writeMonoImage(const cv::Mat& img, uint64_t camId,
 	mavlink_msg_image_available_encode(this->sysid, this->compid, &msg, &imginfo);
 	mavlink_message_t_publish (lcm, "IMAGES", &msg);
 	
-	img_seq++;
+	imgSeq++;
 }
 	
 void
@@ -117,20 +114,17 @@ PxSHMImageServer::writeStereoImage(const cv::Mat& imgLeft, uint64_t camIdLeft,
 								   float z, float lon, float lat, float alt,
 								   uint32_t exposure)
 {
-	if (!initCameraProperties)
+	PxSHM::CameraType cameraType;
+	if (imgLeft.channels() == 1)
 	{
-		writeCameraProperties(imgLeft.channels() == 1 ? PxSHM::CAMERA_STEREO_8 : PxSHM::CAMERA_STEREO_24,
-							  imgLeft.cols, imgLeft.rows, imgLeft.type());
-		initCameraProperties = false;
+		cameraType = PxSHM::CAMERA_STEREO_8;
 	}
-	
-	std::vector<uint8_t> data;
-	int imageSize = imgLeft.elemSize() * imgLeft.rows * imgLeft.cols;
-	data.resize(imageSize * 2);
-	memcpy(&(data[0]), imgLeft.data, imageSize);
-	memcpy(&(data[imageSize]), imgRight.data, imageSize);
-	
-	shm.writeDataPacket(data);
+	else
+	{
+		cameraType = PxSHM::CAMERA_STEREO_24;
+	}
+
+	writeImage(cameraType, imgLeft, imgRight);
 	
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
@@ -142,7 +136,7 @@ PxSHMImageServer::writeStereoImage(const cv::Mat& imgLeft, uint64_t camIdLeft,
 	imginfo.cam_no = cam1 | cam2;
 	imginfo.timestamp = timestamp;
 	imginfo.valid_until = valid_until;
-	imginfo.img_seq = this->img_seq;
+	imginfo.img_seq = this->imgSeq;
 	imginfo.img_buf_index = 2;	//FIXME
 	imginfo.width = imgLeft.cols;
 	imginfo.height = imgLeft.rows;
@@ -163,7 +157,7 @@ PxSHMImageServer::writeStereoImage(const cv::Mat& imgLeft, uint64_t camIdLeft,
 	mavlink_msg_image_available_encode(this->sysid, this->compid, &msg, &imginfo);
 	mavlink_message_t_publish (lcm, "IMAGES", &msg);
 	
-	img_seq++;
+	imgSeq++;
 }
 
 void
@@ -171,20 +165,7 @@ PxSHMImageServer::writeKinectImage(const cv::Mat& imgBayer, const cv::Mat& imgDe
 								   uint64_t timestamp, float roll, float pitch, float yaw,
 								   float z, float lon, float lat, float alt)
 {
-	if (!initCameraProperties)
-	{
-		writeCameraProperties(PxSHM::CAMERA_KINECT,
-							  imgBayer.cols, imgBayer.rows, imgBayer.type());
-		initCameraProperties = false;
-	}
-
-	std::vector<uint8_t> data;
-	int imageSize = imgBayer.elemSize() * imgBayer.rows * imgBayer.cols;
-	data.resize(imageSize * 3);
-	memcpy(&(data[0]), imgBayer.data, imageSize);
-	memcpy(&(data[imageSize]), imgDepth.data, imageSize * 2);
-	
-	shm.writeDataPacket(data);
+	writeImage(PxSHM::CAMERA_KINECT, imgBayer, imgDepth);
 	
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
@@ -196,7 +177,7 @@ PxSHMImageServer::writeKinectImage(const cv::Mat& imgBayer, const cv::Mat& imgDe
 	imginfo.cam_no = cam1;
 	imginfo.timestamp = timestamp;
 	imginfo.valid_until = valid_until;
-	imginfo.img_seq = this->img_seq;
+	imginfo.img_seq = this->imgSeq;
 	imginfo.img_buf_index = 1;	//FIXME
 	imginfo.width = imgBayer.cols;
 	imginfo.height = imgBayer.rows;
@@ -217,26 +198,67 @@ PxSHMImageServer::writeKinectImage(const cv::Mat& imgBayer, const cv::Mat& imgDe
 	mavlink_msg_image_available_encode(this->sysid, this->compid, &msg, &imginfo);
 	mavlink_message_t_publish (lcm, "IMAGES", &msg);
 	
-	img_seq++;
+	imgSeq++;
 }
 
 bool
-PxSHMImageServer::writeCameraProperties(PxSHM::CameraType cameraType,
-										int imageWidth, int imageHeight,
-										int imageType)
+PxSHMImageServer::writeImage(PxSHM::CameraType cameraType, const cv::Mat& img,
+							 const cv::Mat& img2)
 {
-	std::vector<uint8_t> data;
-	data.resize(16);
-	
-	memcpy(&(data[0]), &cameraType, 4);
-	memcpy(&(data[4]), &imageWidth, 4);
-	memcpy(&(data[8]), &imageHeight, 4);
-	memcpy(&(data[12]), &imageType, 4);
-
-	if (shm.writeInfoPacket(data) != static_cast<int>(data.size()))
+	if (img.empty())
 	{
+		fprintf(stderr, "# WARNING: img parameter should not be empty.\n");
 		return false;
 	}
-	
+
+	uint32_t headerLength = 20;
+
+	if (cameraType == PxSHM::CAMERA_STEREO_8 ||
+		cameraType == PxSHM::CAMERA_STEREO_24 ||
+		cameraType == PxSHM::CAMERA_KINECT)
+	{
+		if (img2.empty())
+		{
+			fprintf(stderr, "# WARNING: img2 parameter should not be empty.\n");
+			return false;
+		}
+
+		headerLength += 8;
+	}
+
+	uint32_t dataLength = headerLength + img.step[0] * img.rows +
+						  img2.step[0] * img2.rows;
+
+	if (data.capacity() < dataLength)
+	{
+		data.reserve(data.capacity() * 2);
+	}
+
+	data.resize(dataLength);
+
+	int type = img.type();
+
+	// write header
+	memcpy(&(data[0]), &cameraType, 4);
+	memcpy(&(data[4]), &(img.cols), 4);
+	memcpy(&(data[8]), &(img.rows), 4);
+	memcpy(&(data[12]), &(img.step[0]), 4);
+	memcpy(&(data[16]), &type, 4);
+
+	memcpy(&(data[headerLength]), img.data, img.step[0] * img.rows);
+
+	if (!img2.empty())
+	{
+		memcpy(&(data[20]), &img2.step[0], 4);
+
+		type = img2.type();
+		memcpy(&(data[24]), &type, 4);
+
+		memcpy(&(data[headerLength + img.step[0] * img.rows]), img2.data,
+			   img2.step[0] * img2.rows);
+	}
+
+	shm.writeDataPacket(data);
+
 	return true;
 }

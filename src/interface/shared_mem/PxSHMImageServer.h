@@ -75,9 +75,9 @@ public:
 						  float z, float lon, float lat, float alt);
 	
 private:
-	bool writeCameraProperties(PxSHM::CameraType cameraType,
-							   int imageWidth, int imageHeight, int imageType);
-	
+	bool writeImage(PxSHM::CameraType cameraType, const cv::Mat& img,
+					const cv::Mat& img2 = cv::Mat());
+
 	int sysid;
 	int compid;
 	lcm_t* lcm;
@@ -87,13 +87,9 @@ private:
 	PxSHM shm;
 	int key;
 	
-	bool initCameraProperties;
-	PxSHM::CameraType cameraType;
-	int imageWidth;
-	int imageHeight;
-	int imageType;
-	
-	unsigned int img_seq;
+	std::vector<uint8_t> data;
+
+	unsigned int imgSeq;
 };
 
 #endif

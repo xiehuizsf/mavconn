@@ -44,12 +44,9 @@ PxSHMImageClient::init(bool subscribeLatest,
 {
 	this->subscribeLatest = subscribeLatest;
 	
-	if (!shm.init(cam1 | cam2, PxSHM::CLIENT_TYPE, 128, 1, 1024 * 1024, 10))
-	{
-		return false;
-	}
+	data.reserve(1024 * 1024);
 
-	if (!readCameraProperties(cameraType, imageWidth, imageHeight, imageType))
+	if (!shm.init(cam1 | cam2, PxSHM::CLIENT_TYPE, 128, 1, 1024 * 1024, 10))
 	{
 		return false;
 	}
@@ -221,11 +218,6 @@ PxSHMImageClient::getGPS(const mavlink_message_t* msg, float& lat, float& lon, f
 bool
 PxSHMImageClient::readMonoImage(const mavlink_message_t* msg, cv::Mat& img)
 {
-	if (!(cameraType == PxSHM::CAMERA_MONO_8 || cameraType == PxSHM::CAMERA_MONO_24))
-	{
-		return false;
-	}
-	
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
 	{
 		// Instantly return if MAVLink message did not contain an image
@@ -239,14 +231,21 @@ PxSHMImageClient::readMonoImage(const mavlink_message_t* msg, cv::Mat& img)
 	
 	do
 	{
-		std::vector<uint8_t> data;
-		if (shm.readDataPacket(data) <= 0)
+		PxSHM::CameraType cameraType;
+		if (!readCameraType(cameraType))
 		{
 			return false;
 		}
-		
-		cv::Mat temp(imageHeight, imageWidth, imageType, &(data[0]));
-		temp.copyTo(img);
+
+		if (cameraType != PxSHM::CAMERA_MONO_8 && cameraType != PxSHM::CAMERA_MONO_24)
+		{
+			return false;
+		}
+
+		if (!readImage(img))
+		{
+			return false;
+		}
 	}
 	while (shm.bytesWaiting() && subscribeLatest);
 	
@@ -256,11 +255,6 @@ PxSHMImageClient::readMonoImage(const mavlink_message_t* msg, cv::Mat& img)
 bool
 PxSHMImageClient::readStereoImage(const mavlink_message_t* msg, cv::Mat& imgLeft, cv::Mat& imgRight)
 {
-	if (!(cameraType == PxSHM::CAMERA_STEREO_8 || cameraType == PxSHM::CAMERA_STEREO_24))
-	{
-		return false;
-	}
-	
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
 	{
 		// Instantly return if MAVLink message did not contain an image
@@ -274,18 +268,21 @@ PxSHMImageClient::readStereoImage(const mavlink_message_t* msg, cv::Mat& imgLeft
 	
 	do
 	{
-		std::vector<uint8_t> data;
-		if (shm.readDataPacket(data) <= 0)
+		PxSHM::CameraType cameraType;
+		if (!readCameraType(cameraType))
 		{
 			return false;
 		}
-		
-		cv::Mat temp1(imageHeight, imageWidth, imageType, &(data[0]));
-		temp1.copyTo(imgLeft);
-		
-		int offset = imgLeft.elemSize() * imageHeight * imageWidth;
-		cv::Mat temp2(imageHeight, imageWidth, imageType, &(data[offset]));
-		temp2.copyTo(imgRight);
+
+		if (cameraType != PxSHM::CAMERA_STEREO_8 && cameraType != PxSHM::CAMERA_STEREO_24)
+		{
+			return false;
+		}
+
+		if (!readImage(imgLeft, imgRight))
+		{
+			return false;
+		}
 	}
 	while (shm.bytesWaiting() && subscribeLatest);
 	
@@ -295,36 +292,34 @@ PxSHMImageClient::readStereoImage(const mavlink_message_t* msg, cv::Mat& imgLeft
 bool
 PxSHMImageClient::readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBayer, cv::Mat& imgDepth)
 {
-	if (cameraType != PxSHM::CAMERA_KINECT)
-	{
-		return false;
-	}
-	
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
 	{
 		// Instantly return if MAVLink message did not contain an image
 		return false;
 	}
-	
+
 	if (!shm.bytesWaiting())
 	{
 		return false;
 	}
-	
+
 	do
 	{
-		std::vector<uint8_t> data;
-		if (shm.readDataPacket(data) <= 0)
+		PxSHM::CameraType cameraType;
+		if (!readCameraType(cameraType))
 		{
 			return false;
 		}
-		
-		cv::Mat temp1(imageHeight, imageWidth, CV_8UC1, &(data[0]));
-		temp1.copyTo(imgBayer);
-		
-		int offset = imgBayer.elemSize() * imageHeight * imageWidth;
-		cv::Mat temp2(imageHeight, imageWidth, CV_16UC1, &(data[offset]));
-		temp2.copyTo(imgDepth);
+
+		if (cameraType != PxSHM::CAMERA_KINECT)
+		{
+			return false;
+		}
+
+		if (!readImage(imgBayer, imgDepth))
+		{
+			return false;
+		}
 	}
 	while (shm.bytesWaiting() && subscribeLatest);
 	
@@ -332,25 +327,80 @@ PxSHMImageClient::readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBaye
 }
 
 bool
-PxSHMImageClient::readCameraProperties(int& cameraType, int& imageWidth,
-									   int& imageHeight, int& imageType)
+PxSHMImageClient::readCameraType(PxSHM::CameraType& cameraType)
 {
-	std::vector<uint8_t> data;
+	uint32_t dataLength = shm.readDataPacket(data, 4);
+	if (dataLength < 4)
+	{
+		return false;
+	}
 
-	if (shm.readInfoPacket(data) != 16)
-	{
-		return false;
-	}
-	
-	if (data.size() != 16)
-	{
-		return false;
-	}
-	
 	memcpy(&cameraType, &(data[0]), 4);
-	memcpy(&imageWidth, &(data[4]), 4);
-	memcpy(&imageHeight, &(data[8]), 4);
-	memcpy(&imageType, &(data[12]), 4);
+
+	return true;
+}
+
+bool
+PxSHMImageClient::readImage(cv::Mat& img)
+{
+	uint32_t dataLength = shm.readDataPacket(data);
+	if (dataLength <= 20)
+	{
+		return false;
+	}
+
+	int rows, cols, type;
+	uint32_t step;
+
+//	memcpy(&cameraType, &(data[0]), 4);
+	memcpy(&cols, &(data[4]), 4);
+	memcpy(&rows, &(data[8]), 4);
+	memcpy(&step, &(data[12]), 4);
+	memcpy(&type, &(data[16]), 4);
+
+	if (dataLength != 20 + rows * step)
+	{
+		// data length is not consistent with image type
+		return false;
+	}
+
+	cv::Mat temp(rows, cols, type, &(data[20]), step);
+	temp.copyTo(img);
+
+	return true;
+}
+
+bool
+PxSHMImageClient::readImage(cv::Mat& img, cv::Mat& img2)
+{
+	uint32_t dataLength = shm.readDataPacket(data);
+	if (dataLength <= 28)
+	{
+		return false;
+	}
+
+	int rows, cols, type, type2;
+	uint32_t step, step2;
+
+//	memcpy(&cameraType, &(data[0]), 4);
+	memcpy(&cols, &(data[4]), 4);
+	memcpy(&rows, &(data[8]), 4);
+	memcpy(&step, &(data[12]), 4);
+	memcpy(&type, &(data[16]), 4);
+	memcpy(&step2, &(data[20]), 4);
+	memcpy(&type2, &(data[24]), 4);
+
+	if (dataLength != 28 + rows * step + rows * step2)
+	{
+		// data length is not consistent with image type
+		return false;
+	}
+
+	cv::Mat temp(rows, cols, type, &(data[28]), step);
+	temp.copyTo(img);
+
+	cv::Mat temp2(rows, cols, type2, &(data[28 + rows * step]), step2);
+	temp2.copyTo(img2);
 
 	return true;
 }

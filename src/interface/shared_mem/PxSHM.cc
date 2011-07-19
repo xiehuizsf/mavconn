@@ -241,6 +241,44 @@ PxSHM::writeInfoPacket(const std::vector<uint8_t>& data)
 }
 
 int
+PxSHM::readDataPacket(std::vector<uint8_t>& data, int length)
+{
+	unsigned int shmkey, off;
+	memcpy(&shmkey, mem, 4);
+	memcpy(&off, &(mem[i_size + 8]), 4);
+	if (key != shmkey)
+	{
+		r_off = off;
+		key = shmkey;
+		return 0;
+	}
+	if (off != r_off)
+	{
+		// read packet magic ID
+		if (mem[pos(0,READ_DATA)] != __SHM_IDENTIFIER)
+		{
+			fprintf(stderr, "# WARNING: corrupt packet.\n");
+			r_off = off;
+			return 0;
+		}
+
+		// read packet size
+		unsigned int payloadSizeInBytes;
+		copyFromSHM(reinterpret_cast<uint8_t *>(&payloadSizeInBytes), 4, 1);
+
+		// read specified length of packet payload
+		if (length > payloadSizeInBytes)
+		{
+			length = payloadSizeInBytes;
+		}
+		copyFromSHM(data, length, 5);
+
+		return length;
+	}
+	return 0;
+}
+
+int
 PxSHM::readDataPacket(std::vector<uint8_t>& data)
 {
 	unsigned int shmkey, off;
@@ -286,24 +324,29 @@ PxSHM::readDataPacket(std::vector<uint8_t>& data)
 	return 0;
 }
 
-int
+uint32_t
 PxSHM::writeDataPacket(const std::vector<uint8_t>& data)
+{
+	return writeDataPacket(&(data[0]), data.size());
+}
+
+uint32_t
+PxSHM::writeDataPacket(const uint8_t* data, uint32_t length)
 {
 	// write packet magic ID (1 byte)
 	mem[pos(0,WRITE_DATA)] = __SHM_IDENTIFIER;
 	// write size of packet (4 bytes)
-	size_t num = data.size();
-	copyToSHM(reinterpret_cast<uint8_t *>(&num), 4, 1);
+	copyToSHM(reinterpret_cast<uint8_t *>(&length), 4, 1);
 	// write packet payload (num bytes)
-	copyToSHM(data, 5);
+	copyToSHM(data, length, 5);
 	// write packet CRC (1 byte)
-	mem[pos(5 + num,WRITE_DATA)] = crc(data);
-	w_off = (w_off + num + 6) % d_size;
+	mem[pos(5 + length,WRITE_DATA)] = crc(data, length);
+	w_off = (w_off + length + 6) % d_size;
 
 	// update write offset
 	memcpy(&(mem[i_size + 8]), &w_off, 4);
 
-	return num;
+	return length;
 }
 
 bool
@@ -372,8 +415,14 @@ PxSHM::getType(void) const
 uint8_t
 PxSHM::crc(const std::vector<uint8_t>& data) const
 {
+	return crc(&(data[0]), data.size());
+}
+
+uint8_t
+PxSHM::crc(const uint8_t* data, uint32_t length) const
+{
 	uint8_t c = 0;
-	for (size_t i = 0; i < data.size(); i++)
+	for (uint32_t i = 0; i < length; i++)
 	{
 		c += data[i];
 	}
@@ -440,10 +489,11 @@ PxSHM::copyFromSHM(uint8_t* data, int len, int off) const
 void
 PxSHM::copyFromSHM(std::vector<uint8_t>& data, int len, int off) const
 {
-	if (data.size() < static_cast<size_t>(len))
+	if (data.capacity() < static_cast<size_t>(len))
 	{
-		data.resize(len);
+		data.reserve(data.capacity() * 2);
 	}
+	data.resize(len);
 
 	copyFromSHM(&(data[0]), len, off);
 }
