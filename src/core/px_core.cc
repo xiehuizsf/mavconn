@@ -261,23 +261,26 @@ int main (int argc, char ** argv)
 	glibtop_mem memory;
 	glibtop_proclist proclist;
 
+	glibtop_get_cpu (&cpu);
+	uint64_t old_total = cpu.total;
+	uint64_t old_idle = cpu.idle;
+
 	printf("\nPX SYSTEM CONTROL STARTED ON MAV %d (COMPONENT ID:%d) - RUNNING..\n\n", systemid, compid);
 
 	while (1)
 	{
+		gettimeofday(&tv, NULL);
+		uint64_t currTime =  ((uint64_t)tv.tv_sec) * 1000000 + tv.tv_usec;
 
-		// Send heartbeat if enabled
-		if (emitHeartbeat)
+		if (currTime - lastTime > 1000000)
 		{
-			gettimeofday(&tv, NULL);
-			uint64_t currTime =  ((uint64_t)tv.tv_sec) * 1000000 + tv.tv_usec;
+			// SEND OUT TIME MESSAGE
+			// send message as close to time aquisition as possible
+			mavlink_message_t msg;
 
-			if (currTime - lastTime > 1000000)
+			// Send heartbeat if enabled
+			if (emitHeartbeat)
 			{
-				// SEND OUT TIME MESSAGE
-				// send message as close to time aquisition as possible
-				mavlink_message_t msg;
-
 				mavlink_msg_system_time_pack(systemid, compid, &msg, currTime);
 				mavlink_message_t_publish (lcm, "MAVLINK", &msg);
 
@@ -289,64 +292,73 @@ int main (int argc, char ** argv)
 				// Pack message and get size of encoded byte string
 				mavlink_msg_heartbeat_pack(systemid, compid, &msg, systemType, MAV_AUTOPILOT_PIXHAWK);
 				mavlink_message_t_publish (lcm, "MAVLINK", &msg);
+			}
 
-				if (emitLoad)
+			if (emitLoad)
+			{
+				// GET SYSTEM INFORMATION
+				glibtop_get_cpu (&cpu);
+				glibtop_get_mem(&memory);
+				float load = ((float)(cpu.total-old_total)-(float)(cpu.idle-old_idle)) / (float)(cpu.total-old_total);
+				mavlink_msg_debug_pack(systemid, compid, &msg, 101, load*100.f);
+				mavlink_message_t_publish(lcm, "MAVLINK", &msg);
+				old_total = cpu.total;
+				old_idle = cpu.idle;
+
+				if (verbose)
 				{
-					// GET SYSTEM INFORMATION
-					glibtop_get_cpu (&cpu);
-					glibtop_get_mem(&memory);
+					printf("CPU TYPE INFORMATIONS \n\n"
+							"Cpu Total : %ld \n"
+							"Cpu User : %ld \n"
+							"Cpu Nice : %ld \n"
+							"Cpu Sys : %ld \n"
+							"Cpu Idle : %ld \n"
+							"Cpu Frequences : %ld \n",
+							(unsigned long)cpu.total,
+							(unsigned long)cpu.user,
+							(unsigned long)cpu.nice,
+							(unsigned long)cpu.sys,
+							(unsigned long)cpu.idle,
+							(unsigned long)cpu.frequency);
 
-					float load = ((float)(unsigned long)cpu.total-(float)(unsigned long)cpu.idle) / (float)(unsigned long)cpu.total;
-					mavlink_msg_debug_pack(systemid, compid, &msg, 101, load);
-					mavlink_message_t_publish(lcm, "MAVLINK", &msg);
+					printf("\nLOAD: %f %%\n\n", load*100.0f);
 
-					if (verbose)
-					{
-						printf("CPU TYPE INFORMATIONS \n\n"
-								"Cpu Total : %ld \n"
-								"Cpu User : %ld \n"
-								"Cpu Nice : %ld \n"
-								"Cpu Sys : %ld \n"
-								"Cpu Idle : %ld \n"
-								"Cpu Frequences : %ld \n",
-								(unsigned long)cpu.total,
-								(unsigned long)cpu.user,
-								(unsigned long)cpu.nice,
-								(unsigned long)cpu.sys,
-								(unsigned long)cpu.idle,
-								(unsigned long)cpu.frequency);
+					printf("\nMEMORY USING\n\n"
+							"Memory Total : %ld MB\n"
+							"Memory Used : %ld MB\n"
+							"Memory Free : %ld MB\n"
+							"Memory Shared: %ld MB\n"
+							"Memory Buffered : %ld MB\n"
+							"Memory Cached : %ld MB\n"
+							"Memory user : %ld MB\n"
+							"Memory Locked : %ld MB\n",
+							(unsigned long)memory.total/(1024*1024),
+							(unsigned long)memory.used/(1024*1024),
+							(unsigned long)memory.free/(1024*1024),
+							(unsigned long)memory.shared/(1024*1024),
+							(unsigned long)memory.buffer/(1024*1024),
+							(unsigned long)memory.cached/(1024*1024),
+							(unsigned long)memory.user/(1024*1024),
+							(unsigned long)memory.locked/(1024*1024));
 
-						printf("\nLOAD: %f %%\n\n", load*100.0f);
-
-						printf("\nMEMORY USING\n\n"
-								"Memory Total : %ld MB\n"
-								"Memory Used : %ld MB\n"
-								"Memory Free : %ld MB\n"
-								"Memory Shared: %ld MB\n"
-								"Memory Buffered : %ld MB\n"
-								"Memory Cached : %ld MB\n"
-								"Memory user : %ld MB\n"
-								"Memory Locked : %ld MB\n",
-								(unsigned long)memory.total/(1024*1024),
-								(unsigned long)memory.used/(1024*1024),
-								(unsigned long)memory.free/(1024*1024),
-								(unsigned long)memory.shared/(1024*1024),
-								(unsigned long)memory.buffer/(1024*1024),
-								(unsigned long)memory.cached/(1024*1024),
-								(unsigned long)memory.user/(1024*1024),
-								(unsigned long)memory.locked/(1024*1024));
-
-						int which = 0, arg = 0;
-						glibtop_get_proclist(&proclist,which,arg);
-						printf("%ld\n%ld\n%ld\n",
-								(unsigned long)proclist.number,
-								(unsigned long)proclist.total,
-								(unsigned long)proclist.size);
-					}
+					int which = 0, arg = 0;
+					glibtop_get_proclist(&proclist,which,arg);
+					printf("%ld\n%ld\n%ld\n",
+							(unsigned long)proclist.number,
+							(unsigned long)proclist.total,
+							(unsigned long)proclist.size);
 				}
 			}
 		}
-		usleep(5000);
+
+		//sleep as long as possible, if getting near to 1 second sleep only short
+		gettimeofday(&tv, NULL);
+		uint64_t currTime2 =  ((uint64_t)tv.tv_sec) * 1000000 + tv.tv_usec;
+		int64_t sleeptime = 900000 - (currTime2-currTime);
+		if (sleeptime > 0)
+			usleep(sleeptime);
+		else
+			usleep(10000);
 	}
 
 	mavlink_message_t_unsubscribe (lcm, commSub);
