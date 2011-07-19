@@ -242,14 +242,14 @@ PxSHMImageServer::writeImage(PxSHM::CameraType cameraType, const cv::Mat& img,
 	memcpy(&(data[0]), &cameraType, 4);
 	memcpy(&(data[4]), &(img.cols), 4);
 	memcpy(&(data[8]), &(img.rows), 4);
-	memcpy(&(data[12]), &(img.step[0]), 4);
+	memcpy(&(data[12]), img.step.p, 4);
 	memcpy(&(data[16]), &type, 4);
 
 	memcpy(&(data[headerLength]), img.data, img.step[0] * img.rows);
 
 	if (!img2.empty())
 	{
-		memcpy(&(data[20]), &img2.step[0], 4);
+		memcpy(&(data[20]), img.step.p, 4);
 
 		type = img2.type();
 		memcpy(&(data[24]), &type, 4);
