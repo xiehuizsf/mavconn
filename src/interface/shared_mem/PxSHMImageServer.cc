@@ -58,7 +58,7 @@ PxSHMImageServer::init(int sysid, int compid, lcm_t* lcm,
 void
 PxSHMImageServer::writeMonoImage(const cv::Mat& img, uint64_t camId,
 								 uint64_t timestamp, float roll, float pitch, float yaw,
-								 float z, float lon, float lat, float alt,
+								 float z, float lon, float lat, float alt, float ground_x, float ground_y, float ground_z,
 								 uint32_t exposure)
 {
 	PxSHM::CameraType cameraType;
@@ -99,6 +99,9 @@ PxSHMImageServer::writeMonoImage(const cv::Mat& img, uint64_t camId,
 	imginfo.lon = lon;
 	imginfo.lat = lat;
 	imginfo.alt = alt;
+	imginfo.ground_x = ground_x;
+	imginfo.ground_y = ground_y;
+	imginfo.ground_z = ground_z;
 	
 	mavlink_message_t msg;
 	mavlink_msg_image_available_encode(this->sysid, this->compid, &msg, &imginfo);
@@ -111,7 +114,7 @@ void
 PxSHMImageServer::writeStereoImage(const cv::Mat& imgLeft, uint64_t camIdLeft,
 								   const cv::Mat& imgRight, uint64_t camIdRight,
 								   uint64_t timestamp, float roll, float pitch, float yaw,
-								   float z, float lon, float lat, float alt,
+								   float z, float lon, float lat, float alt, float ground_x, float ground_y, float ground_z,
 								   uint32_t exposure)
 {
 	PxSHM::CameraType cameraType;
@@ -152,6 +155,9 @@ PxSHMImageServer::writeStereoImage(const cv::Mat& imgLeft, uint64_t camIdLeft,
 	imginfo.lon = lon;
 	imginfo.lat = lat;
 	imginfo.alt = alt;
+	imginfo.ground_x = ground_x;
+	imginfo.ground_y = ground_y;
+	imginfo.ground_z = ground_z;
 	
 	mavlink_message_t msg;
 	mavlink_msg_image_available_encode(this->sysid, this->compid, &msg, &imginfo);
@@ -163,7 +169,7 @@ PxSHMImageServer::writeStereoImage(const cv::Mat& imgLeft, uint64_t camIdLeft,
 void
 PxSHMImageServer::writeKinectImage(const cv::Mat& imgBayer, const cv::Mat& imgDepth,
 								   uint64_t timestamp, float roll, float pitch, float yaw,
-								   float z, float lon, float lat, float alt)
+								   float z, float lon, float lat, float alt, float ground_x, float ground_y, float ground_z)
 {
 	writeImage(PxSHM::CAMERA_KINECT, imgBayer, imgDepth);
 	
@@ -193,6 +199,9 @@ PxSHMImageServer::writeKinectImage(const cv::Mat& imgBayer, const cv::Mat& imgDe
 	imginfo.lon = lon;
 	imginfo.lat = lat;
 	imginfo.alt = alt;
+	imginfo.ground_x = ground_x;
+	imginfo.ground_y = ground_y;
+	imginfo.ground_z = ground_z;
 	
 	mavlink_message_t msg;
 	mavlink_msg_image_available_encode(this->sysid, this->compid, &msg, &imginfo);

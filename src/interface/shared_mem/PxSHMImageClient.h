@@ -69,6 +69,7 @@ public:
 	static bool getRollPitchYaw(const mavlink_message_t* msg, float& roll, float& pitch, float& yaw);
 	static bool getLocalHeight(const mavlink_message_t* msg, float& height);
 	static bool getGPS(const mavlink_message_t* msg, float& lat, float& lon, float& alt);
+	static bool getGroundTruth(const mavlink_message_t* msg, float& ground_x, float& ground_y, float& ground_z);
 	
 	bool readMonoImage(const mavlink_message_t* msg, cv::Mat& img);
 	bool readStereoImage(const mavlink_message_t* msg, cv::Mat& imgLeft, cv::Mat& imgRight);

@@ -216,6 +216,29 @@ PxSHMImageClient::getGPS(const mavlink_message_t* msg, float& lat, float& lon, f
 }
 
 bool
+PxSHMImageClient::getGroundTruth(const mavlink_message_t* msg, float& ground_x, float& ground_y, float& ground_z)
+{
+	// Decode message
+	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
+	{
+		// Instantly return if MAVLink message did not contain an image
+		return false;
+	}
+	else
+	{
+		// Extract the image meta information and pointer location from the image
+		mavlink_image_available_t img;
+		mavlink_msg_image_available_decode(msg, &img);
+
+		ground_x = img.ground_x;
+		ground_y = img.ground_y;
+		ground_z = img.ground_z;
+
+		return true;
+	}
+}
+
+bool
 PxSHMImageClient::readMonoImage(const mavlink_message_t* msg, cv::Mat& img)
 {
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
