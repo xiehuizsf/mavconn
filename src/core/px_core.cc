@@ -274,6 +274,11 @@ int main (int argc, char ** argv)
 
 		if (currTime - lastTime > 1000000)
 		{
+
+			//set cpu to always full power
+			system("echo performance > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor");
+			system("echo performance > /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor");
+
 			// SEND OUT TIME MESSAGE
 			// send message as close to time aquisition as possible
 			mavlink_message_t msg;
