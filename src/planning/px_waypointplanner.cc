@@ -150,6 +150,7 @@ void send_setpoint(uint16_t seq)
             mavlink_message_t_publish(lcm, "MAVLINK", &msg);
 
             usleep(paramClient->getParamValue("PROTOCOLDELAY"));
+            if (verbose) printf("Sent new setpoint: X: %f, Y: %f, Z: %f\n", cur->x, cur->y, cur->z);
         }
         else
         {
