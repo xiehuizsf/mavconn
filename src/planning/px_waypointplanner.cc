@@ -137,7 +137,7 @@ void send_setpoint(uint16_t seq)
         mavlink_local_position_setpoint_set_t PControlSetPoint;
 
         // send new set point to local IMU
-        if (cur->frame == 1)
+        if (cur->frame == MAV_FRAME_LOCAL || cur->frame == MAV_FRAME_LOCAL_ENU)
         {
             PControlSetPoint.target_system = systemid;
             PControlSetPoint.target_component = MAV_COMP_ID_IMU;
@@ -335,7 +335,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
             if(msg->sysid == systemid && current_active_wp_id < waypoints->size())
             {
                 mavlink_waypoint_t *wp = waypoints->at(current_active_wp_id);
-                if(wp->frame == 1)
+                if(wp->frame == MAV_FRAME_LOCAL || wp->frame == MAV_FRAME_LOCAL_ENU)
                 {
                     mavlink_attitude_t att;
                     mavlink_msg_attitude_decode(msg, &att);
@@ -369,7 +369,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
             {
                 mavlink_waypoint_t *wp = waypoints->at(current_active_wp_id);
 
-                if(wp->frame == 1)
+                if(wp->frame == MAV_FRAME_LOCAL || wp->frame == MAV_FRAME_LOCAL_ENU)
                 {
                     mavlink_local_position_t pos;
                     mavlink_msg_local_position_decode(msg, &pos);
