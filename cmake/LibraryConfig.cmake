@@ -64,6 +64,7 @@ FIND_PACKAGE(GLUT)
 FIND_PACKAGE(XMU)
 FIND_PACKAGE(AIO)
 FIND_PACKAGE(XMU)
+FIND_PACKAGE(RTI)
 
 ##### Boost #####
 # Expand the next statement if newer boost versions than 1.36.1 are released
