@@ -88,7 +88,7 @@ public:
 	 *
 	 * @return Number of bytes read.
 	 */
-	int readDataPacket(std::vector<uint8_t>& data, int length);
+	int readDataPacket(std::vector<uint8_t>& data, uint32_t length);
 
 	/**
 	 * Read data packet and remove it from the shared memory buffer.

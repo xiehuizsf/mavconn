@@ -65,6 +65,8 @@ FIND_PACKAGE(XMU)
 FIND_PACKAGE(AIO)
 FIND_PACKAGE(XMU)
 FIND_PACKAGE(RTI)
+FIND_PACKAGE(GLIBMM2)
+FIND_PACKAGE(SIGC++)
 
 ##### Boost #####
 # Expand the next statement if newer boost versions than 1.36.1 are released
