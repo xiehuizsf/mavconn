@@ -4,8 +4,13 @@
 
 #include "dds/Middleware.h"
 #include "dds/interface/mavlink/mavlink_interface.h"
+#include "../interface/shared_mem/PxSHMImageClient.h"
+#include "../interface/shared_mem/PxSHMImageServer.h"
 
 bool quit = false;
+
+typedef std::tr1::shared_ptr<PxSHMImageClient> PxSHMImageClientPtr;
+typedef std::tr1::shared_ptr<PxSHMImageServer> PxSHMImageServerPtr;
 
 void signalHandler(int signal)
 {
@@ -126,16 +131,64 @@ main(int argc, char** argv)
 	mw.init(argc, argv);
 
 	mavlink_message_t_subscription_t* mavlinkLCMSub = 0;
+	std::vector< std::pair<PxSHMImageClientPtr, uint32_t> > imageClientVec;
 	if (lcm2dds)
 	{
 		mavlinkLCMSub = mavlink_message_t_subscribe(lcm, "MAVLINK", &mavlinkLCMHandler, 0);
 		px::MavlinkTopic::instance()->advertise();
+
+		PxSHMImageClientPtr client;
+
+		client = PxSHMImageClientPtr(new PxSHMImageClient);
+		if (client->init(true, PxSHM::CAMERA_FORWARD_LEFT))
+		{
+			imageClientVec.push_back(std::make_pair(client, PxSHM::CAMERA_FORWARD_LEFT));
+		}
+		client = PxSHMImageClientPtr(new PxSHMImageClient);
+		if (client->init(true, PxSHM::CAMERA_FORWARD_LEFT, PxSHM::CAMERA_FORWARD_RIGHT))
+		{
+			imageClientVec.push_back(std::make_pair(client, PxSHM::CAMERA_FORWARD_LEFT | PxSHM::CAMERA_FORWARD_RIGHT));
+		}
+		client = PxSHMImageClientPtr(new PxSHMImageClient);
+		if (client->init(true, PxSHM::CAMERA_DOWNWARD_LEFT))
+		{
+			imageClientVec.push_back(std::make_pair(client, PxSHM::CAMERA_DOWNWARD_LEFT));
+		}
+		client = PxSHMImageClientPtr(new PxSHMImageClient);
+		if (client->init(true, PxSHM::CAMERA_DOWNWARD_LEFT, PxSHM::CAMERA_DOWNWARD_RIGHT))
+		{
+			imageClientVec.push_back(std::make_pair(client, PxSHM::CAMERA_DOWNWARD_LEFT | PxSHM::CAMERA_DOWNWARD_RIGHT));
+		}
 	}
 
+	std::vector< std::pair<PxSHMImageServerPtr, uint32_t> > imageServerVec;
 	if (dds2lcm)
 	{
 		px::Handler handler(sigc::bind(sigc::ptr_fun(mavlinkDDSHandler), lcm));
 		px::MavlinkTopic::instance()->subscribe(handler, px::SUBSCRIBE_ALL);
+
+		PxSHMImageServerPtr server;
+
+		server = PxSHMImageServerPtr(new PxSHMImageServer);
+		if (server->init(getSystemID(), PX_COMP_ID_CAMERA, lcm, PxSHM::CAMERA_FORWARD_LEFT))
+		{
+			imageServerVec.push_back(std::make_pair(server, PxSHM::CAMERA_FORWARD_LEFT));
+		}
+		server = PxSHMImageServerPtr(new PxSHMImageServer);
+		if (server->init(getSystemID(), PX_COMP_ID_CAMERA, lcm, PxSHM::CAMERA_FORWARD_RIGHT))
+		{
+			imageServerVec.push_back(std::make_pair(server, PxSHM::CAMERA_FORWARD_LEFT | PxSHM::CAMERA_FORWARD_RIGHT));
+		}
+		server = PxSHMImageServerPtr(new PxSHMImageServer);
+		if (server->init(getSystemID(), PX_COMP_ID_CAMERA, lcm, PxSHM::CAMERA_DOWNWARD_LEFT))
+		{
+			imageServerVec.push_back(std::make_pair(server, PxSHM::CAMERA_DOWNWARD_LEFT));
+		}
+		server = PxSHMImageServerPtr(new PxSHMImageServer);
+		if (server->init(getSystemID(), PX_COMP_ID_CAMERA, lcm, PxSHM::CAMERA_DOWNWARD_LEFT, PxSHM::CAMERA_DOWNWARD_RIGHT))
+		{
+			imageServerVec.push_back(std::make_pair(server, PxSHM::CAMERA_DOWNWARD_LEFT | PxSHM::CAMERA_DOWNWARD_RIGHT));
+		}
 	}
 
 	// listen for LCM messages
