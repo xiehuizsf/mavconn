@@ -69,6 +69,8 @@ PIXHAWK_LINK_LIBRARIES(px_mavlink_bridge_dds
   ${RTI_CORE_LIBRARY_OPTIMIZED}
   ${GLIBMM2_LIBRARY}
   ${SIGC++_LIBRARY}
+  mavconn_dds
+  mavconn_lcm
 )
 ENDIF(RTI_FOUND)
 ENDIF(SIGC++_FOUND)

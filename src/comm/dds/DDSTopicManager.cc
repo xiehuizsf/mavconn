@@ -27,6 +27,45 @@ DDSTopicManager::DDSTopicManager()
 bool DDSTopicManager::start(int argc, char** argv,
                             MiddlewarePolicy &middlewarePolicy)
 {
+	// Find option for filename of QoS profile
+	Glib::OptionGroup optGroupDDS("dds", "DDS options", "DDS configuration options");
+
+	Glib::OptionEntry optProfile;
+	optProfile.set_short_name('p');
+	optProfile.set_long_name("profile");
+	optProfile.set_description("Path to DDS QoS profile file");
+
+	std::string profilePath;
+	optGroupDDS.add_entry_filename(optProfile, profilePath);
+
+	Glib::OptionContext optContext("");
+	optContext.set_help_enabled(true);
+	optContext.set_ignore_unknown_options(false);
+	optContext.set_main_group(optGroupDDS);
+
+	try
+	{
+		if (!optContext.parse(argc, argv))
+		{
+			fprintf(stderr, "# ERROR: Cannot parse options.\n");
+			return false;
+		}
+	}
+	catch (Glib::OptionError& error)
+	{
+		fprintf(stderr, "# ERROR: Cannot parse options.\n");
+		return false;
+	}
+
+	std::ostringstream oss;
+	oss << "[file://" << profilePath << "]";
+
+	if (setenv("NDDS_QOS_PROFILES", oss.str().c_str(), 0) != 0)
+	{
+		fprintf(stderr, "# ERROR: Cannot set NDDS_QOS_PROFILES environment variable.\n");
+		return false;
+	}
+
 	if (!(middlewarePolicy.mask & MIDDLEWARE_RTI_DDS))
 	{
 		return false;
@@ -44,25 +83,11 @@ bool DDSTopicManager::start(int argc, char** argv,
 		exit(EXIT_FAILURE);
 	}
 
-	DDS_DomainParticipantQos participant_qos;
-	DDS_ReturnCode_t retcode = factory->get_default_participant_qos(participant_qos);
-	if (retcode != DDS_RETCODE_OK)
-	{
-		fprintf(stderr, "# ERROR: Failed to get default mParticipant QoS.\n");
-		exit(EXIT_FAILURE);
-	}
-
-	retcode = factory->set_default_participant_qos(participant_qos);
-	if (retcode != DDS_RETCODE_OK)
-	{
-		fprintf(stderr, "# ERROR: Failed to set default mParticipant QoS.\n");
-		exit(EXIT_FAILURE);
-	}
-
-	mParticipant = factory->create_participant(middlewarePolicy.ddsDomainIds[0],
-											   participant_qos,
-											   NULL,
-											   DDS_STATUS_MASK_NONE);
+	mParticipant = factory->create_participant_with_profile(middlewarePolicy.ddsDomainIds[0],
+															"PIXHAWK",
+															"Reliable",
+															NULL,
+															DDS_STATUS_MASK_NONE);
 	if (mParticipant == NULL)
 	{
 		fprintf(stderr, "# ERROR: Unable to create DDS domain mParticipant.\n");

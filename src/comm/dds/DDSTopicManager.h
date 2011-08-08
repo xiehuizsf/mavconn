@@ -139,7 +139,7 @@ TopicCallbackSet* DDSTopicManager::registerTopic(const TTopic& topicObject,
 {
 	typedef typename TTopic::support_type TTypeSupport;
 
-	std::string topicName = topicObject.get_topic_name();
+	std::string topicName = topicObject.getTopicName();
 
 	TopicCallbackSet* topicCallbackSet = lookupTopicCallbackSet(topicName);
 	if (topicCallbackSet != 0)
@@ -158,7 +158,7 @@ TopicCallbackSet* DDSTopicManager::registerTopic(const TTopic& topicObject,
 	topicCallbackSet = new TopicCallbackSet;
 	topicCallbackSet->topicName = topicName;
 	topicCallbackSet->typeName = TTypeSupport::get_type_name();
-	topicCallbackSet->topicType = topicObject.get_topic_type();
+	topicCallbackSet->topicType = topicObject.getTopicType();
 	topicCallbackSet->createFn = (TypeCreateFunction)TTypeSupport::create_data;
 	topicCallbackSet->copyFn = (TypeCopyFunction)TTypeSupport::copy_data;
 	topicCallbackSet->deleteFn = (TypeDeleteFunction)TTypeSupport::delete_data;
@@ -247,7 +247,7 @@ bool DDSTopicManager::registerPublisher(const TTopic& topicObject)
 	typedef typename TTopic::support_type TTypeSupport;
 	typedef typename TTopic::data_writer_type TDataWriter;
 
-	std::string topicName = topicObject.get_topic_name();
+	std::string topicName = topicObject.getTopicName();
 
 	// Look for DDS metadata information
 	DDSMetadata* metadata = lookupMetadata(topicName);
@@ -286,7 +286,7 @@ bool DDSTopicManager::registerPublisher(const TTopic& topicObject)
 		// enable specified transports
 		int numTransports = 0;
 		writer_qos.transport_selection.enabled_transports.maximum(0);
-		if ((topicObject.get_topic_transport_builtin_policy().mask & TRANSPORTBUILTIN_UDP) ==
+		if ((topicObject.getTopicTransportBuiltinPolicy().mask & TRANSPORTBUILTIN_UDP) ==
 		   TRANSPORTBUILTIN_UDP)
 		{
 			numTransports++;
@@ -352,7 +352,7 @@ bool DDSTopicManager::registerSubscriber(const TTopic &topicObject,
 	typedef typename TTopic::support_type TTypeSupport;
 	typedef typename TTopic::data_reader_type TDataReader;
 
-	std::string topicName = topicObject.get_topic_name();
+	std::string topicName = topicObject.getTopicName();
 
 	// Look for DDS metadata information
 	DDSMetadata* metadata = lookupMetadata(topicName);
@@ -422,7 +422,7 @@ bool DDSTopicManager::queryResponse(typename TQueryTopic::data_type& query,
 	typedef typename TResponseTopic::data_type TResponseData;
 
 	TopicCallbackSet* queryTopic =
-			lookupTopicCallbackSet(TQueryTopic::instance()->get_topic_name());
+			lookupTopicCallbackSet(TQueryTopic::instance()->getTopicName());
 	if (queryTopic == 0)
 	{
 		if (!TQueryTopic::instance()->advertise())
@@ -430,11 +430,11 @@ bool DDSTopicManager::queryResponse(typename TQueryTopic::data_type& query,
 			return false;
 		}
 		queryTopic =
-			lookupTopicCallbackSet(TQueryTopic::instance()->get_topic_name());
+			lookupTopicCallbackSet(TQueryTopic::instance()->getTopicName());
 	}
 
 	TopicCallbackSet* responseTopic =
-			lookupTopicCallbackSet(TResponseTopic::instance()->get_topic_name());
+			lookupTopicCallbackSet(TResponseTopic::instance()->getTopicName());
 	if (responseTopic == 0)
 	{
 		if (!TResponseTopic::instance()->listenSingle(Handler(NULL), NULL))
@@ -442,7 +442,7 @@ bool DDSTopicManager::queryResponse(typename TQueryTopic::data_type& query,
 			return false;
 		}
 		responseTopic =
-			lookupTopicCallbackSet(TResponseTopic::instance()->get_topic_name());
+			lookupTopicCallbackSet(TResponseTopic::instance()->getTopicName());
 	}
 
 	struct timeval tv;

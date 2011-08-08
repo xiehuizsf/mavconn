@@ -3,6 +3,12 @@
 namespace px
 {
 
+Middleware::Middleware()
+ : listenThread(0)
+{
+
+}
+
 void Middleware::init(int argc, char **argv)
 {
 	MiddlewarePolicy middlewarePolicy;
@@ -42,9 +48,14 @@ void Middleware::init(int argc, char **argv)
 	}
 
 	TopicManager* topicManager = TopicManagerFactory::getTopicManager();
-	if (topicManager->start(argc, argv, middlewarePolicy) == false)
+	if (!topicManager->start(argc, argv, middlewarePolicy))
 	{
 		shutdown();
+	}
+
+	if (!Glib::thread_supported())
+	{
+		Glib::thread_init();
 	}
 
 	listenThread = Glib::Thread::create(sigc::bind(sigc::mem_fun(topicManager, &TopicManager::listenThread), &quit), true);
@@ -56,7 +67,10 @@ void Middleware::shutdown(void)
 {
 	// kill message processing thread
 	quit = true;
-	listenThread->join();
+	if (listenThread)
+	{
+		listenThread->join();
+	}
 
 	TopicManager* topicManager = TopicManagerFactory::getTopicManager();
 	topicManager->shutdown();

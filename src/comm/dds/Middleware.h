@@ -23,6 +23,8 @@ enum PriorityKind
 class Middleware
 {
 public:
+	Middleware();
+
 	/**
 	 * Start up middleware. This is required at the beginning of
 	 * any program utilizing the middleware.
