@@ -48,8 +48,25 @@ DDS_TypeCode* dds_image_message_t_get_typecode()
     static DDS_TypeCode dds_image_message_t_g_tc_imageData1_sequence = DDS_INITIALIZE_SEQUENCE_TYPECODE(1228800,NULL);
     static DDS_TypeCode dds_image_message_t_g_tc_imageData2_sequence = DDS_INITIALIZE_SEQUENCE_TYPECODE(1228800,NULL);
 
-    static DDS_TypeCode_Member dds_image_message_t_g_tc_members[9]=
+    static DDS_TypeCode_Member dds_image_message_t_g_tc_members[24]=
     {
+        {
+            (char *)"camera_config",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
         {
             (char *)"camera_type",/* Member name */
             {
@@ -202,6 +219,244 @@ DDS_TypeCode* dds_image_message_t_get_typecode()
             DDS_PRIVATE_MEMBER,/* Ignored */
             0,/* Ignored */
             NULL/* Ignored */
+        },
+        {
+            (char *)"cam_id1",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
+        {
+            (char *)"cam_id2",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
+        {
+            (char *)"timestamp",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
+        {
+            (char *)"roll",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
+        {
+            (char *)"pitch",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
+        {
+            (char *)"yaw",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
+        {
+            (char *)"z",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
+        {
+            (char *)"lon",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
+        {
+            (char *)"lat",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
+        {
+            (char *)"alt",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
+        {
+            (char *)"ground_x",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
+        {
+            (char *)"ground_y",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
+        {
+            (char *)"ground_z",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
+        {
+            (char *)"exposure",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
         }
     };
 
@@ -215,7 +470,7 @@ DDS_TypeCode* dds_image_message_t_get_typecode()
         0, /* Ignored */
         0, /* Ignored */
         NULL, /* Ignored */
-        9, /* Number of members */
+        24, /* Number of members */
         dds_image_message_t_g_tc_members, /* Members */
         DDS_VM_NONE /* Ignored */
     }}; /* Type code for dds_image_message_t*/
@@ -232,10 +487,25 @@ DDS_TypeCode* dds_image_message_t_get_typecode()
     dds_image_message_t_g_tc_members[2]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
     dds_image_message_t_g_tc_members[3]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
     dds_image_message_t_g_tc_members[4]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
-    dds_image_message_t_g_tc_members[5]._representation._typeCode = (RTICdrTypeCode *)&dds_image_message_t_g_tc_imageData1_sequence;
-    dds_image_message_t_g_tc_members[6]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
+    dds_image_message_t_g_tc_members[5]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
+    dds_image_message_t_g_tc_members[6]._representation._typeCode = (RTICdrTypeCode *)&dds_image_message_t_g_tc_imageData1_sequence;
     dds_image_message_t_g_tc_members[7]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
-    dds_image_message_t_g_tc_members[8]._representation._typeCode = (RTICdrTypeCode *)&dds_image_message_t_g_tc_imageData2_sequence;
+    dds_image_message_t_g_tc_members[8]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
+    dds_image_message_t_g_tc_members[9]._representation._typeCode = (RTICdrTypeCode *)&dds_image_message_t_g_tc_imageData2_sequence;
+    dds_image_message_t_g_tc_members[10]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_ulonglong;
+    dds_image_message_t_g_tc_members[11]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_ulonglong;
+    dds_image_message_t_g_tc_members[12]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_ulonglong;
+    dds_image_message_t_g_tc_members[13]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_float;
+    dds_image_message_t_g_tc_members[14]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_float;
+    dds_image_message_t_g_tc_members[15]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_float;
+    dds_image_message_t_g_tc_members[16]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_float;
+    dds_image_message_t_g_tc_members[17]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_float;
+    dds_image_message_t_g_tc_members[18]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_float;
+    dds_image_message_t_g_tc_members[19]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_float;
+    dds_image_message_t_g_tc_members[20]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_float;
+    dds_image_message_t_g_tc_members[21]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_float;
+    dds_image_message_t_g_tc_members[22]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_float;
+    dds_image_message_t_g_tc_members[23]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_ulong;
 
     is_initialized = RTI_TRUE;
 
@@ -255,6 +525,10 @@ RTIBool dds_image_message_t_initialize_ex(
     void* buffer;                
     buffer = NULL;        
 
+    if (!RTICdrType_initLong(&sample->camera_config)) {
+        return RTI_FALSE;
+    }                
+            
     if (!RTICdrType_initLong(&sample->camera_type)) {
         return RTI_FALSE;
     }                
@@ -297,6 +571,62 @@ RTIBool dds_image_message_t_initialize_ex(
         return RTI_FALSE;
     }
             
+    if (!RTICdrType_initUnsignedLongLong(&sample->cam_id1)) {
+        return RTI_FALSE;
+    }                
+            
+    if (!RTICdrType_initUnsignedLongLong(&sample->cam_id2)) {
+        return RTI_FALSE;
+    }                
+            
+    if (!RTICdrType_initUnsignedLongLong(&sample->timestamp)) {
+        return RTI_FALSE;
+    }                
+            
+    if (!RTICdrType_initFloat(&sample->roll)) {
+        return RTI_FALSE;
+    }                
+            
+    if (!RTICdrType_initFloat(&sample->pitch)) {
+        return RTI_FALSE;
+    }                
+            
+    if (!RTICdrType_initFloat(&sample->yaw)) {
+        return RTI_FALSE;
+    }                
+            
+    if (!RTICdrType_initFloat(&sample->z)) {
+        return RTI_FALSE;
+    }                
+            
+    if (!RTICdrType_initFloat(&sample->lon)) {
+        return RTI_FALSE;
+    }                
+            
+    if (!RTICdrType_initFloat(&sample->lat)) {
+        return RTI_FALSE;
+    }                
+            
+    if (!RTICdrType_initFloat(&sample->alt)) {
+        return RTI_FALSE;
+    }                
+            
+    if (!RTICdrType_initFloat(&sample->ground_x)) {
+        return RTI_FALSE;
+    }                
+            
+    if (!RTICdrType_initFloat(&sample->ground_y)) {
+        return RTI_FALSE;
+    }                
+            
+    if (!RTICdrType_initFloat(&sample->ground_z)) {
+        return RTI_FALSE;
+    }                
+            
+    if (!RTICdrType_initUnsignedLong(&sample->exposure)) {
+        return RTI_FALSE;
+    }                
+            
 
     return RTI_TRUE;
 }
@@ -322,6 +652,11 @@ RTIBool dds_image_message_t_copy(
     const dds_image_message_t* src)
 {        
 
+    if (!RTICdrType_copyLong(
+        &dst->camera_config, &src->camera_config)) {
+        return RTI_FALSE;
+    }
+            
     if (!RTICdrType_copyLong(
         &dst->camera_type, &src->camera_type)) {
         return RTI_FALSE;
@@ -364,6 +699,76 @@ RTIBool dds_image_message_t_copy(
             
     if (!DDS_CharSeq_copy_no_alloc(&dst->imageData2,
                                           &src->imageData2)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrType_copyUnsignedLongLong(
+        &dst->cam_id1, &src->cam_id1)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrType_copyUnsignedLongLong(
+        &dst->cam_id2, &src->cam_id2)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrType_copyUnsignedLongLong(
+        &dst->timestamp, &src->timestamp)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrType_copyFloat(
+        &dst->roll, &src->roll)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrType_copyFloat(
+        &dst->pitch, &src->pitch)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrType_copyFloat(
+        &dst->yaw, &src->yaw)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrType_copyFloat(
+        &dst->z, &src->z)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrType_copyFloat(
+        &dst->lon, &src->lon)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrType_copyFloat(
+        &dst->lat, &src->lat)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrType_copyFloat(
+        &dst->alt, &src->alt)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrType_copyFloat(
+        &dst->ground_x, &src->ground_x)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrType_copyFloat(
+        &dst->ground_y, &src->ground_y)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrType_copyFloat(
+        &dst->ground_z, &src->ground_z)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrType_copyUnsignedLong(
+        &dst->exposure, &src->exposure)) {
         return RTI_FALSE;
     }
             

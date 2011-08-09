@@ -137,6 +137,9 @@ dds_image_message_tPluginSupport_print_data(
 
 
     RTICdrType_printLong(
+        &sample->camera_config, "camera_config", indent_level + 1);
+            
+    RTICdrType_printLong(
         &sample->camera_type, "camera_type", indent_level + 1);
             
     RTICdrType_printLong(
@@ -200,6 +203,48 @@ dds_image_message_tPluginSupport_print_data(
         }
     
     }
+            
+    RTICdrType_printUnsignedLongLong(
+        &sample->cam_id1, "cam_id1", indent_level + 1);
+            
+    RTICdrType_printUnsignedLongLong(
+        &sample->cam_id2, "cam_id2", indent_level + 1);
+            
+    RTICdrType_printUnsignedLongLong(
+        &sample->timestamp, "timestamp", indent_level + 1);
+            
+    RTICdrType_printFloat(
+        &sample->roll, "roll", indent_level + 1);
+            
+    RTICdrType_printFloat(
+        &sample->pitch, "pitch", indent_level + 1);
+            
+    RTICdrType_printFloat(
+        &sample->yaw, "yaw", indent_level + 1);
+            
+    RTICdrType_printFloat(
+        &sample->z, "z", indent_level + 1);
+            
+    RTICdrType_printFloat(
+        &sample->lon, "lon", indent_level + 1);
+            
+    RTICdrType_printFloat(
+        &sample->lat, "lat", indent_level + 1);
+            
+    RTICdrType_printFloat(
+        &sample->alt, "alt", indent_level + 1);
+            
+    RTICdrType_printFloat(
+        &sample->ground_x, "ground_x", indent_level + 1);
+            
+    RTICdrType_printFloat(
+        &sample->ground_y, "ground_y", indent_level + 1);
+            
+    RTICdrType_printFloat(
+        &sample->ground_z, "ground_z", indent_level + 1);
+            
+    RTICdrType_printUnsignedLong(
+        &sample->exposure, "exposure", indent_level + 1);
             
 
 }
@@ -328,6 +373,11 @@ dds_image_message_tPlugin_serialize(
   if(serialize_sample) {
 
     if (!RTICdrStream_serializeLong(
+        stream, &sample->camera_config)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_serializeLong(
         stream, &sample->camera_type)) {
         return RTI_FALSE;
     }
@@ -402,6 +452,76 @@ dds_image_message_tPlugin_serialize(
         }
     }
             
+    if (!RTICdrStream_serializeUnsignedLongLong(
+        stream, &sample->cam_id1)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_serializeUnsignedLongLong(
+        stream, &sample->cam_id2)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_serializeUnsignedLongLong(
+        stream, &sample->timestamp)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_serializeFloat(
+        stream, &sample->roll)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_serializeFloat(
+        stream, &sample->pitch)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_serializeFloat(
+        stream, &sample->yaw)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_serializeFloat(
+        stream, &sample->z)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_serializeFloat(
+        stream, &sample->lon)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_serializeFloat(
+        stream, &sample->lat)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_serializeFloat(
+        stream, &sample->alt)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_serializeFloat(
+        stream, &sample->ground_x)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_serializeFloat(
+        stream, &sample->ground_y)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_serializeFloat(
+        stream, &sample->ground_z)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_serializeUnsignedLong(
+        stream, &sample->exposure)) {
+        return RTI_FALSE;
+    }
+            
   }
 
 
@@ -440,6 +560,11 @@ dds_image_message_tPlugin_deserialize_sample(
 
     if(deserialize_sample) {
 
+    if (!RTICdrStream_deserializeLong(
+        stream, &sample->camera_config)) {
+        return RTI_FALSE;
+    }
+            
     if (!RTICdrStream_deserializeLong(
         stream, &sample->camera_type)) {
         return RTI_FALSE;
@@ -529,6 +654,76 @@ dds_image_message_tPlugin_deserialize_sample(
         }
     }
             
+    if (!RTICdrStream_deserializeUnsignedLongLong(
+        stream, &sample->cam_id1)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_deserializeUnsignedLongLong(
+        stream, &sample->cam_id2)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_deserializeUnsignedLongLong(
+        stream, &sample->timestamp)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_deserializeFloat(
+        stream, &sample->roll)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_deserializeFloat(
+        stream, &sample->pitch)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_deserializeFloat(
+        stream, &sample->yaw)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_deserializeFloat(
+        stream, &sample->z)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_deserializeFloat(
+        stream, &sample->lon)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_deserializeFloat(
+        stream, &sample->lat)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_deserializeFloat(
+        stream, &sample->alt)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_deserializeFloat(
+        stream, &sample->ground_x)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_deserializeFloat(
+        stream, &sample->ground_y)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_deserializeFloat(
+        stream, &sample->ground_z)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_deserializeUnsignedLong(
+        stream, &sample->exposure)) {
+        return RTI_FALSE;
+    }
+            
     }
 
 
@@ -604,6 +799,10 @@ RTIBool dds_image_message_tPlugin_skip(
         return RTI_FALSE;
     }
             
+    if (!RTICdrStream_skipLong(stream)) {
+        return RTI_FALSE;
+    }
+            
     {
         RTICdrUnsignedLong sequence_length;
 
@@ -632,6 +831,62 @@ RTIBool dds_image_message_tPlugin_skip(
             RTI_CDR_CHAR_TYPE)) {
             return RTI_FALSE;
         }
+    }
+            
+    if (!RTICdrStream_skipUnsignedLongLong(stream)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_skipUnsignedLongLong(stream)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_skipUnsignedLongLong(stream)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_skipFloat(stream)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_skipFloat(stream)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_skipFloat(stream)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_skipFloat(stream)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_skipFloat(stream)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_skipFloat(stream)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_skipFloat(stream)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_skipFloat(stream)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_skipFloat(stream)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_skipFloat(stream)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_skipUnsignedLong(stream)) {
+        return RTI_FALSE;
     }
             
     }
@@ -688,6 +943,9 @@ dds_image_message_tPlugin_get_serialized_sample_max_size(
     current_alignment +=  RTICdrType_getLongMaxSizeSerialized(
         current_alignment);
             
+    current_alignment +=  RTICdrType_getLongMaxSizeSerialized(
+        current_alignment);
+            
     current_alignment +=  RTICdrType_getPrimitiveSequenceMaxSizeSerialized(
         current_alignment, (1228800), RTI_CDR_CHAR_TYPE);
             
@@ -699,6 +957,48 @@ dds_image_message_tPlugin_get_serialized_sample_max_size(
             
     current_alignment +=  RTICdrType_getPrimitiveSequenceMaxSizeSerialized(
         current_alignment, (1228800), RTI_CDR_CHAR_TYPE);
+            
+    current_alignment +=  RTICdrType_getLongLongMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getLongLongMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getLongLongMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getUnsignedLongMaxSizeSerialized(
+        current_alignment);
             
     if (include_encapsulation) {
         current_alignment += encapsulation_size;
@@ -750,6 +1050,9 @@ dds_image_message_tPlugin_get_serialized_sample_min_size(
     current_alignment +=  RTICdrType_getLongMaxSizeSerialized(
         current_alignment);
             
+    current_alignment +=  RTICdrType_getLongMaxSizeSerialized(
+        current_alignment);
+            
     current_alignment +=  RTICdrType_getPrimitiveSequenceMaxSizeSerialized(
         current_alignment, 0, RTI_CDR_CHAR_TYPE);
             
@@ -761,6 +1064,48 @@ dds_image_message_tPlugin_get_serialized_sample_min_size(
             
     current_alignment +=  RTICdrType_getPrimitiveSequenceMaxSizeSerialized(
         current_alignment, 0, RTI_CDR_CHAR_TYPE);
+            
+    current_alignment +=  RTICdrType_getLongLongMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getLongLongMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getLongLongMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getUnsignedLongMaxSizeSerialized(
+        current_alignment);
             
     if (include_encapsulation) {
         current_alignment += encapsulation_size;
@@ -819,6 +1164,9 @@ dds_image_message_tPlugin_get_serialized_sample_size(
     current_alignment += RTICdrType_getLongMaxSizeSerialized(
         current_alignment);
             
+    current_alignment += RTICdrType_getLongMaxSizeSerialized(
+        current_alignment);
+            
     current_alignment += RTICdrType_getPrimitiveSequenceSerializedSize(
         current_alignment, 
         DDS_CharSeq_get_length(&sample->imageData1),
@@ -834,6 +1182,48 @@ dds_image_message_tPlugin_get_serialized_sample_size(
         current_alignment, 
         DDS_CharSeq_get_length(&sample->imageData2),
         RTI_CDR_CHAR_TYPE);
+            
+    current_alignment += RTICdrType_getLongLongMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment += RTICdrType_getLongLongMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment += RTICdrType_getLongLongMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment += RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment += RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment += RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment += RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment += RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment += RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment += RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment += RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment += RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment += RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment += RTICdrType_getUnsignedLongMaxSizeSerialized(
+        current_alignment);
             
     if (include_encapsulation) {
         current_alignment += encapsulation_size;

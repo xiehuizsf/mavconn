@@ -8,8 +8,8 @@
   or consult the RTI Data Distribution Service manual.
 */
 
-#ifndef dds_image_message_t_2133245898_h
-#define dds_image_message_t_2133245898_h
+#ifndef dds_image_message_t_2133246201_h
+#define dds_image_message_t_2133246201_h
 
 #ifndef NDDS_STANDALONE_TYPE
     #ifdef __cplusplus
@@ -40,6 +40,7 @@ extern const char *dds_image_message_tTYPENAME;
 
 typedef struct dds_image_message_t
 {
+    DDS_Long  camera_config;
     DDS_Long  camera_type;
     DDS_Long  cols;
     DDS_Long  rows;
@@ -49,6 +50,20 @@ typedef struct dds_image_message_t
     DDS_Long  step2;
     DDS_Long  type2;
      DDS_CharSeq  imageData2;
+    DDS_UnsignedLongLong  cam_id1;
+    DDS_UnsignedLongLong  cam_id2;
+    DDS_UnsignedLongLong  timestamp;
+    DDS_Float  roll;
+    DDS_Float  pitch;
+    DDS_Float  yaw;
+    DDS_Float  z;
+    DDS_Float  lon;
+    DDS_Float  lat;
+    DDS_Float  alt;
+    DDS_Float  ground_x;
+    DDS_Float  ground_y;
+    DDS_Float  ground_z;
+    DDS_UnsignedLong  exposure;
 
 } dds_image_message_t;
     
@@ -96,4 +111,4 @@ RTIBool dds_image_message_t_copy(
 
 
 
-#endif /* dds_image_message_t_2133245898_h */
+#endif /* dds_image_message_t_2133246201_h */

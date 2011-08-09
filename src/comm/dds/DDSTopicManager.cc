@@ -40,7 +40,7 @@ bool DDSTopicManager::start(int argc, char** argv,
 
 	Glib::OptionContext optContext("");
 	optContext.set_help_enabled(true);
-	optContext.set_ignore_unknown_options(false);
+	optContext.set_ignore_unknown_options(true);
 	optContext.set_main_group(optGroupDDS);
 
 	try

@@ -1,5 +1,6 @@
 struct dds_image_message_t
 {
+	long camera_config;	///< PxSHM::Camera enumeration
 	long camera_type;	///< PxSHM::CameraType enumeration
 	long cols;		///< Number of columns in image(s)
 	long rows;		///< Number of rows in image(s)
@@ -9,4 +10,19 @@ struct dds_image_message_t
 	long step2;		///< Step (stride) of image 2
 	long type2;		///< Type of image 2
 	sequence<char,1228800> imageData2;
+
+	unsigned long long cam_id1;
+	unsigned long long cam_id2;
+	unsigned long long timestamp;
+	float roll;
+	float pitch;
+	float yaw;
+	float z;
+	float lon;
+	float lat;
+	float alt;
+	float ground_x;
+	float ground_y;
+	float ground_z;
+	unsigned long exposure;
 };

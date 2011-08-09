@@ -13,7 +13,7 @@ void Middleware::init(int argc, char **argv)
 {
 	MiddlewarePolicy middlewarePolicy;
 	middlewarePolicy.mask = DEFAULT_MIDDLEWARE_MASK;
-	middlewarePolicy.ddsDomainIds.push_back(1);
+	middlewarePolicy.ddsDomainIds.push_back(0);
 
 	if (middlewarePolicy.mask & MIDDLEWARE_RTI_DDS)
 	{

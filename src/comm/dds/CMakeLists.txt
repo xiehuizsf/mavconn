@@ -33,6 +33,7 @@ SET_SOURCE_FILES(DDS_INTERFACE_SRC_FILES
   interface/image/dds_image_message_t.cxx
   interface/image/dds_image_message_tPlugin.cxx
   interface/image/dds_image_message_tSupport.cxx
+  interface/image/image_interface.cc
   interface/mavlink/dds_mavlink_message_t.cxx
   interface/mavlink/dds_mavlink_message_tPlugin.cxx
   interface/mavlink/dds_mavlink_message_tSupport.cxx
@@ -44,9 +45,7 @@ PIXHAWK_LINK_LIBRARIES(mavconn_dds
   dl
   nsl
   rt
-  ${RTI_CPP_LIBRARY_OPTIMIZED}
-  ${RTI_C_LIBRARY_OPTIMIZED}
-  ${RTI_CORE_LIBRARY_OPTIMIZED}
+  ${RTI_LIBRARIES}
   ${GLIBMM2_LIBRARY}
   ${SIGC++_LIBRARY}
 )

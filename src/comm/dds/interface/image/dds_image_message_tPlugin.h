@@ -8,8 +8,8 @@
   or consult the RTI Data Distribution Service manual.
 */
 
-#ifndef dds_image_message_tPlugin_2133245898_h
-#define dds_image_message_tPlugin_2133245898_h
+#ifndef dds_image_message_tPlugin_2133246201_h
+#define dds_image_message_tPlugin_2133246201_h
 
 #include "dds_image_message_t.h"
 
@@ -252,4 +252,4 @@ dds_image_message_tPlugin_delete(struct PRESTypePlugin *);
 #endif
         
 
-#endif /* dds_image_message_tPlugin_2133245898_h */
+#endif /* dds_image_message_tPlugin_2133246201_h */

@@ -54,7 +54,13 @@ PxSHMImageServer::init(int sysid, int compid, lcm_t* lcm,
 	data.reserve(1024 * 1024);
 	return shm.init(key, PxSHM::SERVER_TYPE, 128, 1, 1024 * 1024, 10);
 }
-	
+
+int
+PxSHMImageServer::getCameraConfig(void) const
+{
+	return cam1 | cam2;
+}
+
 void
 PxSHMImageServer::writeMonoImage(const cv::Mat& img, uint64_t camId,
 								 uint64_t timestamp, float roll, float pitch, float yaw,
