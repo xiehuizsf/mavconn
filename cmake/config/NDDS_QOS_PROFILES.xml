@@ -293,7 +293,7 @@
                         </element>
                         <element>
                             <name>dds.transport.UDPv4.builtin.parent.allow_interfaces</name>
-                            <value>192.168.1.*,129.132.245.*</value>
+                            <value>192.168.1.*,129.132.*</value>
                         </element>
 
                         <!--

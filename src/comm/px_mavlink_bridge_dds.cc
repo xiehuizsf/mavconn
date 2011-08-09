@@ -1,6 +1,4 @@
-#include <iostream>
 #include <mavconn.h>
-#include <ndds/ndds_cpp.h>
 
 #include "dds/Middleware.h"
 #include "dds/interface/image/image_interface.h"
@@ -11,8 +9,7 @@
 bool verbose = false;
 bool quit = false;
 
-typedef std::tr1::shared_ptr<PxSHMImageServer> PxSHMImageServerPtr;
-
+std::vector<PxSHMImageServer> imageServerVec;
 std::vector<PxSHMImageClient> imageClientVec;
 
 void signalHandler(int signal)
@@ -169,15 +166,15 @@ mavlinkLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 }
 
 void
-imageDDSHandler(void* msg, std::vector<PxSHMImageServerPtr>* serverVec)
+imageDDSHandler(void* msg)
 {
 	dds_image_message_t* dds_msg = reinterpret_cast<dds_image_message_t*>(msg);
 
 	int serverIdx = -1;
-	for (size_t i = 0; i < serverVec->size(); ++i)
+	for (size_t i = 0; i < imageServerVec.size(); ++i)
 	{
-		PxSHMImageServerPtr& server = serverVec->at(i);
-		if (server->getCameraConfig() == dds_msg->camera_config)
+		PxSHMImageServer& server = imageServerVec.at(i);
+		if (server.getCameraConfig() == dds_msg->camera_config)
 		{
 			serverIdx = i;
 			break;
@@ -188,8 +185,8 @@ imageDDSHandler(void* msg, std::vector<PxSHMImageServerPtr>* serverVec)
 	{
 		return;
 	}
-
-	PxSHMImageServerPtr& server = serverVec->at(serverIdx);
+	serverIdx = 2;//TODO: remove
+	PxSHMImageServer& server = imageServerVec.at(serverIdx);
 
 	// write image(s) to shared memory
 	if (dds_msg->camera_type == PxSHM::CAMERA_MONO_8 ||
@@ -197,12 +194,12 @@ imageDDSHandler(void* msg, std::vector<PxSHMImageServerPtr>* serverVec)
 	{
 		cv::Mat img(dds_msg->rows, dds_msg->cols, dds_msg->type1, dds_msg->imageData1.get_contiguous_buffer(), dds_msg->step1);
 
-		server->writeMonoImage(img, dds_msg->cam_id1, dds_msg->timestamp,
-							   dds_msg->roll, dds_msg->pitch, dds_msg->yaw,
-							   dds_msg->z,
-							   dds_msg->lon, dds_msg->lat, dds_msg->alt,
-							   dds_msg->ground_x, dds_msg->ground_y, dds_msg->ground_z,
-							   dds_msg->exposure);
+		server.writeMonoImage(img, dds_msg->cam_id1, dds_msg->timestamp,
+							  dds_msg->roll, dds_msg->pitch, dds_msg->yaw,
+							  dds_msg->z,
+							  dds_msg->lon, dds_msg->lat, dds_msg->alt,
+							  dds_msg->ground_x, dds_msg->ground_y, dds_msg->ground_z,
+							  dds_msg->exposure);
 	}
 	else if (dds_msg->camera_type == PxSHM::CAMERA_STEREO_8 ||
 			 dds_msg->camera_type == PxSHM::CAMERA_STEREO_24)
@@ -210,24 +207,24 @@ imageDDSHandler(void* msg, std::vector<PxSHMImageServerPtr>* serverVec)
 		cv::Mat imgLeft(dds_msg->rows, dds_msg->cols, dds_msg->type1, dds_msg->imageData1.get_contiguous_buffer(), dds_msg->step1);
 		cv::Mat imgRight(dds_msg->rows, dds_msg->cols, dds_msg->type2, dds_msg->imageData2.get_contiguous_buffer(), dds_msg->step2);
 
-		server->writeStereoImage(imgLeft, dds_msg->cam_id1, imgRight, 0,
-								 dds_msg->timestamp,
-								 dds_msg->roll, dds_msg->pitch, dds_msg->yaw,
-								 dds_msg->z,
-								 dds_msg->lon, dds_msg->lat, dds_msg->alt,
-								 dds_msg->ground_x, dds_msg->ground_y, dds_msg->ground_z,
-								 dds_msg->exposure);
+		server.writeStereoImage(imgLeft, dds_msg->cam_id1, imgRight, 0,
+								dds_msg->timestamp,
+								dds_msg->roll, dds_msg->pitch, dds_msg->yaw,
+								dds_msg->z,
+								dds_msg->lon, dds_msg->lat, dds_msg->alt,
+								dds_msg->ground_x, dds_msg->ground_y, dds_msg->ground_z,
+								dds_msg->exposure);
 	}
 	else if (dds_msg->camera_type == PxSHM::CAMERA_KINECT)
 	{
 		cv::Mat imgBayer(dds_msg->rows, dds_msg->cols, dds_msg->type1, dds_msg->imageData1.get_contiguous_buffer(), dds_msg->step1);
 		cv::Mat imgDepth(dds_msg->rows, dds_msg->cols, dds_msg->type2, dds_msg->imageData2.get_contiguous_buffer(), dds_msg->step2);
 
-		server->writeKinectImage(imgBayer, imgDepth, dds_msg->timestamp,
-								 dds_msg->roll, dds_msg->pitch, dds_msg->yaw,
-								 dds_msg->z,
-								 dds_msg->lon, dds_msg->lat, dds_msg->alt,
-								 dds_msg->ground_x, dds_msg->ground_y, dds_msg->ground_z);
+		server.writeKinectImage(imgBayer, imgDepth, dds_msg->timestamp,
+								dds_msg->roll, dds_msg->pitch, dds_msg->yaw,
+								dds_msg->z,
+								dds_msg->lon, dds_msg->lat, dds_msg->alt,
+								dds_msg->ground_x, dds_msg->ground_y, dds_msg->ground_z);
 	}
 
 	if (verbose)
@@ -352,7 +349,7 @@ main(int argc, char** argv)
 		imageClientVec.at(3).init(true, PxSHM::CAMERA_DOWNWARD_LEFT, PxSHM::CAMERA_DOWNWARD_RIGHT);
 
 		// subscribe to LCM messages
-		imageLCMSub = mavlink_message_t_subscribe(lcm, "IMAGES", &imageLCMHandler, &imageClientVec);
+		imageLCMSub = mavlink_message_t_subscribe(lcm, "IMAGES", &imageLCMHandler, 0);
 		mavlinkLCMSub = mavlink_message_t_subscribe(lcm, "MAVLINK", &mavlinkLCMHandler, 0);
 
 		// advertise DDS topics
@@ -362,35 +359,17 @@ main(int argc, char** argv)
 
 	if (dds2lcm)
 	{
-		std::vector<PxSHMImageServerPtr> imageServerVec;
-
 		// create instance of shared memory server for each possible camera configuration
-		PxSHMImageServerPtr server;
+		imageServerVec.resize(4);
 
-		server = PxSHMImageServerPtr(new PxSHMImageServer);
-		if (server->init(getSystemID(), PX_COMP_ID_CAMERA, lcm, PxSHM::CAMERA_FORWARD_LEFT))
-		{
-			imageServerVec.push_back(server);
-		}
-		server = PxSHMImageServerPtr(new PxSHMImageServer);
-		if (server->init(getSystemID(), PX_COMP_ID_CAMERA, lcm, PxSHM::CAMERA_FORWARD_RIGHT))
-		{
-			imageServerVec.push_back(server);
-		}
-		server = PxSHMImageServerPtr(new PxSHMImageServer);
-		if (server->init(getSystemID(), PX_COMP_ID_CAMERA, lcm, PxSHM::CAMERA_DOWNWARD_LEFT))
-		{
-			imageServerVec.push_back(server);
-		}
-		server = PxSHMImageServerPtr(new PxSHMImageServer);
-		if (server->init(getSystemID(), PX_COMP_ID_CAMERA, lcm, PxSHM::CAMERA_DOWNWARD_LEFT, PxSHM::CAMERA_DOWNWARD_RIGHT))
-		{
-			imageServerVec.push_back(server);
-		}
+		imageServerVec.at(0).init(getSystemID(), PX_COMP_ID_CAMERA, lcm, PxSHM::CAMERA_FORWARD_LEFT);
+		imageServerVec.at(1).init(getSystemID(), PX_COMP_ID_CAMERA, lcm, PxSHM::CAMERA_FORWARD_LEFT, PxSHM::CAMERA_FORWARD_RIGHT);
+		imageServerVec.at(2).init(getSystemID(), PX_COMP_ID_CAMERA, lcm, PxSHM::CAMERA_DOWNWARD_LEFT);
+		imageServerVec.at(3).init(getSystemID(), PX_COMP_ID_CAMERA, lcm, PxSHM::CAMERA_DOWNWARD_LEFT, PxSHM::CAMERA_DOWNWARD_RIGHT);
 
 		// subscribe to DDS messages
 		px::Handler handler;
-		handler = px::Handler(sigc::bind(sigc::ptr_fun(imageDDSHandler), &imageServerVec));
+		handler = px::Handler(sigc::ptr_fun(imageDDSHandler));
 		px::ImageTopic::instance()->subscribe(handler, px::SUBSCRIBE_ALL);
 
 		handler = px::Handler(sigc::bind(sigc::ptr_fun(mavlinkDDSHandler), lcm));
