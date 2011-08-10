@@ -1,4 +1,5 @@
 #include <mavconn.h>
+#include <opencv2/highgui/highgui.hpp>
 
 #include "dds/Middleware.h"
 #include "dds/interface/image/image_interface.h"
@@ -38,6 +39,11 @@ imageLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 		dds_image_message_t dds_msg;
 		PxSHM::CameraType cameraType;
 
+		std::vector<int> compressionParams;
+		compressionParams.push_back(CV_IMWRITE_JPEG_QUALITY);
+		compressionParams.push_back(50);  // 50% quality
+		std::vector<uchar> buffer;
+
 		// read mono image data
 		cv::Mat img;
 		if (client.readMonoImage(msg, img))
@@ -48,7 +54,9 @@ imageLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 			dds_msg.rows = img.rows;
 			dds_msg.step1 = img.step[0];
 			dds_msg.type1 = img.type();
-			dds_msg.imageData1.from_array(reinterpret_cast<DDS_Char*>(img.data), img.step[0] * img.rows);
+
+			cv::imencode(".jpg", img, buffer, compressionParams);
+			dds_msg.imageData1.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
 
 			if (img.channels() == 1)
 			{
@@ -71,10 +79,15 @@ imageLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 			dds_msg.rows = imgLeft.rows;
 			dds_msg.step1 = imgLeft.step[0];
 			dds_msg.type1 = imgLeft.type();
-			dds_msg.imageData1.from_array(reinterpret_cast<DDS_Char*>(imgLeft.data), imgLeft.step[0] * imgLeft.rows);
+
+			cv::imencode(".png", imgLeft, buffer, compressionParams);
+			dds_msg.imageData1.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
+
 			dds_msg.step2 = imgRight.step[0];
 			dds_msg.type2 = imgRight.type();
-			dds_msg.imageData2.from_array(reinterpret_cast<DDS_Char*>(imgRight.data), imgRight.step[0] * imgRight.rows);
+
+			cv::imencode(".png", imgRight, buffer, compressionParams);
+			dds_msg.imageData2.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
 
 			if (imgLeft.channels() == 1)
 			{
@@ -98,10 +111,15 @@ imageLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 			dds_msg.rows = imgBayer.rows;
 			dds_msg.step1 = imgBayer.step[0];
 			dds_msg.type1 = imgBayer.type();
-			dds_msg.imageData1.from_array(reinterpret_cast<DDS_Char*>(imgBayer.data), imgBayer.step[0] * imgBayer.rows);
+
+			cv::imencode(".png", imgBayer, buffer, compressionParams);
+			dds_msg.imageData1.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
+
 			dds_msg.step2 = imgDepth.step[0];
 			dds_msg.type2 = imgDepth.type();
-			dds_msg.imageData2.from_array(reinterpret_cast<DDS_Char*>(imgDepth.data), imgDepth.step[0] * imgDepth.rows);
+
+			cv::imencode(".png", imgDepth, buffer, compressionParams);
+			dds_msg.imageData2.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
 
 			cameraType = PxSHM::CAMERA_KINECT;
 
@@ -159,7 +177,7 @@ mavlinkLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 
 	if (verbose)
 	{
-		fprintf(stderr, "# INFO: Forwarded MAVLINK message from LCM to DDS.\n");
+		fprintf(stderr, "# INFO: Forwarded MAVLINK message [%d] from LCM to DDS.\n", msg->msgid);
 	}
 
 	dds_mavlink_message_t_finalize(&dds_msg);
@@ -192,7 +210,9 @@ imageDDSHandler(void* msg)
 	if (dds_msg->camera_type == PxSHM::CAMERA_MONO_8 ||
 		dds_msg->camera_type == PxSHM::CAMERA_MONO_24)
 	{
-		cv::Mat img(dds_msg->rows, dds_msg->cols, dds_msg->type1, dds_msg->imageData1.get_contiguous_buffer(), dds_msg->step1);
+		cv::Mat buffer(dds_msg->imageData1.length(), 1, CV_8U, dds_msg->imageData1.get_contiguous_buffer());
+		cv::Mat img = cv::imdecode(buffer, -1);
+//		cv::Mat img(dds_msg->rows, dds_msg->cols, dds_msg->type1, dds_msg->imageData1.get_contiguous_buffer(), dds_msg->step1);
 
 		server.writeMonoImage(img, dds_msg->cam_id1, dds_msg->timestamp,
 							  dds_msg->roll, dds_msg->pitch, dds_msg->yaw,
@@ -204,8 +224,10 @@ imageDDSHandler(void* msg)
 	else if (dds_msg->camera_type == PxSHM::CAMERA_STEREO_8 ||
 			 dds_msg->camera_type == PxSHM::CAMERA_STEREO_24)
 	{
-		cv::Mat imgLeft(dds_msg->rows, dds_msg->cols, dds_msg->type1, dds_msg->imageData1.get_contiguous_buffer(), dds_msg->step1);
-		cv::Mat imgRight(dds_msg->rows, dds_msg->cols, dds_msg->type2, dds_msg->imageData2.get_contiguous_buffer(), dds_msg->step2);
+		cv::Mat buffer(dds_msg->imageData1.length(), 1, CV_8U, dds_msg->imageData1.get_contiguous_buffer());
+		cv::Mat imgLeft = cv::imdecode(buffer, -1);
+		buffer = cv::Mat(dds_msg->imageData2.length(), 1, CV_8U, dds_msg->imageData2.get_contiguous_buffer());
+		cv::Mat imgRight = cv::imdecode(buffer, -1);
 
 		server.writeStereoImage(imgLeft, dds_msg->cam_id1, imgRight, 0,
 								dds_msg->timestamp,
@@ -217,8 +239,10 @@ imageDDSHandler(void* msg)
 	}
 	else if (dds_msg->camera_type == PxSHM::CAMERA_KINECT)
 	{
-		cv::Mat imgBayer(dds_msg->rows, dds_msg->cols, dds_msg->type1, dds_msg->imageData1.get_contiguous_buffer(), dds_msg->step1);
-		cv::Mat imgDepth(dds_msg->rows, dds_msg->cols, dds_msg->type2, dds_msg->imageData2.get_contiguous_buffer(), dds_msg->step2);
+		cv::Mat buffer(dds_msg->imageData1.length(), 1, CV_8U, dds_msg->imageData1.get_contiguous_buffer());
+		cv::Mat imgBayer = cv::imdecode(buffer, -1);
+		buffer = cv::Mat(dds_msg->imageData2.length(), 1, CV_8U, dds_msg->imageData2.get_contiguous_buffer());
+		cv::Mat imgDepth = cv::imdecode(buffer, -1);
 
 		server.writeKinectImage(imgBayer, imgDepth, dds_msg->timestamp,
 								dds_msg->roll, dds_msg->pitch, dds_msg->yaw,
@@ -254,7 +278,7 @@ mavlinkDDSHandler(void* msg, lcm_t* lcm)
 
 	if (verbose)
 	{
-		fprintf(stderr, "# INFO: Forwarded MAVLINK message from DDS to LCM.\n");
+		fprintf(stderr, "# INFO: Forwarded MAVLINK message [%d] from DDS to LCM.\n", dds_msg->msgid);
 	}
 }
 
