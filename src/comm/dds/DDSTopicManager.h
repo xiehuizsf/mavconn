@@ -60,17 +60,15 @@ public:
 	TopicCallbackSet* lookupTopicCallbackSet(const std::string& topicName);
 
 private:
-	typedef bool (*TypeWriteFunction)(void *, DDSDataWriter *);
-	typedef bool (*TypeTakeFunction)(void *, DDSDataReader *);
-
 	/**
 	* Entity structure for sender.
 	*/
 	typedef struct
 	{
-		DDSPublisher       *publisher;  /**< Publisher */
-		DDSDataWriter      *writer;     /**< DataWriter */
-		TypeWriteFunction   handler;    /**< write handler */
+		DDSPublisher* publisher;  /**< Publisher */
+		DDSDataWriter* writer;    /**< DataWriter */
+		sigc::slot<bool, void*> handler; /**< write handler */
+		sigc::signal<bool, void*> handlerSignal; /**< write handler signal */
 	} DDSSender;
 
 	/**
@@ -78,8 +76,9 @@ private:
 	*/
 	typedef struct
 	{
-		DDSDataReader      *reader;   /**< DataReader */
-		TypeTakeFunction    handler;  /**< take handler */
+		DDSDataReader* reader;   /**< DataReader */
+		sigc::slot<bool, void*> handler; /**< take handler */
+		sigc::signal<bool, void*> handlerSignal; /**< take handler signal */
 	} DDSReceiver;
 
 	struct DDSMetadata
@@ -111,11 +110,11 @@ private:
 	template< typename TData,
 			  typename TTypeSupport,
 			  typename TDataReader >
-	static bool takeSample(TData* sample, DDSDataReader* reader);
+	static bool takeSample(void* sample, DDSDataReader* reader);
 	template< typename TData,
 			  typename TTypeSupport,
 			  typename TDataWriter >
-	static bool writeSample(TData* sample, DDSDataWriter* writer);
+	static bool writeSample(void* sample, DDSDataWriter* writer);
 
 	// Data members
 	static DDSTopicManager* instance;
@@ -123,6 +122,8 @@ private:
 	DDSDomainParticipant* mParticipant;
 	DDSSubscriber* mSubscriber;
 	DDSWaitSet* mWaitset;
+
+	Glib::Mutex mWaitsetMutex;
 
 	typedef std::map<std::string, DDSMetadata> StringMetadataMap;
 	typedef std::map<std::string, TopicCallbackSet*> StringTopicMap;
@@ -190,7 +191,7 @@ TopicCallbackSet* DDSTopicManager::registerTopic(const TTopic& topicObject,
 template< typename TData,
           typename TTypeSupport,
           typename TDataReader >
-bool DDSTopicManager::takeSample(TData* sample, DDSDataReader* reader)
+bool DDSTopicManager::takeSample(void* sample, DDSDataReader* reader)
 {
 	TDataReader* sampleReader = TDataReader::narrow(reader);
 	if (sampleReader == NULL)
@@ -200,7 +201,8 @@ bool DDSTopicManager::takeSample(TData* sample, DDSDataReader* reader)
 	}
 
 	DDS_SampleInfo info;
-	DDS_ReturnCode_t retcode = sampleReader->take_next_sample(*sample, info);
+	DDS_ReturnCode_t retcode = sampleReader->take_next_sample(*(reinterpret_cast<TData*>(sample)), info);
+
 	if (retcode != DDS_RETCODE_OK)
 	{
 		if (retcode != DDS_RETCODE_NO_DATA)
@@ -217,7 +219,7 @@ bool DDSTopicManager::takeSample(TData* sample, DDSDataReader* reader)
 template< typename TData,
           typename TTypeSupport,
           typename TDataWriter >
-bool DDSTopicManager::writeSample(TData*sample, DDSDataWriter* writer)
+bool DDSTopicManager::writeSample(void* sample, DDSDataWriter* writer)
 {
 	TDataWriter* sampleWriter = TDataWriter::narrow(writer);
 	if (sampleWriter == NULL)
@@ -226,7 +228,7 @@ bool DDSTopicManager::writeSample(TData*sample, DDSDataWriter* writer)
 		return false;
 	}
 
-	DDS_ReturnCode_t retcode = sampleWriter->write(*sample, DDS_HANDLE_NIL);
+	DDS_ReturnCode_t retcode = sampleWriter->write(*(reinterpret_cast<TData*>(sample)), DDS_HANDLE_NIL);
 	if (retcode != DDS_RETCODE_OK)
 	{
 		if (retcode != DDS_RETCODE_NO_DATA)
@@ -243,10 +245,6 @@ bool DDSTopicManager::writeSample(TData*sample, DDSDataWriter* writer)
 template<typename TTopic>
 bool DDSTopicManager::registerPublisher(const TTopic& topicObject)
 {
-	typedef typename TTopic::data_type TData;
-	typedef typename TTopic::support_type TTypeSupport;
-	typedef typename TTopic::data_writer_type TDataWriter;
-
 	std::string topicName = topicObject.getTopicName();
 
 	// Look for DDS metadata information
@@ -332,13 +330,16 @@ bool DDSTopicManager::registerPublisher(const TTopic& topicObject)
 			return false;
 		}
 
-		typedef bool (*WriteFunction)(TData *, DDSDataWriter *);
-		WriteFunction writeFn = writeSample<TData, TTypeSupport, TDataWriter>;
+		typedef typename TTopic::data_type TData;
+		typedef typename TTopic::support_type TTypeSupport;
+		typedef typename TTopic::data_writer_type TDataWriter;
 
 		metadata->sender = new DDSSender;
 		metadata->sender->publisher = publisher;
 		metadata->sender->writer = writer;
-		metadata->sender->handler = (TypeWriteFunction)writeFn;
+
+		metadata->sender->handler = sigc::slot<bool, void*>(sigc::bind(sigc::ptr_fun(&(DDSTopicManager::writeSample<TData, TTypeSupport, TDataWriter>)), writer));
+		metadata->sender->handlerSignal.connect(metadata->sender->handler);
 	}
 
 	return true;
@@ -348,10 +349,6 @@ template<typename TTopic>
 bool DDSTopicManager::registerSubscriber(const TTopic &topicObject,
                                          bool processIncomingMessages)
 {
-	typedef typename TTopic::data_type TData;
-	typedef typename TTopic::support_type TTypeSupport;
-	typedef typename TTopic::data_reader_type TDataReader;
-
 	std::string topicName = topicObject.getTopicName();
 
 	// Look for DDS metadata information
@@ -376,20 +373,22 @@ bool DDSTopicManager::registerSubscriber(const TTopic &topicObject,
 		DDSDataReader* reader =
 			mSubscriber->create_datareader(metadata->topic,
 										   DDS_DATAREADER_QOS_DEFAULT,
-										   0,
-										   DDS_DATA_AVAILABLE_STATUS);
+										   NULL,
+										   DDS_STATUS_MASK_NONE);
 		if (reader == NULL)
 		{
 			fprintf(stderr, "# WARNING: Unable to create data reader.\n");
 			return false;
 		}
 
-		typedef bool (*TakeFunction)(TData *, DDSDataReader *);
-		TakeFunction takeFn = takeSample<TData, TTypeSupport, TDataReader>;
+		typedef typename TTopic::data_type TData;
+		typedef typename TTopic::support_type TTypeSupport;
+		typedef typename TTopic::data_reader_type TDataReader;
 
 		metadata->receiver = new DDSReceiver;
 		metadata->receiver->reader = reader;
-		metadata->receiver->handler = (TypeTakeFunction)takeFn;
+		metadata->receiver->handler = sigc::slot<bool, void*>(sigc::bind(sigc::ptr_fun(&(DDSTopicManager::takeSample<TData, TTypeSupport, TDataReader>)), reader));
+		metadata->receiver->handlerSignal.connect(metadata->receiver->handler);
 
 		DDSStatusCondition* cond = reader->get_statuscondition();
 		cond->set_enabled_statuses(DDS_DATA_AVAILABLE_STATUS);
@@ -478,8 +477,7 @@ bool DDSTopicManager::queryResponse(typename TQueryTopic::data_type& query,
 	while (ts < scheduled_ts && !receivedResponse)
 	{
 		receivedResponse =
-			responseMetadata->receiver->handler((void *)&response,
-												responseMetadata->receiver->reader);
+			responseMetadata->receiver->handlerSignal.emit(&response);
 		NDDSUtility::sleep(ddsTimeout);
 
 		gettimeofday(&tv, NULL);

@@ -185,7 +185,7 @@ imageDDSHandler(void* msg)
 	{
 		return;
 	}
-	serverIdx = 2;//TODO: remove
+
 	PxSHMImageServer& server = imageServerVec.at(serverIdx);
 
 	// write image(s) to shared memory

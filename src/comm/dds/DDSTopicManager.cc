@@ -101,7 +101,9 @@ bool DDSTopicManager::start(int argc, char** argv,
 		exit(EXIT_FAILURE);
 	}
 
+	mWaitsetMutex.lock();
 	mWaitset = new DDSWaitSet();
+	mWaitsetMutex.unlock();
 
 	return true;
 }
@@ -267,10 +269,12 @@ bool DDSTopicManager::unsubscribe(const std::string& topicName,
 				if (metadata->cond != NULL)
 				{
 					mConditionMetadataMap.erase(metadata->cond);
+					mWaitsetMutex.lock();
 					if (mWaitset != NULL)
 					{
 						mWaitset->detach_condition(metadata->cond);
 					}
+					mWaitsetMutex.unlock();
 					metadata->cond = NULL;
 				}
 
@@ -309,7 +313,7 @@ bool DDSTopicManager::publish(const std::string& topicName,
 	DDSMetadata* metadata = lookupMetadata(topicName);
 	if (metadata != 0)
 	{
-		metadata->sender->handler(sampleMem, metadata->sender->writer);
+		metadata->sender->handlerSignal.emit(sampleMem);
 
 		return true;
 	}
@@ -321,7 +325,7 @@ bool DDSTopicManager::publish(const std::string& topicName,
 	}
 }
 
-bool DDSTopicManager::publish(TopicCallbackSet* topic, void *sampleMem)
+bool DDSTopicManager::publish(TopicCallbackSet* topic, void* sampleMem)
 {
 	return publish(topic->topicName, sampleMem);
 }
@@ -395,10 +399,12 @@ bool DDSTopicManager::unregisterSubscriber(const std::string& topicName)
 			if (metadata->cond != NULL)
 			{
 				mConditionMetadataMap.erase(metadata->cond);
+				mWaitsetMutex.lock();
 				if (mWaitset != NULL)
 				{
 					mWaitset->detach_condition(metadata->cond);
 				}
+				mWaitsetMutex.unlock();
 				metadata->cond = NULL;
 			}
 
@@ -515,14 +521,16 @@ bool DDSTopicManager::log(const std::string& topicName,
 
 void DDSTopicManager::listenThread(bool* quitFlag)
 {
-	const DDS_Duration_t timeout = { 1, 0 }; // 1 sec
+	const DDS_Duration_t timeout = { 0, 1000000 }; // 1 msec
 	DDSConditionSeq activeConditions; // holder for active conditions
 
 	DDS_ReturnCode_t retcode;
 
 	while (*quitFlag == false)
 	{
+		mWaitsetMutex.lock();
 		retcode = mWaitset->wait(activeConditions, timeout);
+		mWaitsetMutex.unlock();
 
 		// if message is received
 		if (retcode == DDS_RETCODE_OK)
@@ -543,16 +551,15 @@ void DDSTopicManager::listenThread(bool* quitFlag)
 						{
 							Callback* callback = &(topic->callback[j]);
 
-							bool validData = true;
 							if (callback->getData())
 							{
-								validData = metadata->receiver->handler(callback->getData(),
-																		metadata->receiver->reader);
-							}
+								bool validData =
+									metadata->receiver->handlerSignal.emit(callback->getData());
 
-							if (validData)
-							{
-								callback->activate();
+								if (validData)
+								{
+									callback->activate();
+								}
 							}
 						} // end callback for loop
 					} // end if topic != 0
@@ -566,6 +573,7 @@ void DDSTopicManager::listenThread(bool* quitFlag)
 	}
 
 	DDSConditionSeq attachedConditions;
+	mWaitsetMutex.lock();
 	retcode = mWaitset->get_conditions(attachedConditions);
 	if (retcode != DDS_RETCODE_OK)
 	{
@@ -580,6 +588,7 @@ void DDSTopicManager::listenThread(bool* quitFlag)
 
 	delete mWaitset;
 	mWaitset = NULL;
+	mWaitsetMutex.unlock();
 }
 
 /**

@@ -47,15 +47,15 @@ void Middleware::init(int argc, char **argv)
 		}
 	}
 
+	if (!Glib::thread_supported())
+	{
+		Glib::thread_init();
+	}
+
 	TopicManager* topicManager = TopicManagerFactory::getTopicManager();
 	if (!topicManager->start(argc, argv, middlewarePolicy))
 	{
 		shutdown();
-	}
-
-	if (!Glib::thread_supported())
-	{
-		Glib::thread_init();
 	}
 
 	listenThread = Glib::Thread::create(sigc::bind(sigc::mem_fun(topicManager, &TopicManager::listenThread), &quit), true);
