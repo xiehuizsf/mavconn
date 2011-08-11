@@ -1,5 +1,6 @@
 #include <mavconn.h>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include "dds/Middleware.h"
 #include "dds/interface/image/image_interface.h"
@@ -12,6 +13,8 @@ bool quit = false;
 
 std::vector<PxSHMImageServer> imageServerVec;
 std::vector<PxSHMImageClient> imageClientVec;
+
+dds_image_message_t dds_image_msg;
 
 void signalHandler(int signal)
 {
@@ -36,7 +39,6 @@ imageLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 		}
 
 		bool publishImage = false;
-		dds_image_message_t dds_msg;
 		PxSHM::CameraType cameraType;
 
 		std::vector<int> compressionParams;
@@ -48,15 +50,17 @@ imageLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 		cv::Mat img;
 		if (client.readMonoImage(msg, img))
 		{
-			dds_image_message_t_initialize(&dds_msg);
-
-			dds_msg.cols = img.cols;
-			dds_msg.rows = img.rows;
-			dds_msg.step1 = img.step[0];
-			dds_msg.type1 = img.type();
+			dds_image_msg.cols = img.cols;
+			dds_image_msg.rows = img.rows;
+			dds_image_msg.step1 = img.step[0];
+			dds_image_msg.type1 = img.type();
 
 			cv::imencode(".jpg", img, buffer, compressionParams);
-			dds_msg.imageData1.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
+			dds_image_msg.imageData1.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
+
+			dds_image_msg.step2 = 0;
+			dds_image_msg.type2 = 0;
+			dds_image_msg.imageData2.length(0);
 
 			if (img.channels() == 1)
 			{
@@ -73,21 +77,19 @@ imageLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 		cv::Mat imgLeft, imgRight;
 		if (client.readStereoImage(msg, imgLeft, imgRight))
 		{
-			dds_image_message_t_initialize(&dds_msg);
-
-			dds_msg.cols = imgLeft.cols;
-			dds_msg.rows = imgLeft.rows;
-			dds_msg.step1 = imgLeft.step[0];
-			dds_msg.type1 = imgLeft.type();
+			dds_image_msg.cols = imgLeft.cols;
+			dds_image_msg.rows = imgLeft.rows;
+			dds_image_msg.step1 = imgLeft.step[0];
+			dds_image_msg.type1 = imgLeft.type();
 
 			cv::imencode(".png", imgLeft, buffer, compressionParams);
-			dds_msg.imageData1.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
+			dds_image_msg.imageData1.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
 
-			dds_msg.step2 = imgRight.step[0];
-			dds_msg.type2 = imgRight.type();
+			dds_image_msg.step2 = imgRight.step[0];
+			dds_image_msg.type2 = imgRight.type();
 
 			cv::imencode(".png", imgRight, buffer, compressionParams);
-			dds_msg.imageData2.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
+			dds_image_msg.imageData2.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
 
 			if (imgLeft.channels() == 1)
 			{
@@ -105,21 +107,19 @@ imageLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 		cv::Mat imgBayer, imgDepth;
 		if (client.readKinectImage(msg, imgBayer, imgDepth))
 		{
-			dds_image_message_t_initialize(&dds_msg);
-
-			dds_msg.cols = imgBayer.cols;
-			dds_msg.rows = imgBayer.rows;
-			dds_msg.step1 = imgBayer.step[0];
-			dds_msg.type1 = imgBayer.type();
+			dds_image_msg.cols = imgBayer.cols;
+			dds_image_msg.rows = imgBayer.rows;
+			dds_image_msg.step1 = imgBayer.step[0];
+			dds_image_msg.type1 = imgBayer.type();
 
 			cv::imencode(".png", imgBayer, buffer, compressionParams);
-			dds_msg.imageData1.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
+			dds_image_msg.imageData1.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
 
-			dds_msg.step2 = imgDepth.step[0];
-			dds_msg.type2 = imgDepth.type();
+			dds_image_msg.step2 = imgDepth.step[0];
+			dds_image_msg.type2 = imgDepth.type();
 
 			cv::imencode(".png", imgDepth, buffer, compressionParams);
-			dds_msg.imageData2.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
+			dds_image_msg.imageData2.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
 
 			cameraType = PxSHM::CAMERA_KINECT;
 
@@ -128,25 +128,23 @@ imageLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 
 		if (publishImage)
 		{
-			dds_msg.camera_config = client.getCameraConfig();
-			dds_msg.camera_type = cameraType;
+			dds_image_msg.camera_config = client.getCameraConfig();
+			dds_image_msg.camera_type = cameraType;
 
-			dds_msg.cam_id1 = PxSHMImageClient::getCameraID(msg);
-			dds_msg.timestamp = PxSHMImageClient::getTimestamp(msg);
-			PxSHMImageClient::getRollPitchYaw(msg, dds_msg.roll, dds_msg.pitch, dds_msg.yaw);
-			PxSHMImageClient::getLocalHeight(msg, dds_msg.z);
-			PxSHMImageClient::getGPS(msg, dds_msg.lon, dds_msg.lat, dds_msg.alt);
-			PxSHMImageClient::getGroundTruth(msg, dds_msg.ground_x, dds_msg.ground_y, dds_msg.ground_z);
+			dds_image_msg.cam_id1 = PxSHMImageClient::getCameraID(msg);
+			dds_image_msg.timestamp = PxSHMImageClient::getTimestamp(msg);
+			PxSHMImageClient::getRollPitchYaw(msg, dds_image_msg.roll, dds_image_msg.pitch, dds_image_msg.yaw);
+			PxSHMImageClient::getLocalHeight(msg, dds_image_msg.z);
+			PxSHMImageClient::getGPS(msg, dds_image_msg.lon, dds_image_msg.lat, dds_image_msg.alt);
+			PxSHMImageClient::getGroundTruth(msg, dds_image_msg.ground_x, dds_image_msg.ground_y, dds_image_msg.ground_z);
 
 			// publish image to DDS
-			px::ImageTopic::instance()->publish(&dds_msg);
+			px::ImageTopic::instance()->publish(&dds_image_msg);
 
 			if (verbose)
 			{
 				fprintf(stderr, "# INFO: Forwarded image from LCM to DDS.\n");
 			}
-
-			dds_image_message_t_finalize(&dds_msg);
 		}
 	}
 }
@@ -212,7 +210,6 @@ imageDDSHandler(void* msg)
 	{
 		cv::Mat buffer(dds_msg->imageData1.length(), 1, CV_8U, dds_msg->imageData1.get_contiguous_buffer());
 		cv::Mat img = cv::imdecode(buffer, -1);
-//		cv::Mat img(dds_msg->rows, dds_msg->cols, dds_msg->type1, dds_msg->imageData1.get_contiguous_buffer(), dds_msg->step1);
 
 		server.writeMonoImage(img, dds_msg->cam_id1, dds_msg->timestamp,
 							  dds_msg->roll, dds_msg->pitch, dds_msg->yaw,
@@ -372,6 +369,8 @@ main(int argc, char** argv)
 		imageClientVec.at(2).init(true, PxSHM::CAMERA_DOWNWARD_LEFT);
 		imageClientVec.at(3).init(true, PxSHM::CAMERA_DOWNWARD_LEFT, PxSHM::CAMERA_DOWNWARD_RIGHT);
 
+		dds_image_message_t_initialize(&dds_image_msg);
+
 		// subscribe to LCM messages
 		imageLCMSub = mavlink_message_t_subscribe(lcm, "IMAGES", &imageLCMHandler, 0);
 		mavlinkLCMSub = mavlink_message_t_subscribe(lcm, "MAVLINK", &mavlinkLCMHandler, 0);
@@ -400,28 +399,9 @@ main(int argc, char** argv)
 		px::MavlinkTopic::instance()->subscribe(handler, px::SUBSCRIBE_ALL);
 	}
 
-	// listen for LCM messages
-	int lcm_fd = lcm_get_fileno(lcm);
-
-	// wait a limited amount of time for an incoming LCM message
-	struct timeval timeout = {
-		1,	// seconds
-		0	// microseconds
-	};
-
 	while (!quit)
 	{
-		fd_set fds;
-		FD_ZERO(&fds);
-		FD_SET(lcm_fd, &fds);
-
-		int status = select(lcm_fd + 1, &fds, 0, 0, &timeout);
-
-		if (status != 0 && FD_ISSET(lcm_fd, &fds) && !quit)
-		{
-			// LCM has events ready to be processed.
-			lcm_handle(lcm);
-		}
+		lcm_handle(lcm);
 	}
 
 	mw.shutdown();
@@ -429,7 +409,10 @@ main(int argc, char** argv)
 	if (lcm2dds)
 	{
 		mavlink_message_t_unsubscribe(lcm, mavlinkLCMSub);
+
+		dds_image_message_t_finalize(&dds_image_msg);
 	}
+	lcm_destroy(lcm);
 
 	return 0;
 }
