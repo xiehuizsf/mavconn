@@ -22,6 +22,7 @@ void signalHandler(int signal)
 	{
 		fprintf(stderr, "# INFO: Shutting down...\n");
 		quit = true;
+		exit(EXIT_SUCCESS);
 	}
 }
 
