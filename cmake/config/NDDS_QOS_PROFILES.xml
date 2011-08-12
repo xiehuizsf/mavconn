@@ -5,6 +5,20 @@
 <dds>
     <qos_library name="PIXHAWK">
         <qos_profile name="Reliable" is_default_qos="true">
+            <topic_qos>
+                <latency_budget>
+	    	    <duration>
+                        <sec>1</sec>
+                        <nanosec>0</nanosec>
+                    </duration>
+                </latency_budget>
+                <lifespan>
+	    	    <duration>
+                        <sec>1</sec>
+                        <nanosec>0</nanosec>
+                    </duration>
+                </lifespan>
+            </topic_qos>
             <datareader_qos>
                 <reliability>
                     <!--

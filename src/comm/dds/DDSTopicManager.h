@@ -95,11 +95,11 @@ private:
 	DDSTopicManager& operator=(const DDSTopicManager&);
 
 	// DDS Specific methods
-	static void setAperiodicPublisherQos(DDS_DataWriterQos* qos);
-	static void setPeriodicPublisherQos(DDS_DataWriterQos* qos);
-	static void setFrequentPeriodicPublisherQos(DDS_DataWriterQos* qos);
-	static void setAperiodicSubscriberQos(DDS_DataReaderQos* qos);
-	static void setPeriodicSubscriberQos(DDS_DataReaderQos* qos, int queueSize);
+	static void setAperiodicPublisherQos(DDS_DataWriterQos& qos);
+	static void setPeriodicPublisherQos(DDS_DataWriterQos& qos);
+	static void setFrequentPeriodicPublisherQos(DDS_DataWriterQos& qos);
+	static void setAperiodicSubscriberQos(DDS_DataReaderQos& qos);
+	static void setPeriodicSubscriberQos(DDS_DataReaderQos& qos, int queueSize);
 
 	bool findTopicServer(TopicCallbackSet* queryTopic, TopicCallbackSet* responseTopic,
 						 unsigned int timeout_ms);
@@ -140,7 +140,7 @@ TopicCallbackSet* DDSTopicManager::registerTopic(const TTopic& topicObject,
 {
 	typedef typename TTopic::support_type TTypeSupport;
 
-	std::string topicName = topicObject.getTopicName();
+	std::string topicName = topicObject.getName();
 
 	TopicCallbackSet* topicCallbackSet = lookupTopicCallbackSet(topicName);
 	if (topicCallbackSet != 0)
@@ -159,7 +159,8 @@ TopicCallbackSet* DDSTopicManager::registerTopic(const TTopic& topicObject,
 	topicCallbackSet = new TopicCallbackSet;
 	topicCallbackSet->topicName = topicName;
 	topicCallbackSet->typeName = TTypeSupport::get_type_name();
-	topicCallbackSet->topicType = topicObject.getTopicType();
+	topicCallbackSet->topicType = topicObject.getType();
+	topicCallbackSet->minimumTimeSeparation = topicObject.getMinimumTimeSeparation();
 	topicCallbackSet->createFn = (TypeCreateFunction)TTypeSupport::create_data;
 	topicCallbackSet->copyFn = (TypeCopyFunction)TTypeSupport::copy_data;
 	topicCallbackSet->deleteFn = (TypeDeleteFunction)TTypeSupport::delete_data;
@@ -245,7 +246,7 @@ bool DDSTopicManager::writeSample(void* sample, DDSDataWriter* writer)
 template<typename TTopic>
 bool DDSTopicManager::registerPublisher(const TTopic& topicObject)
 {
-	std::string topicName = topicObject.getTopicName();
+	std::string topicName = topicObject.getName();
 
 	// Look for DDS metadata information
 	DDSMetadata* metadata = lookupMetadata(topicName);
@@ -284,7 +285,7 @@ bool DDSTopicManager::registerPublisher(const TTopic& topicObject)
 		// enable specified transports
 		int numTransports = 0;
 		writer_qos.transport_selection.enabled_transports.maximum(0);
-		if ((topicObject.getTopicTransportBuiltinPolicy().mask & TRANSPORTBUILTIN_UDP) ==
+		if ((topicObject.getTransportBuiltinPolicy().mask & TRANSPORTBUILTIN_UDP) ==
 		   TRANSPORTBUILTIN_UDP)
 		{
 			numTransports++;
@@ -303,15 +304,15 @@ bool DDSTopicManager::registerPublisher(const TTopic& topicObject)
 		// set publisher QOS
 		if (topicCallbackSet->topicType == TOPIC_QUERY_REPLY)
 		{
-			setAperiodicPublisherQos(&writer_qos);
+			setAperiodicPublisherQos(writer_qos);
 		}
 		else if (topicCallbackSet->topicType == TOPIC_PUBLISH_SUBSCRIBE)
 		{
-			setPeriodicPublisherQos(&writer_qos);
+			setPeriodicPublisherQos(writer_qos);
 		}
 		else if (topicCallbackSet->topicType == TOPIC_PUBLISH_SUBSCRIBE_FREQUENT)
 		{
-			setFrequentPeriodicPublisherQos(&writer_qos);
+			setFrequentPeriodicPublisherQos(writer_qos);
 		}
 		else
 		{
@@ -349,7 +350,7 @@ template<typename TTopic>
 bool DDSTopicManager::registerSubscriber(const TTopic &topicObject,
                                          bool processIncomingMessages)
 {
-	std::string topicName = topicObject.getTopicName();
+	std::string topicName = topicObject.getName();
 
 	// Look for DDS metadata information
 	DDSMetadata* metadata = lookupMetadata(topicName);
@@ -421,7 +422,7 @@ bool DDSTopicManager::queryResponse(typename TQueryTopic::data_type& query,
 	typedef typename TResponseTopic::data_type TResponseData;
 
 	TopicCallbackSet* queryTopic =
-			lookupTopicCallbackSet(TQueryTopic::instance()->getTopicName());
+			lookupTopicCallbackSet(TQueryTopic::instance()->getName());
 	if (queryTopic == 0)
 	{
 		if (!TQueryTopic::instance()->advertise())
@@ -429,11 +430,11 @@ bool DDSTopicManager::queryResponse(typename TQueryTopic::data_type& query,
 			return false;
 		}
 		queryTopic =
-			lookupTopicCallbackSet(TQueryTopic::instance()->getTopicName());
+			lookupTopicCallbackSet(TQueryTopic::instance()->getName());
 	}
 
 	TopicCallbackSet* responseTopic =
-			lookupTopicCallbackSet(TResponseTopic::instance()->getTopicName());
+			lookupTopicCallbackSet(TResponseTopic::instance()->getName());
 	if (responseTopic == 0)
 	{
 		if (!TResponseTopic::instance()->listenSingle(Handler(NULL), NULL))
@@ -441,7 +442,7 @@ bool DDSTopicManager::queryResponse(typename TQueryTopic::data_type& query,
 			return false;
 		}
 		responseTopic =
-			lookupTopicCallbackSet(TResponseTopic::instance()->getTopicName());
+			lookupTopicCallbackSet(TResponseTopic::instance()->getName());
 	}
 
 	struct timeval tv;

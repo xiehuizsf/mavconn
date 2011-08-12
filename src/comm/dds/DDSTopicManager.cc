@@ -190,17 +190,22 @@ bool DDSTopicManager::subscribe(const std::string& topicName, Handler& handler,
 		exit(EXIT_FAILURE);
 		break;
 	case SUBSCRIBE_LATEST:
-		setPeriodicSubscriberQos(&reader_qos, 1);
+		setPeriodicSubscriberQos(reader_qos, 1);
 		break;
 	case SUBSCRIBE_ALL:
-		setPeriodicSubscriberQos(&reader_qos, 100);
+		setPeriodicSubscriberQos(reader_qos, 100);
 		break;
 	case SUBSCRIBE_ALL_LONGQUEUELIMIT:
-		setPeriodicSubscriberQos(&reader_qos, 1000);
+		setPeriodicSubscriberQos(reader_qos, 1000);
 		fprintf(stderr, "# WARNING (DDSTopicManager): Long DDS sample queue selected.\n"
 				"This piece of software should not run live on the robot.\n");
 		break;
 	}
+
+	reader_qos.time_based_filter.minimum_separation.sec =
+		static_cast<DDS_Long>(topicCallbackSet->minimumTimeSeparation);
+	reader_qos.time_based_filter.minimum_separation.nanosec =
+		static_cast<DDS_UnsignedLong>(topicCallbackSet->minimumTimeSeparation * 1000000000.0f);
 
 	retcode = mSubscriber->set_default_datareader_qos(reader_qos);
 	if (retcode != DDS_RETCODE_OK)
@@ -483,11 +488,11 @@ bool DDSTopicManager::log(const std::string& topicName,
 
 	if (subscribeKind == SUBSCRIBE_LATEST)
 	{
-		setPeriodicSubscriberQos(&reader_qos, 1);
+		setPeriodicSubscriberQos(reader_qos, 1);
 	}
 	else
 	{
-		setPeriodicSubscriberQos(&reader_qos, 100);
+		setPeriodicSubscriberQos(reader_qos, 100);
 	}
 
 	DDS_ReturnCode_t retcode = mSubscriber->set_default_datareader_qos(reader_qos);
@@ -596,61 +601,61 @@ void DDSTopicManager::listenThread(bool* quitFlag)
 * reliable model.
 * @param qos the pointer to the DataWriter QoS.
 */
-void DDSTopicManager::setAperiodicPublisherQos(DDS_DataWriterQos* qos)
+void DDSTopicManager::setAperiodicPublisherQos(DDS_DataWriterQos& qos)
 {
-	qos->history.depth = 1;
+	qos.history.depth = 1;
 
-	qos->resource_limits.initial_samples =
-		qos->resource_limits.max_samples = 1;
-	qos->resource_limits.max_samples_per_instance =
-		qos->resource_limits.max_samples;
+	qos.resource_limits.initial_samples =
+		qos.resource_limits.max_samples = 1;
+	qos.resource_limits.max_samples_per_instance =
+		qos.resource_limits.max_samples;
 
 	// want to piggyback HB w/ every sample
-	qos->protocol.rtps_reliable_writer.heartbeats_per_max_samples = 1;
+	qos.protocol.rtps_reliable_writer.heartbeats_per_max_samples = 1;
 
-	qos->protocol.rtps_reliable_writer.high_watermark = 1;
-	qos->protocol.rtps_reliable_writer.low_watermark = 0;
+	qos.protocol.rtps_reliable_writer.high_watermark = 1;
+	qos.protocol.rtps_reliable_writer.low_watermark = 0;
 
 	// essentially turn off slow HB period
-	qos->protocol.rtps_reliable_writer.heartbeat_period.sec = 3600 * 24 * 7;
+	qos.protocol.rtps_reliable_writer.heartbeat_period.sec = 3600 * 24 * 7;
 }
 
 /**
 * Sets the DataWriter QoS for a periodic, non-strict reliable model.
 * @param qos the pointer to the DataWriter QoS.
 */
-void DDSTopicManager::setPeriodicPublisherQos(DDS_DataWriterQos* qos)
+void DDSTopicManager::setPeriodicPublisherQos(DDS_DataWriterQos& qos)
 {
-	qos->history.depth = 20;
+	qos.history.depth = 20;
 
-	qos->resource_limits.max_samples =
-		qos->resource_limits.initial_samples = 20;
-	qos->resource_limits.max_samples_per_instance =
-		qos->resource_limits.max_samples;
+	qos.resource_limits.max_samples =
+		qos.resource_limits.initial_samples = 20;
+	qos.resource_limits.max_samples_per_instance =
+		qos.resource_limits.max_samples;
 
-	qos->protocol.rtps_reliable_writer.heartbeats_per_max_samples = 2;
+	qos.protocol.rtps_reliable_writer.heartbeats_per_max_samples = 2;
 
-	qos->protocol.rtps_reliable_writer.high_watermark = 16;
-	qos->protocol.rtps_reliable_writer.low_watermark = 4;
+	qos.protocol.rtps_reliable_writer.high_watermark = 16;
+	qos.protocol.rtps_reliable_writer.low_watermark = 4;
 }
 
 /**
 * Sets the DataWriter QoS for a frequent periodic, non-strict reliable model.
 * @param qos the pointer to the DataWriter QoS.
 */
-void DDSTopicManager::setFrequentPeriodicPublisherQos(DDS_DataWriterQos* qos)
+void DDSTopicManager::setFrequentPeriodicPublisherQos(DDS_DataWriterQos& qos)
 {
-	qos->history.depth = 300;
+	qos.history.depth = 300;
 
-	qos->resource_limits.max_samples =
-		qos->resource_limits.initial_samples = 300;
-	qos->resource_limits.max_samples_per_instance =
-		qos->resource_limits.max_samples;
+	qos.resource_limits.max_samples =
+		qos.resource_limits.initial_samples = 300;
+	qos.resource_limits.max_samples_per_instance =
+		qos.resource_limits.max_samples;
 
-	qos->protocol.rtps_reliable_writer.heartbeats_per_max_samples = 30;
+	qos.protocol.rtps_reliable_writer.heartbeats_per_max_samples = 30;
 
-	qos->protocol.rtps_reliable_writer.high_watermark = 240;
-	qos->protocol.rtps_reliable_writer.low_watermark = 60;
+	qos.protocol.rtps_reliable_writer.high_watermark = 240;
+	qos.protocol.rtps_reliable_writer.low_watermark = 60;
 }
 
 /**
@@ -658,15 +663,15 @@ void DDSTopicManager::setFrequentPeriodicPublisherQos(DDS_DataWriterQos* qos)
 * reliable model.
 * @param qos the pointer to the DataReader QoS.
 */
-void DDSTopicManager::setAperiodicSubscriberQos(DDS_DataReaderQos* qos)
+void DDSTopicManager::setAperiodicSubscriberQos(DDS_DataReaderQos& qos)
 {
-	qos->history.depth = 1;
+	qos.history.depth = 1;
 
-	qos->resource_limits.initial_samples =
-		qos->resource_limits.max_samples =
-			qos->reader_resource_limits.max_samples_per_remote_writer = 1;
-	qos->resource_limits.max_samples_per_instance =
-		qos->resource_limits.max_samples;
+	qos.resource_limits.initial_samples =
+		qos.resource_limits.max_samples =
+			qos.reader_resource_limits.max_samples_per_remote_writer = 1;
+	qos.resource_limits.max_samples_per_instance =
+		qos.resource_limits.max_samples;
 }
 
 /**
@@ -674,18 +679,18 @@ void DDSTopicManager::setAperiodicSubscriberQos(DDS_DataReaderQos* qos)
 * @param qos the pointer to the DataReader QoS.
 * @param queueSize the size of the queue.
 */
-void DDSTopicManager::setPeriodicSubscriberQos(DDS_DataReaderQos* qos,
+void DDSTopicManager::setPeriodicSubscriberQos(DDS_DataReaderQos& qos,
                                                int queueSize)
 {
-	qos->history.depth = queueSize;
+	qos.history.depth = queueSize;
 
-	qos->resource_limits.initial_samples =
-		qos->resource_limits.max_samples =
-			qos->reader_resource_limits.max_samples_per_remote_writer =
+	qos.resource_limits.initial_samples =
+		qos.resource_limits.max_samples =
+			qos.reader_resource_limits.max_samples_per_remote_writer =
 				queueSize;
 
-	qos->resource_limits.max_samples_per_instance =
-		qos->resource_limits.max_samples;
+	qos.resource_limits.max_samples_per_instance =
+		qos.resource_limits.max_samples;
 }
 
 

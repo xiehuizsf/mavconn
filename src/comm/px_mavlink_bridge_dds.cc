@@ -297,18 +297,24 @@ main(int argc, char** argv)
 	optBridgeMode.set_long_name("mode");
 	optBridgeMode.set_description("dds2lcm: Push DDS messages to LCM, lcm2dds: Push LCM messages to DDS");
 
+	Glib::OptionEntry optImageMinimumSeparation;
+	optImageMinimumSeparation.set_long_name("image_minimum_separation");
+	optImageMinimumSeparation.set_description("Minimum time separation in seconds between image samples");
+
 	Glib::OptionEntry optVerbose;
 	optVerbose.set_short_name('v');
 	optVerbose.set_long_name("verbose");
 	optVerbose.set_description("Verbose output");
 
-//	Glib::OptionEntry optProfile;
-//	optProfile.set_short_name('p');
-//	optProfile.set_long_name("profile");
-//	optProfile.set_description("Path to DDS QoS profile file");
+	Glib::OptionEntry optProfile;
+	optProfile.set_short_name('p');
+	optProfile.set_long_name("profile");
+	optProfile.set_description("Path to DDS QoS profile file");
 
 	std::string bridgeMode;
+	double imageMinimumSeparation = 0.0;
 	optGroup.add_entry_filename(optBridgeMode, bridgeMode);
+	optGroup.add_entry(optImageMinimumSeparation, imageMinimumSeparation);
 	optGroup.add_entry(optVerbose, verbose);
 
 	Glib::OptionContext optContext("");
@@ -394,6 +400,7 @@ main(int argc, char** argv)
 		// subscribe to DDS messages
 		px::Handler handler;
 		handler = px::Handler(sigc::ptr_fun(imageDDSHandler));
+		px::ImageTopic::instance()->setMinimumTimeSeparation(imageMinimumSeparation);
 		px::ImageTopic::instance()->subscribe(handler, px::SUBSCRIBE_ALL);
 
 		handler = px::Handler(sigc::bind(sigc::ptr_fun(mavlinkDDSHandler), lcm));

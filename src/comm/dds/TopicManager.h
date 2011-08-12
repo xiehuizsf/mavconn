@@ -12,86 +12,6 @@
 namespace px
 {
 
-//typedef void (*handler_t)(void *);
-
-//// Base implementation class. All handler implementation classes should inherit from this
-//class HandlerImpl
-//{
-//public:
-//	HandlerImpl() : mHandler(NULL) {}
-//
-//	explicit HandlerImpl(handler_t handler) : mHandler(handler) {}
-//
-//	virtual ~HandlerImpl() {}
-//
-//	virtual void operator()(void* data)
-//	{
-//		assert(mHandler != NULL);
-//
-//		mHandler(data);
-//	}
-//
-//private:
-//	handler_t mHandler;
-//};
-//
-//// Default handler object
-//class Handler
-//{
-//public:
-//	Handler() : mImpl() {}
-//
-//	// This is for legacy purposes
-//	explicit Handler(handler_t handler) : mImpl()
-//	{
-//		if (handler != NULL)
-//		{
-//			mImpl.reset(new HandlerImpl(handler));
-//		}
-//	}
-//
-//	explicit Handler(std::tr1::shared_ptr<HandlerImpl> impl) : mImpl(impl) {}
-//
-//	Handler(const Handler& other) : mImpl(other.mImpl) {}
-//
-//	Handler& operator=(const Handler& other)
-//	{
-//		this->mImpl = other.mImpl;
-//		return *this;
-//	}
-//
-//	Handler& operator=(std::tr1::shared_ptr<HandlerImpl> impl)
-//	{
-//		mImpl = impl;
-//		return *this;
-//	}
-//
-//	bool isNull() const
-//	{
-//		return (mImpl.get() == NULL);
-//	}
-//
-//	bool operator==(const Handler& other) const
-//	{
-//		return (this->mImpl == other.mImpl);
-//	}
-//
-//	bool operator!=(const Handler& other) const
-//	{
-//		return (this->mImpl != other.mImpl);
-//	}
-//
-//	void operator()(void* data)
-//	{
-//		// Note: will cause an error here is impl_ is NULL!
-//		assert(isNull() == false);
-//		mImpl->operator()(data);
-//	}
-//
-//private:
-//	std::tr1::shared_ptr<HandlerImpl> mImpl;
-//};
-
 typedef sigc::slot<void, void*> Handler;
 typedef sigc::slot<void, void*, double, FILE*> LogHandler;
 
@@ -237,6 +157,7 @@ struct TopicCallbackSet{
 	std::string topicName;
 	std::string typeName;
 	TopicType topicType;
+	float minimumTimeSeparation;
 	TypeCreateFunction createFn;
 	TypeCopyFunction copyFn;
 	TypeDeleteFunction deleteFn;
