@@ -355,7 +355,7 @@ PxSHMImageClient::readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBaye
 		}
 	}
 	while (shm.bytesWaiting() && subscribeLatest);
-	
+
 	return true;
 }
 
