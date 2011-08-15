@@ -75,6 +75,7 @@ public:
 	bool readMonoImage(const mavlink_message_t* msg, cv::Mat& img);
 	bool readStereoImage(const mavlink_message_t* msg, cv::Mat& imgLeft, cv::Mat& imgRight);
 	bool readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBayer, cv::Mat& imgDepth);
+	bool readRGBDImage(cv::Mat& img, cv::Mat& imgDepth);
 
 private:
 	bool readCameraType(PxSHM::CameraType& cameraType);

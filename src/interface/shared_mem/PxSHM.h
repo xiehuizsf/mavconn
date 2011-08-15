@@ -58,7 +58,8 @@ public:
 		CAMERA_MONO_24 = 1,
 		CAMERA_STEREO_8 = 2,
 		CAMERA_STEREO_24 = 3,
-		CAMERA_KINECT = 4
+		CAMERA_KINECT = 4,
+		CAMERA_RGBD = 5
 	} CameraType;
 
 	typedef enum

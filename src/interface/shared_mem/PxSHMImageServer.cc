@@ -216,6 +216,15 @@ PxSHMImageServer::writeKinectImage(const cv::Mat& imgBayer, const cv::Mat& imgDe
 	imgSeq++;
 }
 
+void
+PxSHMImageServer::writeRGBDImage(const cv::Mat& img, const cv::Mat& imgDepth,
+								 uint64_t timestamp, float roll, float pitch, float yaw)
+{
+	writeImage(PxSHM::CAMERA_RGBD, img, imgDepth);
+
+	imgSeq++;
+}
+
 bool
 PxSHMImageServer::writeImage(PxSHM::CameraType cameraType, const cv::Mat& img,
 							 const cv::Mat& img2)
@@ -230,7 +239,8 @@ PxSHMImageServer::writeImage(PxSHM::CameraType cameraType, const cv::Mat& img,
 
 	if (cameraType == PxSHM::CAMERA_STEREO_8 ||
 		cameraType == PxSHM::CAMERA_STEREO_24 ||
-		cameraType == PxSHM::CAMERA_KINECT)
+		cameraType == PxSHM::CAMERA_KINECT ||
+		cameraType == PxSHM::CAMERA_RGBD)
 	{
 		if (img2.empty())
 		{

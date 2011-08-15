@@ -360,6 +360,37 @@ PxSHMImageClient::readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBaye
 }
 
 bool
+PxSHMImageClient::readRGBDImage(cv::Mat& img, cv::Mat& imgDepth)
+{
+	if (!shm.bytesWaiting())
+	{
+		return false;
+	}
+
+	do
+	{
+		PxSHM::CameraType cameraType;
+		if (!readCameraType(cameraType))
+		{
+			return false;
+		}
+
+		if (cameraType != PxSHM::CAMERA_RGBD)
+		{
+			return false;
+		}
+
+		if (!readImage(img, imgDepth))
+		{
+			return false;
+		}
+	}
+	while (shm.bytesWaiting() && subscribeLatest);
+
+	return true;
+}
+
+bool
 PxSHMImageClient::readCameraType(PxSHM::CameraType& cameraType)
 {
 	uint32_t dataLength = shm.readDataPacket(data, 4);
