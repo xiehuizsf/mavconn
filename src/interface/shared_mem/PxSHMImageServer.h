@@ -77,11 +77,19 @@ public:
 						  float z, float lon, float lat, float alt, float ground_x, float ground_y, float ground_z);
 	
 	void writeRGBDImage(const cv::Mat& img, const cv::Mat& imgDepth,
-						uint64_t timestamp, float roll, float pitch, float yaw);
+						uint64_t timestamp, float roll, float pitch, float yaw,
+						const cv::Mat& cameraMatrix);
 
 private:
 	bool writeImage(PxSHM::CameraType cameraType, const cv::Mat& img,
 					const cv::Mat& img2 = cv::Mat());
+
+	bool writeImageWithCameraInfo(PxSHM::CameraType cameraType,
+								  uint64_t timestamp,
+								  float roll, float pitch, float yaw,
+								  const cv::Mat& cameraMatrix,
+								  const cv::Mat& img,
+								  const cv::Mat& img2 = cv::Mat());
 
 	int sysid;
 	int compid;

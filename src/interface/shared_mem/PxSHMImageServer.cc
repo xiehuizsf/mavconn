@@ -218,9 +218,12 @@ PxSHMImageServer::writeKinectImage(const cv::Mat& imgBayer, const cv::Mat& imgDe
 
 void
 PxSHMImageServer::writeRGBDImage(const cv::Mat& img, const cv::Mat& imgDepth,
-								 uint64_t timestamp, float roll, float pitch, float yaw)
+								 uint64_t timestamp, float roll, float pitch, float yaw,
+								 const cv::Mat& cameraMatrix)
 {
-	writeImage(PxSHM::CAMERA_RGBD, img, imgDepth);
+	writeImageWithCameraInfo(PxSHM::CAMERA_RGBD,
+							 timestamp, roll, pitch, yaw, cameraMatrix,
+							 img, imgDepth);
 
 	imgSeq++;
 }
@@ -278,6 +281,91 @@ PxSHMImageServer::writeImage(PxSHM::CameraType cameraType, const cv::Mat& img,
 
 		type = img2.type();
 		memcpy(&(data[24]), &type, 4);
+
+		memcpy(&(data[headerLength + img.step[0] * img.rows]), img2.data,
+			   img2.step[0] * img2.rows);
+	}
+
+	shm.writeDataPacket(data);
+
+	return true;
+}
+
+bool
+PxSHMImageServer::writeImageWithCameraInfo(PxSHM::CameraType cameraType,
+										   uint64_t timestamp,
+										   float roll, float pitch, float yaw,
+										   const cv::Mat& cameraMatrix,
+										   const cv::Mat& img,
+							 	 	 	   const cv::Mat& img2)
+{
+	if (img.empty())
+	{
+		fprintf(stderr, "# WARNING: img parameter should not be empty.\n");
+		return false;
+	}
+
+	uint32_t headerLength = 76;
+
+	if (cameraType == PxSHM::CAMERA_STEREO_8 ||
+		cameraType == PxSHM::CAMERA_STEREO_24 ||
+		cameraType == PxSHM::CAMERA_KINECT ||
+		cameraType == PxSHM::CAMERA_RGBD)
+	{
+		if (img2.empty())
+		{
+			fprintf(stderr, "# WARNING: img2 parameter should not be empty.\n");
+			return false;
+		}
+
+		headerLength += 8;
+	}
+
+	uint32_t dataLength = headerLength + img.step[0] * img.rows +
+						  img2.step[0] * img2.rows;
+
+	if (data.capacity() < dataLength)
+	{
+		data.reserve(data.capacity() * 2);
+	}
+
+	data.resize(dataLength);
+
+	int type = img.type();
+
+	// write header
+	memcpy(&(data[0]), &cameraType, 4);
+	memcpy(&(data[4]), &timestamp, 8);
+	memcpy(&(data[12]), &roll, 4);
+	memcpy(&(data[16]), &pitch, 4);
+	memcpy(&(data[20]), &yaw, 4);
+
+	assert(cameraMatrix.rows == 3);
+	assert(cameraMatrix.col == 3);
+
+	int mark = 24;
+	for (int i = 0; i < cameraMatrix.rows; ++i)
+	{
+		for (int j = 0; j < cameraMatrix.cols; ++j)
+		{
+			memcpy(&(data[mark]), &(cameraMatrix.at<float>(i,j)), 4);
+			mark += 4;
+		}
+	}
+
+	memcpy(&(data[mark]), &(img.cols), 4);
+	memcpy(&(data[mark+4]), &(img.rows), 4);
+	memcpy(&(data[mark+8]), img.step.p, 4);
+	memcpy(&(data[mark+12]), &type, 4);
+
+	memcpy(&(data[headerLength]), img.data, img.step[0] * img.rows);
+
+	if (!img2.empty())
+	{
+		memcpy(&(data[mark+16]), img2.step.p, 4);
+
+		type = img2.type();
+		memcpy(&(data[mark+20]), &type, 4);
 
 		memcpy(&(data[headerLength + img.step[0] * img.rows]), img2.data,
 			   img2.step[0] * img2.rows);

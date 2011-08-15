@@ -75,13 +75,19 @@ public:
 	bool readMonoImage(const mavlink_message_t* msg, cv::Mat& img);
 	bool readStereoImage(const mavlink_message_t* msg, cv::Mat& imgLeft, cv::Mat& imgRight);
 	bool readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBayer, cv::Mat& imgDepth);
-	bool readRGBDImage(cv::Mat& img, cv::Mat& imgDepth);
+	bool readRGBDImage(cv::Mat& img, cv::Mat& imgDepth, uint64_t& timestamp,
+					   float& roll, float& pitch, float& yaw,
+					   cv::Mat& cameraMatrix);
 
 private:
 	bool readCameraType(PxSHM::CameraType& cameraType);
 
 	bool readImage(cv::Mat& img);
 	bool readImage(cv::Mat& img, cv::Mat& img2);
+	bool readImageWithCameraInfo(uint64_t& timestamp,
+								 float& roll, float& pitch, float& yaw,
+								 cv::Mat& cameraMatrix,
+								 cv::Mat& img, cv::Mat& img2);
 
 	PxSHM::Camera cam1;
 	PxSHM::Camera cam2;
