@@ -60,7 +60,7 @@ CONFIGURE_FILE(MAVCONNPathConfig.h.in ${CMAKE_CURRENT_BINARY_DIR}/MAVCONNPathCon
 # Set the search paths for include files
 INCLUDE_DIRECTORIES(
   # External
-  ${CV_INCLUDE_DIR}
+  ${OPENCV_CORE_INCLUDE_DIR}
 
   # All library includes are prefixed with the path to avoid conflicts
   ${CMAKE_CURRENT_SOURCE_DIR}

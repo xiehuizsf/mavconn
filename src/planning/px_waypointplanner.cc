@@ -954,7 +954,7 @@ int main(int argc, char* argv[])
                     break;
                 }
 
-                printf("WP % 3u%s: Frame: %u\t Command: % 3u\tOrbit: % 6.2f\t\tparam1: % 6.2f\tparam2: % 7.2f\tX: % 7.2f\tY: % 7.2f\tZ: % 7.2f\tYaw: % 7.2f\tAuto-Cont: %u\t\n", wp->seq, (wp->current?"*":" "), wp->frame, wp->command, wp->param3, wp->param1, wp->param2, wp->x, wp->y, wp->z, wp->param4, wp->autocontinue);
+                printf("WP %3u%s: Frame: %u\t Command: %3u\tOrbit: %6.2f\t\tparam1: %6.2f\tparam2: %7.2f\tX: %7.2f\tY: %7.2f\tZ: %7.2f\tYaw: %7.2f\tAuto-Cont: %u\t\n", wp->seq, (wp->current?"*":" "), wp->frame, wp->command, wp->param3, wp->param1, wp->param2, wp->x, wp->y, wp->z, wp->param4, wp->autocontinue);
                 waypoints->push_back(wp);
             }
         }

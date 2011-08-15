@@ -59,6 +59,8 @@ public:
 	bool init(int sysid, int compid, lcm_t* lcm,
 			  PxSHM::Camera cam1, PxSHM::Camera cam2 = PxSHM::CAMERA_NONE);
 	
+	int getCameraConfig(void) const;
+
 	void writeMonoImage(const cv::Mat& img, uint64_t camId,
 						uint64_t timestamp, float roll, float pitch, float yaw,
 						float z, float lon, float lat, float alt, float ground_x, float ground_y, float ground_z,

@@ -34,6 +34,8 @@ This file is part of the PIXHAWK project
 #include "PxSHMImageClient.h"
 
 PxSHMImageClient::PxSHMImageClient()
+ : cam1(PxSHM::CAMERA_NONE)
+ , cam2(PxSHM::CAMERA_NONE)
 {
 	
 }
@@ -43,7 +45,9 @@ PxSHMImageClient::init(bool subscribeLatest,
 					   PxSHM::Camera cam1, PxSHM::Camera cam2)
 {
 	this->subscribeLatest = subscribeLatest;
-	
+	this->cam1 = cam1;
+	this->cam2 = cam2;
+
 	data.reserve(1024 * 1024);
 
 	if (!shm.init(cam1 | cam2, PxSHM::CLIENT_TYPE, 128, 1, 1024 * 1024, 10))
@@ -238,6 +242,12 @@ PxSHMImageClient::getGroundTruth(const mavlink_message_t* msg, float& ground_x, 
 	}
 }
 
+int
+PxSHMImageClient::getCameraConfig(void) const
+{
+	return (cam1 | cam2);
+}
+
 bool
 PxSHMImageClient::readMonoImage(const mavlink_message_t* msg, cv::Mat& img)
 {
@@ -345,7 +355,7 @@ PxSHMImageClient::readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBaye
 		}
 	}
 	while (shm.bytesWaiting() && subscribeLatest);
-	
+
 	return true;
 }
 

@@ -241,7 +241,7 @@ PxSHM::writeInfoPacket(const std::vector<uint8_t>& data)
 }
 
 int
-PxSHM::readDataPacket(std::vector<uint8_t>& data, int length)
+PxSHM::readDataPacket(std::vector<uint8_t>& data, uint32_t length)
 {
 	unsigned int shmkey, off;
 	memcpy(&shmkey, mem, 4);
