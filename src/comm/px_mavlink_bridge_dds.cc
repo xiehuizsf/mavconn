@@ -8,11 +8,13 @@
 #include "dds/interface/rgbd_image/rgbd_image_interface.h"
 #include "../interface/shared_mem/PxSHMImageClient.h"
 #include "../interface/shared_mem/PxSHMImageServer.h"
+#include "PxZip.h"
 
 bool verbose = false;
 bool quit = false;
 
 std::vector<PxSHMImageServer> imageServerVec;
+std::vector<PxSHMImageServer> rgbdServerVec;
 std::vector<PxSHMImageClient> imageClientVec;
 
 dds_image_message_t dds_image_msg;
@@ -121,7 +123,7 @@ imageLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 			dds_image_msg.step2 = imgDepth.step[0];
 			dds_image_msg.type2 = imgDepth.type();
 
-			cv::imencode(".jpg", imgDepth, buffer, compressionParams);
+			PxZip::compress(imgDepth.data, imgDepth.step * imgDepth.rows, buffer);
 			dds_image_msg.imageData2.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
 
 			cameraType = PxSHM::CAMERA_KINECT;
@@ -213,7 +215,7 @@ rgbdLCMHandler(void)
 									 roll, pitch, yaw, cameraMatrix))
 			{
 				dds_rgbd_image_msg.camera_config = client.getCameraConfig();
-				dds_rgbd_image_msg.camera_type = PxSHM::CAMERA_RGB;
+				dds_rgbd_image_msg.camera_type = PxSHM::CAMERA_RGBD;
 				dds_rgbd_image_msg.timestamp = timestamp;
 				dds_rgbd_image_msg.roll = roll;
 				dds_rgbd_image_msg.pitch = pitch;
@@ -238,7 +240,7 @@ rgbdLCMHandler(void)
 				dds_rgbd_image_msg.step2 = imgDepth.step[0];
 				dds_rgbd_image_msg.type2 = imgDepth.type();
 
-				// TODO: compress imgDepth data
+				PxZip::compress(imgDepth.data, imgDepth.step * imgDepth.rows, buffer);
 				dds_rgbd_image_msg.imageData2.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
 
 				// publish image to DDS
@@ -308,10 +310,13 @@ imageDDSHandler(void* msg)
 	}
 	else if (dds_msg->camera_type == PxSHM::CAMERA_KINECT)
 	{
-		cv::Mat buffer(dds_msg->imageData1.length(), 1, CV_8U, dds_msg->imageData1.get_contiguous_buffer());
-		cv::Mat imgBayer = cv::imdecode(buffer, -1);
-		buffer = cv::Mat(dds_msg->imageData2.length(), 1, CV_8U, dds_msg->imageData2.get_contiguous_buffer());
-		cv::Mat imgDepth = cv::imdecode(buffer, -1);
+		cv::Mat imgBuffer(dds_msg->imageData1.length(), 1, CV_8U, dds_msg->imageData1.get_contiguous_buffer());
+		cv::Mat imgBayer = cv::imdecode(imgBuffer, -1);
+		
+		std::vector<uint8_t> buffer;
+		PxZip::decompress(reinterpret_cast<uint8_t*>(dds_msg->imageData2.get_contiguous_buffer()),
+						  dds_msg->imageData2.length(), buffer);
+		cv::Mat imgDepth(buffer);
 
 		server.writeKinectImage(imgBayer, imgDepth, dds_msg->timestamp,
 								dds_msg->roll, dds_msg->pitch, dds_msg->yaw,
@@ -323,6 +328,59 @@ imageDDSHandler(void* msg)
 	if (verbose)
 	{
 		fprintf(stderr, "# INFO: Forwarded image from DDS to LCM.\n");
+	}
+}
+
+void
+rgbdDDSHandler(void* msg)
+{
+	dds_rgbd_image_message_t* dds_msg = reinterpret_cast<dds_rgbd_image_message_t*>(msg);
+
+	int serverIdx = -1;
+	for (size_t i = 0; i < rgbdServerVec.size(); ++i)
+	{
+		PxSHMImageServer& server = rgbdServerVec.at(i);
+		if (server.getCameraConfig() == dds_msg->camera_config)
+		{
+			serverIdx = i;
+			break;
+		}
+	}
+
+	if (serverIdx == -1)
+	{
+		return;
+	}
+
+	PxSHMImageServer& server = rgbdServerVec.at(serverIdx);
+
+	// write image(s) to shared memory
+	assert(dds_msg->camera_type == PxSHM::CAMERA_RGBD);
+
+	cv::Mat imgBuffer(dds_msg->imageData1.length(), 1, CV_8U, dds_msg->imageData1.get_contiguous_buffer());
+	cv::Mat imgColor = cv::imdecode(imgBuffer, -1);
+		
+	std::vector<uint8_t> buffer;
+	PxZip::decompress(reinterpret_cast<uint8_t*>(dds_msg->imageData2.get_contiguous_buffer()),
+					  dds_msg->imageData2.length(), buffer);
+	cv::Mat imgDepth(buffer);
+
+	cv::Mat cameraMatrix(3, 3, CV_32F);
+	for (int i = 0; i < 3; ++i)
+	{
+		for (int j = 0; j < 3; ++j)
+		{
+			cameraMatrix.at<float>(i,j) = dds_msg->camera_matrix[i * 3 + j];
+		}
+	}
+
+	server.writeRGBDImage(imgColor, imgDepth, dds_msg->timestamp,
+	  					  dds_msg->roll, dds_msg->pitch, dds_msg->yaw,
+						  cameraMatrix);
+
+	if (verbose)
+	{
+		fprintf(stderr, "# INFO: Forwarded RGBD image from DDS to LCM.\n");
 	}
 }
 
@@ -477,11 +535,19 @@ main(int argc, char** argv)
 		imageServerVec.at(2).init(getSystemID(), PX_COMP_ID_CAMERA, lcm, PxSHM::CAMERA_DOWNWARD_LEFT);
 		imageServerVec.at(3).init(getSystemID(), PX_COMP_ID_CAMERA, lcm, PxSHM::CAMERA_DOWNWARD_LEFT, PxSHM::CAMERA_DOWNWARD_RIGHT);
 
+		rgbdServerVec.resize(2);
+		rgbdServerVec.at(0).init(getSystemID(), PX_COMP_ID_CAMERA, lcm, PxSHM::CAMERA_FORWARD_RGBD);
+		rgbdServerVec.at(1).init(getSystemID(), PX_COMP_ID_CAMERA, lcm, PxSHM::CAMERA_DOWNWARD_RGBD);
+
 		// subscribe to DDS messages
 		px::Handler handler;
 		handler = px::Handler(sigc::ptr_fun(imageDDSHandler));
 		px::ImageTopic::instance()->setMinimumTimeSeparation(imageMinimumSeparation);
-		px::ImageTopic::instance()->subscribe(handler, px::SUBSCRIBE_ALL);
+		px::ImageTopic::instance()->subscribe(handler, px::SUBSCRIBE_LATEST);
+		
+		handler = px::Handler(sigc::ptr_fun(rgbdDDSHandler));
+		px::RGBDImageTopic::instance()->setMinimumTimeSeparation(imageMinimumSeparation);
+		px::RGBDImageTopic::instance()->subscribe(handler, px::SUBSCRIBE_LATEST);
 
 		handler = px::Handler(sigc::bind(sigc::ptr_fun(mavlinkDDSHandler), lcm));
 		px::MavlinkTopic::instance()->subscribe(handler, px::SUBSCRIBE_ALL);
@@ -499,7 +565,7 @@ main(int argc, char** argv)
 		mavlink_message_t_unsubscribe(lcm, mavlinkLCMSub);
 
 		dds_image_message_t_finalize(&dds_image_msg);
-		dds_image_message_t_finalize(&dds_rgbd_image_msg);
+		dds_rgbd_image_message_t_finalize(&dds_rgbd_image_msg);
 	}
 	lcm_destroy(lcm);
 

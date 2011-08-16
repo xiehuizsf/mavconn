@@ -341,7 +341,7 @@ PxSHMImageServer::writeImageWithCameraInfo(PxSHM::CameraType cameraType,
 	memcpy(&(data[20]), &yaw, 4);
 
 	assert(cameraMatrix.rows == 3);
-	assert(cameraMatrix.col == 3);
+	assert(cameraMatrix.cols == 3);
 
 	int mark = 24;
 	for (int i = 0; i < cameraMatrix.rows; ++i)

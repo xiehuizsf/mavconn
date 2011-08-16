@@ -59,7 +59,7 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
   ENDIF(CMAKE_SYSTEM_PROCESSOR MATCHES "i[3-6]|x86_64")
 ENDIF(CMAKE_SYSTEM_NAME MATCHES "Linux")
 
-PIXHAWK_EXECUTABLE(px_mavlink_bridge_dds px_mavlink_bridge_dds.cc)
+PIXHAWK_EXECUTABLE(px_mavlink_bridge_dds px_mavlink_bridge_dds.cc PxZip.cc)
 PIXHAWK_LINK_LIBRARIES(px_mavlink_bridge_dds
   dl
   nsl
@@ -69,6 +69,7 @@ PIXHAWK_LINK_LIBRARIES(px_mavlink_bridge_dds
   ${RTI_LIBRARIES}
   ${GLIBMM2_LIBRARY}
   ${SIGC++_LIBRARY}
+  ${ZLIB_LIBRARY}
   mavconn_dds
   mavconn_lcm
   mavconn_shm
