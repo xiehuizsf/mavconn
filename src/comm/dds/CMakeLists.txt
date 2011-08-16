@@ -9,6 +9,7 @@ INCLUDE_DIRECTORIES(
   ${SIGC++_INCLUDE_DIR}
   ${RTI_INCLUDE_DIR}
   ${RTI_INCLUDE_DIR}/ndds
+  ${ZLIB_INCLUDE_DIRS}
 )
 
 IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -38,6 +39,10 @@ SET_SOURCE_FILES(DDS_INTERFACE_SRC_FILES
   interface/mavlink/dds_mavlink_message_tPlugin.cxx
   interface/mavlink/dds_mavlink_message_tSupport.cxx
   interface/mavlink/mavlink_interface.cc
+  interface/rgbd_image/dds_rgbd_image_message_t.cxx
+  interface/rgbd_image/dds_rgbd_image_message_tPlugin.cxx
+  interface/rgbd_image/dds_rgbd_image_message_tSupport.cxx
+  interface/rgbd_image/rgbd_image_interface.cc
 )
 
 PIXHAWK_LIBRARY(mavconn_dds SHARED ${DDS_CORE_SRC_FILES} ${DDS_INTERFACE_SRC_FILES})
@@ -48,6 +53,7 @@ PIXHAWK_LINK_LIBRARIES(mavconn_dds
   ${RTI_LIBRARIES}
   ${GLIBMM2_LIBRARY}
   ${SIGC++_LIBRARY}
+  ${ZLIB_LIBRARIES}
 )
 ENDIF(RTI_FOUND)
 ENDIF(SIGC++_FOUND)

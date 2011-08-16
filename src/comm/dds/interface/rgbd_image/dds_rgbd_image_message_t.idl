@@ -1,0 +1,18 @@
+struct dds_rgbd_image_message_t
+{
+	long camera_config;	///< PxSHM::Camera enumeration
+	long camera_type;	///< PxSHM::CameraType enumeration
+	unsigned long long timestamp;
+	float roll;
+	float pitch;
+	float yaw;
+	float camera_matrix[9];
+	long cols;		///< Number of columns in image(s)
+	long rows;		///< Number of rows in image(s)
+	long step1;		///< Step (stride) of image 1
+	long type1;		///< Type of image 1
+	sequence<char,3891200> imageData1;
+	long step2;		///< Step (stride) of image 2
+	long type2;		///< Type of image 2
+	sequence<char,3891200> imageData2;
+};
