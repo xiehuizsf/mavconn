@@ -99,6 +99,7 @@ bool verbose = false;				///< Enable verbose output
 bool emitHeartbeat = false;			///< Generate a heartbeat with this process
 bool emitLoad = false;				///< Emit CPU load as debug message 101
 bool debug = false;					///< Enable debug functions and output
+bool cpu_performance = false;		///< Set CPU to performance mode (needs root)
 
 uint64_t currTime;
 uint64_t lastTime;
@@ -205,6 +206,7 @@ int main (int argc, char ** argv)
 			{ "sysid", 'a', 0, G_OPTION_ARG_INT, &systemid, "ID of this system", NULL },
 			{ "compid", 'c', 0, G_OPTION_ARG_INT, &compid, "ID of this component", NULL },
 			{ "heartbeat", NULL, 0, G_OPTION_ARG_NONE, &emitHeartbeat, "Emit Heartbeat", (emitHeartbeat) ? "on" : "off" },
+			{ "cpu", NULL, 0, G_OPTION_ARG_NONE, &cpu_performance, "Set CPU to performance mode", NULL },
 			{ "load", 'l', 0, G_OPTION_ARG_NONE, &emitLoad, "Emit CPU load as debug message 101", NULL },
 			{ "silent", 's', 0, G_OPTION_ARG_NONE, &silent, "Be silent", NULL },
 			{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose, "Be verbose", NULL },
@@ -274,6 +276,14 @@ int main (int argc, char ** argv)
 
 		if (currTime - lastTime > 1000000)
 		{
+
+			if (cpu_performance)
+			{
+				//set cpu to always full power
+				system("echo performance > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor");
+				system("echo performance > /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor");
+			}
+
 			// SEND OUT TIME MESSAGE
 			// send message as close to time aquisition as possible
 			mavlink_message_t msg;

@@ -34,6 +34,8 @@ This file is part of the PIXHAWK project
 #include "PxSHMImageClient.h"
 
 PxSHMImageClient::PxSHMImageClient()
+ : cam1(PxSHM::CAMERA_NONE)
+ , cam2(PxSHM::CAMERA_NONE)
 {
 	
 }
@@ -43,7 +45,9 @@ PxSHMImageClient::init(bool subscribeLatest,
 					   PxSHM::Camera cam1, PxSHM::Camera cam2)
 {
 	this->subscribeLatest = subscribeLatest;
-	
+	this->cam1 = cam1;
+	this->cam2 = cam2;
+
 	data.reserve(1024 * 1024);
 
 	if (!shm.init(cam1 | cam2, PxSHM::CLIENT_TYPE, 128, 1, 1024 * 1024, 10))
@@ -216,6 +220,35 @@ PxSHMImageClient::getGPS(const mavlink_message_t* msg, float& lat, float& lon, f
 }
 
 bool
+PxSHMImageClient::getGroundTruth(const mavlink_message_t* msg, float& ground_x, float& ground_y, float& ground_z)
+{
+	// Decode message
+	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
+	{
+		// Instantly return if MAVLink message did not contain an image
+		return false;
+	}
+	else
+	{
+		// Extract the image meta information and pointer location from the image
+		mavlink_image_available_t img;
+		mavlink_msg_image_available_decode(msg, &img);
+
+		ground_x = img.ground_x;
+		ground_y = img.ground_y;
+		ground_z = img.ground_z;
+
+		return true;
+	}
+}
+
+int
+PxSHMImageClient::getCameraConfig(void) const
+{
+	return (cam1 | cam2);
+}
+
+bool
 PxSHMImageClient::readMonoImage(const mavlink_message_t* msg, cv::Mat& img)
 {
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
@@ -322,7 +355,42 @@ PxSHMImageClient::readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBaye
 		}
 	}
 	while (shm.bytesWaiting() && subscribeLatest);
-	
+
+	return true;
+}
+
+bool
+PxSHMImageClient::readRGBDImage(cv::Mat& img, cv::Mat& imgDepth,
+								uint64_t& timestamp,
+								float& roll, float& pitch, float& yaw,
+								cv::Mat& cameraMatrix)
+{
+	if (!shm.bytesWaiting())
+	{
+		return false;
+	}
+
+	do
+	{
+		PxSHM::CameraType cameraType;
+		if (!readCameraType(cameraType))
+		{
+			return false;
+		}
+
+		if (cameraType != PxSHM::CAMERA_RGBD)
+		{
+			return false;
+		}
+
+		if (!readImageWithCameraInfo(timestamp, roll, pitch, yaw, cameraMatrix,
+									 img, imgDepth))
+		{
+			return false;
+		}
+	}
+	while (shm.bytesWaiting() && subscribeLatest);
+
 	return true;
 }
 
@@ -400,6 +468,60 @@ PxSHMImageClient::readImage(cv::Mat& img, cv::Mat& img2)
 	temp.copyTo(img);
 
 	cv::Mat temp2(rows, cols, type2, &(data[28 + rows * step]), step2);
+	temp2.copyTo(img2);
+
+	return true;
+}
+
+bool
+PxSHMImageClient::readImageWithCameraInfo(uint64_t& timestamp,
+										  float& roll, float& pitch, float& yaw,
+										  cv::Mat& cameraMatrix,
+										  cv::Mat& img, cv::Mat& img2)
+{
+	uint32_t dataLength = shm.readDataPacket(data);
+	if (dataLength <= 84)
+	{
+		return false;
+	}
+
+	int rows, cols, type, type2;
+	uint32_t step, step2;
+
+//	memcpy(&cameraType, &(data[0]), 4);
+	memcpy(&timestamp, &(data[4]), 8);
+	memcpy(&roll, &(data[12]), 4);
+	memcpy(&pitch, &(data[16]), 4);
+	memcpy(&yaw, &(data[20]), 4);
+
+	int mark = 24;
+	cameraMatrix = cv::Mat(3, 3, CV_32F);
+	for (int i = 0; i < cameraMatrix.rows; ++i)
+	{
+		for (int j = 0; j < cameraMatrix.cols; ++j)
+		{
+			memcpy(&(cameraMatrix.at<float>(i,j)), &(data[mark]), 4);
+			mark += 4;
+		}
+	}
+
+	memcpy(&cols, &(data[mark]), 4);
+	memcpy(&rows, &(data[mark+4]), 4);
+	memcpy(&step, &(data[mark+8]), 4);
+	memcpy(&type, &(data[mark+12]), 4);
+	memcpy(&step2, &(data[mark+16]), 4);
+	memcpy(&type2, &(data[mark+20]), 4);
+
+	if (dataLength != 84 + rows * step + rows * step2)
+	{
+		// data length is not consistent with image type
+		return false;
+	}
+
+	cv::Mat temp(rows, cols, type, &(data[84]), step);
+	temp.copyTo(img);
+
+	cv::Mat temp2(rows, cols, type2, &(data[84 + rows * step]), step2);
 	temp2.copyTo(img2);
 
 	return true;

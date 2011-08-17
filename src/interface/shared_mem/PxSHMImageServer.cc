@@ -54,11 +54,17 @@ PxSHMImageServer::init(int sysid, int compid, lcm_t* lcm,
 	data.reserve(1024 * 1024);
 	return shm.init(key, PxSHM::SERVER_TYPE, 128, 1, 1024 * 1024, 10);
 }
-	
+
+int
+PxSHMImageServer::getCameraConfig(void) const
+{
+	return cam1 | cam2;
+}
+
 void
 PxSHMImageServer::writeMonoImage(const cv::Mat& img, uint64_t camId,
 								 uint64_t timestamp, float roll, float pitch, float yaw,
-								 float z, float lon, float lat, float alt,
+								 float z, float lon, float lat, float alt, float ground_x, float ground_y, float ground_z,
 								 uint32_t exposure)
 {
 	PxSHM::CameraType cameraType;
@@ -99,6 +105,9 @@ PxSHMImageServer::writeMonoImage(const cv::Mat& img, uint64_t camId,
 	imginfo.lon = lon;
 	imginfo.lat = lat;
 	imginfo.alt = alt;
+	imginfo.ground_x = ground_x;
+	imginfo.ground_y = ground_y;
+	imginfo.ground_z = ground_z;
 	
 	mavlink_message_t msg;
 	mavlink_msg_image_available_encode(this->sysid, this->compid, &msg, &imginfo);
@@ -111,7 +120,7 @@ void
 PxSHMImageServer::writeStereoImage(const cv::Mat& imgLeft, uint64_t camIdLeft,
 								   const cv::Mat& imgRight, uint64_t camIdRight,
 								   uint64_t timestamp, float roll, float pitch, float yaw,
-								   float z, float lon, float lat, float alt,
+								   float z, float lon, float lat, float alt, float ground_x, float ground_y, float ground_z,
 								   uint32_t exposure)
 {
 	PxSHM::CameraType cameraType;
@@ -152,6 +161,9 @@ PxSHMImageServer::writeStereoImage(const cv::Mat& imgLeft, uint64_t camIdLeft,
 	imginfo.lon = lon;
 	imginfo.lat = lat;
 	imginfo.alt = alt;
+	imginfo.ground_x = ground_x;
+	imginfo.ground_y = ground_y;
+	imginfo.ground_z = ground_z;
 	
 	mavlink_message_t msg;
 	mavlink_msg_image_available_encode(this->sysid, this->compid, &msg, &imginfo);
@@ -163,7 +175,7 @@ PxSHMImageServer::writeStereoImage(const cv::Mat& imgLeft, uint64_t camIdLeft,
 void
 PxSHMImageServer::writeKinectImage(const cv::Mat& imgBayer, const cv::Mat& imgDepth,
 								   uint64_t timestamp, float roll, float pitch, float yaw,
-								   float z, float lon, float lat, float alt)
+								   float z, float lon, float lat, float alt, float ground_x, float ground_y, float ground_z)
 {
 	writeImage(PxSHM::CAMERA_KINECT, imgBayer, imgDepth);
 	
@@ -193,11 +205,26 @@ PxSHMImageServer::writeKinectImage(const cv::Mat& imgBayer, const cv::Mat& imgDe
 	imginfo.lon = lon;
 	imginfo.lat = lat;
 	imginfo.alt = alt;
+	imginfo.ground_x = ground_x;
+	imginfo.ground_y = ground_y;
+	imginfo.ground_z = ground_z;
 	
 	mavlink_message_t msg;
 	mavlink_msg_image_available_encode(this->sysid, this->compid, &msg, &imginfo);
 	mavlink_message_t_publish (lcm, "IMAGES", &msg);
 	
+	imgSeq++;
+}
+
+void
+PxSHMImageServer::writeRGBDImage(const cv::Mat& img, const cv::Mat& imgDepth,
+								 uint64_t timestamp, float roll, float pitch, float yaw,
+								 const cv::Mat& cameraMatrix)
+{
+	writeImageWithCameraInfo(PxSHM::CAMERA_RGBD,
+							 timestamp, roll, pitch, yaw, cameraMatrix,
+							 img, imgDepth);
+
 	imgSeq++;
 }
 
@@ -215,7 +242,8 @@ PxSHMImageServer::writeImage(PxSHM::CameraType cameraType, const cv::Mat& img,
 
 	if (cameraType == PxSHM::CAMERA_STEREO_8 ||
 		cameraType == PxSHM::CAMERA_STEREO_24 ||
-		cameraType == PxSHM::CAMERA_KINECT)
+		cameraType == PxSHM::CAMERA_KINECT ||
+		cameraType == PxSHM::CAMERA_RGBD)
 	{
 		if (img2.empty())
 		{
@@ -249,10 +277,95 @@ PxSHMImageServer::writeImage(PxSHM::CameraType cameraType, const cv::Mat& img,
 
 	if (!img2.empty())
 	{
-		memcpy(&(data[20]), img.step.p, 4);
+		memcpy(&(data[20]), img2.step.p, 4);
 
 		type = img2.type();
 		memcpy(&(data[24]), &type, 4);
+
+		memcpy(&(data[headerLength + img.step[0] * img.rows]), img2.data,
+			   img2.step[0] * img2.rows);
+	}
+
+	shm.writeDataPacket(data);
+
+	return true;
+}
+
+bool
+PxSHMImageServer::writeImageWithCameraInfo(PxSHM::CameraType cameraType,
+										   uint64_t timestamp,
+										   float roll, float pitch, float yaw,
+										   const cv::Mat& cameraMatrix,
+										   const cv::Mat& img,
+							 	 	 	   const cv::Mat& img2)
+{
+	if (img.empty())
+	{
+		fprintf(stderr, "# WARNING: img parameter should not be empty.\n");
+		return false;
+	}
+
+	uint32_t headerLength = 76;
+
+	if (cameraType == PxSHM::CAMERA_STEREO_8 ||
+		cameraType == PxSHM::CAMERA_STEREO_24 ||
+		cameraType == PxSHM::CAMERA_KINECT ||
+		cameraType == PxSHM::CAMERA_RGBD)
+	{
+		if (img2.empty())
+		{
+			fprintf(stderr, "# WARNING: img2 parameter should not be empty.\n");
+			return false;
+		}
+
+		headerLength += 8;
+	}
+
+	uint32_t dataLength = headerLength + img.step[0] * img.rows +
+						  img2.step[0] * img2.rows;
+
+	if (data.capacity() < dataLength)
+	{
+		data.reserve(data.capacity() * 2);
+	}
+
+	data.resize(dataLength);
+
+	int type = img.type();
+
+	// write header
+	memcpy(&(data[0]), &cameraType, 4);
+	memcpy(&(data[4]), &timestamp, 8);
+	memcpy(&(data[12]), &roll, 4);
+	memcpy(&(data[16]), &pitch, 4);
+	memcpy(&(data[20]), &yaw, 4);
+
+	assert(cameraMatrix.rows == 3);
+	assert(cameraMatrix.cols == 3);
+
+	int mark = 24;
+	for (int i = 0; i < cameraMatrix.rows; ++i)
+	{
+		for (int j = 0; j < cameraMatrix.cols; ++j)
+		{
+			memcpy(&(data[mark]), &(cameraMatrix.at<float>(i,j)), 4);
+			mark += 4;
+		}
+	}
+
+	memcpy(&(data[mark]), &(img.cols), 4);
+	memcpy(&(data[mark+4]), &(img.rows), 4);
+	memcpy(&(data[mark+8]), img.step.p, 4);
+	memcpy(&(data[mark+12]), &type, 4);
+
+	memcpy(&(data[headerLength]), img.data, img.step[0] * img.rows);
+
+	if (!img2.empty())
+	{
+		memcpy(&(data[mark+16]), img2.step.p, 4);
+
+		type = img2.type();
+		memcpy(&(data[mark+20]), &type, 4);
 
 		memcpy(&(data[headerLength + img.step[0] * img.rows]), img2.data,
 			   img2.step[0] * img2.rows);

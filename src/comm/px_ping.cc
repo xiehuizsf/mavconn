@@ -113,7 +113,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
 						    // This is a response to a ping request
 							uint64_t sendTime = emitTimes.at(ping.seq);
 							uint64_t roundTrip = r_timestamp - sendTime;
-							printf("Response: SYS: %d\t COMP: %d\t roundtrip time: %lld\n", msg->sysid, msg->compid, roundTrip);
+							printf("Response: SYS: %d\t COMP: %d\t roundtrip time: %lu\n", msg->sysid, msg->compid, roundTrip);
 						}
 				}
 			}

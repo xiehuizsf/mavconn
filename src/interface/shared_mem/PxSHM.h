@@ -45,11 +45,13 @@ class PxSHM
 public:
 	typedef enum
 	{
+		CAMERA_NONE = 0x0,
 		CAMERA_FORWARD_LEFT = 0x01,
 		CAMERA_FORWARD_RIGHT = 0x02,
 		CAMERA_DOWNWARD_LEFT = 0x04,
 		CAMERA_DOWNWARD_RIGHT = 0x08,
-		CAMERA_NONE = 0x10
+		CAMERA_FORWARD_RGBD = 0x10,
+		CAMERA_DOWNWARD_RGBD = 0x20
 	} Camera;
 
 	typedef enum
@@ -58,7 +60,8 @@ public:
 		CAMERA_MONO_24 = 1,
 		CAMERA_STEREO_8 = 2,
 		CAMERA_STEREO_24 = 3,
-		CAMERA_KINECT = 4
+		CAMERA_KINECT = 4,
+		CAMERA_RGBD = 5
 	} CameraType;
 
 	typedef enum
@@ -88,7 +91,7 @@ public:
 	 *
 	 * @return Number of bytes read.
 	 */
-	int readDataPacket(std::vector<uint8_t>& data, int length);
+	int readDataPacket(std::vector<uint8_t>& data, uint32_t length);
 
 	/**
 	 * Read data packet and remove it from the shared memory buffer.

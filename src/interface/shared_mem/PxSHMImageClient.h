@@ -69,16 +69,28 @@ public:
 	static bool getRollPitchYaw(const mavlink_message_t* msg, float& roll, float& pitch, float& yaw);
 	static bool getLocalHeight(const mavlink_message_t* msg, float& height);
 	static bool getGPS(const mavlink_message_t* msg, float& lat, float& lon, float& alt);
+	static bool getGroundTruth(const mavlink_message_t* msg, float& ground_x, float& ground_y, float& ground_z);
 	
+	int getCameraConfig(void) const;
 	bool readMonoImage(const mavlink_message_t* msg, cv::Mat& img);
 	bool readStereoImage(const mavlink_message_t* msg, cv::Mat& imgLeft, cv::Mat& imgRight);
 	bool readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBayer, cv::Mat& imgDepth);
+	bool readRGBDImage(cv::Mat& img, cv::Mat& imgDepth, uint64_t& timestamp,
+					   float& roll, float& pitch, float& yaw,
+					   cv::Mat& cameraMatrix);
 
 private:
 	bool readCameraType(PxSHM::CameraType& cameraType);
 
 	bool readImage(cv::Mat& img);
 	bool readImage(cv::Mat& img, cv::Mat& img2);
+	bool readImageWithCameraInfo(uint64_t& timestamp,
+								 float& roll, float& pitch, float& yaw,
+								 cv::Mat& cameraMatrix,
+								 cv::Mat& img, cv::Mat& img2);
+
+	PxSHM::Camera cam1;
+	PxSHM::Camera cam2;
 
 	bool subscribeLatest;
 	std::vector<uint8_t> data;

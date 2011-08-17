@@ -59,24 +59,37 @@ public:
 	bool init(int sysid, int compid, lcm_t* lcm,
 			  PxSHM::Camera cam1, PxSHM::Camera cam2 = PxSHM::CAMERA_NONE);
 	
+	int getCameraConfig(void) const;
+
 	void writeMonoImage(const cv::Mat& img, uint64_t camId,
 						uint64_t timestamp, float roll, float pitch, float yaw,
-						float z, float lon, float lat, float alt,
+						float z, float lon, float lat, float alt, float ground_x, float ground_y, float ground_z,
 						uint32_t exposure);
 	
 	void writeStereoImage(const cv::Mat& imgLeft, uint64_t camIdLeft,
 						  const cv::Mat& imgRight, uint64_t camIdRight,
 						  uint64_t timestamp, float roll, float pitch, float yaw,
-						  float z, float lon, float lat, float alt,
+						  float z, float lon, float lat, float alt, float ground_x, float ground_y, float ground_z,
 						  uint32_t exposure);
 	
 	void writeKinectImage(const cv::Mat& imgBayer, const cv::Mat& imgDepth,
 						  uint64_t timestamp, float roll, float pitch, float yaw,
-						  float z, float lon, float lat, float alt);
+						  float z, float lon, float lat, float alt, float ground_x, float ground_y, float ground_z);
 	
+	void writeRGBDImage(const cv::Mat& img, const cv::Mat& imgDepth,
+						uint64_t timestamp, float roll, float pitch, float yaw,
+						const cv::Mat& cameraMatrix);
+
 private:
 	bool writeImage(PxSHM::CameraType cameraType, const cv::Mat& img,
 					const cv::Mat& img2 = cv::Mat());
+
+	bool writeImageWithCameraInfo(PxSHM::CameraType cameraType,
+								  uint64_t timestamp,
+								  float roll, float pitch, float yaw,
+								  const cv::Mat& cameraMatrix,
+								  const cv::Mat& img,
+								  const cv::Mat& img2 = cv::Mat());
 
 	int sysid;
 	int compid;
