@@ -123,7 +123,7 @@ imageLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 			dds_image_msg.step2 = imgDepth.step[0];
 			dds_image_msg.type2 = imgDepth.type();
 
-			PxZip::compress(imgDepth.data, imgDepth.step * imgDepth.rows, buffer);
+			PxZip::compress(imgDepth.data, imgDepth.step[0] * imgDepth.rows, buffer);
 			dds_image_msg.imageData2.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
 
 			cameraType = PxSHM::CAMERA_KINECT;
@@ -240,7 +240,7 @@ rgbdLCMHandler(void)
 				dds_rgbd_image_msg.step2 = imgDepth.step[0];
 				dds_rgbd_image_msg.type2 = imgDepth.type();
 
-				PxZip::compress(imgDepth.data, imgDepth.step * imgDepth.rows, buffer);
+				PxZip::compress(imgDepth.data, imgDepth.step[0] * imgDepth.rows, buffer);
 				dds_rgbd_image_msg.imageData2.from_array(reinterpret_cast<DDS_Char*>(&buffer[0]), buffer.size());
 
 				// publish image to DDS

@@ -20,7 +20,7 @@ PxZip::compress(uint8_t* inData, size_t inDataSize,
 	strm.next_out = tempBuffer;
 	strm.avail_out = kBufferSize;
 	
-	deflateInit(&strm, Z_BEST_COMPRESSION);
+	deflateInit(&strm, Z_BEST_SPEED);
 
 	while (strm.avail_in != 0)
 	{
