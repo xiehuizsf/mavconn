@@ -202,11 +202,6 @@ bool DDSTopicManager::subscribe(const std::string& topicName, Handler& handler,
 		break;
 	}
 
-	reader_qos.time_based_filter.minimum_separation.sec =
-		static_cast<DDS_Long>(topicCallbackSet->minimumTimeSeparation);
-	reader_qos.time_based_filter.minimum_separation.nanosec =
-		static_cast<DDS_UnsignedLong>(topicCallbackSet->minimumTimeSeparation * 1000000000.0f);
-
 	retcode = mSubscriber->set_default_datareader_qos(reader_qos);
 	if (retcode != DDS_RETCODE_OK)
 	{
