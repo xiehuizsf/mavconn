@@ -127,7 +127,9 @@ imageLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 			dds_image_msg.step2 = imgDepth.step[0];
 			dds_image_msg.type2 = imgDepth.type();
 
-			PxZip::instance()->compressData(imgDepth.data, imgDepth.step[0] * imgDepth.rows, buffer);
+			PxZip::instance()->compressData(imgDepth.data,
+											imgDepth.step[0] * imgDepth.rows,
+											buffer);
 			pBuffer = reinterpret_cast<DDS_Char*>(&buffer[0]);
 			dds_image_msg.imageData2.from_array(pBuffer, buffer.size());
 
@@ -349,18 +351,21 @@ imageDDSHandler(void* msg)
 	}
 	else if (dds_msg->camera_type == PxSHM::CAMERA_KINECT)
 	{
-		std::vector<uint8_t> buffer;
+		std::vector<uint8_t> buffer1;
 		uint8_t* pBuffer = reinterpret_cast<uint8_t*>(dds_msg->imageData1.get_contiguous_buffer());
 		PxZip::instance()->decompressData(pBuffer,
 										  dds_msg->imageData1.length(),
-										  buffer);
-		cv::Mat imgBayer(dds_msg->rows, dds_msg->cols, dds_msg->type1, &(buffer[0]), dds_msg->step1);
+										  buffer1);
+		cv::Mat imgBayer(dds_msg->rows, dds_msg->cols, dds_msg->type1,
+						 &(buffer1[0]), dds_msg->step1);
 
+		std::vector<uint8_t> buffer2;
 		pBuffer = reinterpret_cast<uint8_t*>(dds_msg->imageData2.get_contiguous_buffer());
 		PxZip::instance()->decompressData(pBuffer,
 										  dds_msg->imageData2.length(),
-										  buffer);
-		cv::Mat imgDepth(buffer);
+										  buffer2);
+		cv::Mat imgDepth(dds_msg->rows, dds_msg->cols, dds_msg->type2,
+						 &(buffer2[0]), dds_msg->step2);
 
 		server.writeKinectImage(imgBayer, imgDepth, dds_msg->timestamp,
 								dds_msg->roll, dds_msg->pitch, dds_msg->yaw,
@@ -412,7 +417,8 @@ rgbdDDSHandler(void* msg)
 	PxZip::instance()->decompressData(pBuffer,
 									  dds_msg->imageData2.length(),
 									  buffer);
-	cv::Mat imgDepth(buffer);
+	cv::Mat imgDepth(dds_msg->rows, dds_msg->cols, dds_msg->type2,
+					 &(buffer[0]), dds_msg->step2);
 
 	cv::Mat cameraMatrix(3, 3, CV_32F);
 	for (int i = 0; i < 3; ++i)

@@ -45,8 +45,9 @@ PxZip::compressData(unsigned char* inData, size_t inDataSize,
 	std::vector<unsigned char> buffer;
 
 	z_stream strm;
-	strm.zalloc = 0;
-	strm.zfree = 0;
+	strm.zalloc = Z_NULL;
+	strm.zfree = Z_NULL;
+	strm.opaque = Z_NULL;
 	strm.next_in = inData;
 	strm.avail_in = inDataSize;
 	strm.next_out = chunkBuffer;
@@ -54,33 +55,29 @@ PxZip::compressData(unsigned char* inData, size_t inDataSize,
 	
 	deflateInit(&strm, Z_BEST_SPEED);
 
-	while (strm.avail_in != 0)
-	{
- 		int res = deflate(&strm, Z_NO_FLUSH);
- 		assert(res == Z_OK);
- 		if (strm.avail_out == 0)
- 		{
- 			buffer.insert(buffer.end(), chunkBuffer, chunkBuffer + kChunkSize);
-   			strm.next_out = chunkBuffer;
-			strm.avail_out = kChunkSize;
-		}
-	}
+	int flush, ret;
 
-	int deflateRes = Z_OK;
-	while (deflateRes == Z_OK)
+	do
 	{
-		if (strm.avail_out == 0)
+		flush = (strm.avail_in == 0) ? Z_FINISH : Z_NO_FLUSH;
+
+		do
 		{
-			buffer.insert(buffer.end(), chunkBuffer, chunkBuffer + kChunkSize);
 			strm.next_out = chunkBuffer;
 			strm.avail_out = kChunkSize;
-		}
-		deflateRes = deflate(&strm, Z_FINISH);
-	}
 
-	assert(deflateRes == Z_STREAM_END);
-	buffer.insert(buffer.end(), chunkBuffer,
-				  chunkBuffer + kChunkSize - strm.avail_out);
+			ret = deflate(&strm, flush);
+			assert(ret != Z_STREAM_ERROR);
+
+			buffer.insert(buffer.end(), chunkBuffer,
+						  chunkBuffer + kChunkSize - strm.avail_out);
+		}
+		while (strm.avail_out == 0);
+	}
+	while (flush != Z_FINISH);
+
+	assert(ret == Z_STREAM_END);
+
 	deflateEnd(&strm);
 
 	outData.swap(buffer);
@@ -93,8 +90,9 @@ PxZip::decompressData(unsigned char* inData, size_t inDataSize,
 	std::vector<unsigned char> buffer;
 
 	z_stream strm;
-	strm.zalloc = 0;
-	strm.zfree = 0;
+	strm.zalloc = Z_NULL;
+	strm.zfree = Z_NULL;
+	strm.opaque = Z_NULL;
 	strm.next_in = inData;
 	strm.avail_in = inDataSize;
 	strm.next_out = chunkBuffer;
@@ -102,36 +100,33 @@ PxZip::decompressData(unsigned char* inData, size_t inDataSize,
 	
 	inflateInit(&strm);
 
-	while (strm.avail_in != 0)
-	{
- 		int res = inflate(&strm, Z_NO_FLUSH);
- 		assert(res == Z_OK);
- 		if (strm.avail_out == 0)
- 		{
- 			buffer.insert(buffer.end(), chunkBuffer, chunkBuffer + kChunkSize);
-   			strm.next_out = chunkBuffer;
-			strm.avail_out = kChunkSize;
-		}
-	}
+	int ret;
 
-	int inflateRes = Z_OK;
-	while (inflateRes == Z_OK)
+	do
 	{
-		if (strm.avail_out == 0)
+		if (strm.avail_in == 0)
 		{
-			buffer.insert(buffer.end(), chunkBuffer, chunkBuffer + kChunkSize);
+			break;
+		}
+
+		do
+		{
 			strm.next_out = chunkBuffer;
 			strm.avail_out = kChunkSize;
-		}
-		inflateRes = inflate(&strm, Z_FINISH);
-	}
 
-	assert(inflateRes == Z_STREAM_END);
-	buffer.insert(buffer.end(), chunkBuffer,
-				  chunkBuffer + kChunkSize - strm.avail_out);
+			ret = inflate(&strm, Z_NO_FLUSH);
+			assert(ret != Z_STREAM_ERROR);
+
+			buffer.insert(buffer.end(), chunkBuffer,
+						  chunkBuffer + kChunkSize - strm.avail_out);
+		}
+		while (strm.avail_out == 0);
+	}
+	while (ret != Z_STREAM_END);
+
 	inflateEnd(&strm);
 
-	outData.swap(buffer);			  
+	outData.swap(buffer);
 }
 
 void

@@ -257,7 +257,7 @@ PxSHMImageServer::writeImage(PxSHM::CameraType cameraType, const cv::Mat& img,
 	uint32_t dataLength = headerLength + img.step[0] * img.rows +
 						  img2.step[0] * img2.rows;
 
-	if (data.capacity() < dataLength)
+	while (data.capacity() < dataLength)
 	{
 		data.reserve(data.capacity() * 2);
 	}
@@ -273,7 +273,9 @@ PxSHMImageServer::writeImage(PxSHM::CameraType cameraType, const cv::Mat& img,
 	memcpy(&(data[12]), img.step.p, 4);
 	memcpy(&(data[16]), &type, 4);
 
+	char dummy[img.step[0] * img.rows];
 	memcpy(&(data[headerLength]), img.data, img.step[0] * img.rows);
+	//memcpy(&(data[headerLength]), img.data, img.step[0] * img.rows);
 
 	if (!img2.empty())
 	{
@@ -324,7 +326,7 @@ PxSHMImageServer::writeImageWithCameraInfo(PxSHM::CameraType cameraType,
 	uint32_t dataLength = headerLength + img.step[0] * img.rows +
 						  img2.step[0] * img2.rows;
 
-	if (data.capacity() < dataLength)
+	while (data.capacity() < dataLength)
 	{
 		data.reserve(data.capacity() * 2);
 	}
