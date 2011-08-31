@@ -126,6 +126,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
 					|| msg->msgid == MAVLINK_MSG_ID_SET_CAM_SHUTTER
 					|| msg->msgid == MAVLINK_MSG_ID_IMAGE_TRIGGER_CONTROL
 					|| msg->msgid == MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE
+					|| msg->msgid == MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE
 					|| msg->msgid == MAVLINK_MSG_ID_PING
 					|| msg->msgid == MAVLINK_MSG_ID_STATUSTEXT
 					|| msg->msgid == MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET

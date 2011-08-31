@@ -160,7 +160,6 @@ TopicCallbackSet* DDSTopicManager::registerTopic(const TTopic& topicObject,
 	topicCallbackSet->topicName = topicName;
 	topicCallbackSet->typeName = TTypeSupport::get_type_name();
 	topicCallbackSet->topicType = topicObject.getType();
-	topicCallbackSet->minimumTimeSeparation = topicObject.getMinimumTimeSeparation();
 	topicCallbackSet->createFn = (TypeCreateFunction)TTypeSupport::create_data;
 	topicCallbackSet->copyFn = (TypeCopyFunction)TTypeSupport::copy_data;
 	topicCallbackSet->deleteFn = (TypeDeleteFunction)TTypeSupport::delete_data;

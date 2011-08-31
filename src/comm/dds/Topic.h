@@ -90,8 +90,6 @@ public:
 	const std::string& getName(void) const { return topicName; }
 	const std::string& getReverseName(void) const;
 	TopicType getType(void) const { return topicType; }
-	float getMinimumTimeSeparation(void) const { return minimumTimeSeparation; }
-	void setMinimumTimeSeparation(float separation) { minimumTimeSeparation = separation; }
 	TransportBuiltinPolicy getTransportBuiltinPolicy() const { return transportBuiltin; };
 
 protected:
@@ -109,11 +107,6 @@ protected:
 	 * Type of topic: query/reply, publish/subscribe.
 	 */
 	TopicType topicType;
-
-	/**
-	 * Minimum time period between samples.
-	 */
-	float minimumTimeSeparation;
 
 	/**
 	 * List of enabled built-in transports.
@@ -162,7 +155,6 @@ Topic< TData, TTypeSupport, TDataReader, TDataWriter >::
 
 	topicName.assign("");
 	topicType = TOPIC_PUBLISH_SUBSCRIBE;
-	minimumTimeSeparation = 0.0f;
 	topicCallbackSet = 0;
 	reverseTopicName.assign("");
 	plugin = 0;

@@ -157,7 +157,6 @@ struct TopicCallbackSet{
 	std::string topicName;
 	std::string typeName;
 	TopicType topicType;
-	float minimumTimeSeparation;
 	TypeCreateFunction createFn;
 	TypeCopyFunction copyFn;
 	TypeDeleteFunction deleteFn;

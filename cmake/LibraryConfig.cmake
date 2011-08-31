@@ -59,6 +59,7 @@ FIND_PACKAGE(GLIBTOP)
 FIND_PACKAGE(RTI)
 FIND_PACKAGE(GLIBMM2)
 FIND_PACKAGE(SIGC++)
+FIND_PACKAGE(JPEG_TURBO)
 
 ##### Boost #####
 # Expand the next statement if newer boost versions than 1.36.1 are released
