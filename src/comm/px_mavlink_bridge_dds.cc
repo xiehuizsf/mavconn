@@ -460,7 +460,7 @@ mavlinkDDSHandler(void* msg, lcm_t* lcm)
 
 	if (verbose)
 	{
-		fprintf(stderr, "# INFO: Forwarded MAVLINK message [%d] from DDS to LCM.\n", dds_msg->msgid);
+		fprintf(stderr, "# INFO: Forwarded MAVLINK message [%d] from DDS to LCM.\n", lcm_msg.msgid);
 	}
 }
 
@@ -495,9 +495,15 @@ main(int argc, char** argv)
 	optProfile.set_long_name("profile");
 	optProfile.set_description("Path to DDS QoS profile file");
 
+	Glib::OptionEntry optRGBA;
+	optRGBA.set_long_name("rgba");
+	optRGBA.set_description("Stream RGBA data");
+
 	std::string bridgeMode;
+	bool streamRGBA = false;
 	optGroup.add_entry_filename(optBridgeMode, bridgeMode);
 	optGroup.add_entry(optImageMinimumSeparation, imageMinimumSeparation);
+	optGroup.add_entry(optRGBA, streamRGBA);
 	optGroup.add_entry(optVerbose, verbose);
 
 	Glib::OptionContext optContext("");
@@ -581,7 +587,11 @@ main(int argc, char** argv)
 		{
 			Glib::thread_init();
 		}
-		Glib::Thread* rgbdLCMThread = Glib::Thread::create(sigc::ptr_fun(&rgbdLCMHandler), true);
+
+		if (streamRGBA)
+		{
+			Glib::Thread* rgbdLCMThread = Glib::Thread::create(sigc::ptr_fun(&rgbdLCMHandler), true);
+		}
 	}
 
 	if (dds2lcm)
