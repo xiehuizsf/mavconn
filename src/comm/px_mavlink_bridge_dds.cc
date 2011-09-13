@@ -449,7 +449,7 @@ mavlinkDDSHandler(void* msg, lcm_t* lcm)
 {
 	dds_mavlink_message_t* dds_msg = reinterpret_cast<dds_mavlink_message_t*>(msg);
 
-	if (static_cast<uint8_t>(dds_msg->sysid) != getSystemID())
+	if (static_cast<uint8_t>(dds_msg->sysid) == getSystemID())
 	{
 		return;
 	}
