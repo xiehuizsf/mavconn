@@ -39,6 +39,10 @@ SET_SOURCE_FILES(DDS_INTERFACE_SRC_FILES
   interface/mavlink/dds_mavlink_message_tPlugin.cxx
   interface/mavlink/dds_mavlink_message_tSupport.cxx
   interface/mavlink/mavlink_interface.cc
+  interface/perception/dds_obstacle_map_message_t.cxx
+  interface/perception/dds_obstacle_map_message_tPlugin.cxx
+  interface/perception/dds_obstacle_map_message_tSupport.cxx
+  interface/perception/perception_interface.cc
   interface/rgbd_image/dds_rgbd_image_message_t.cxx
   interface/rgbd_image/dds_rgbd_image_message_tPlugin.cxx
   interface/rgbd_image/dds_rgbd_image_message_tSupport.cxx

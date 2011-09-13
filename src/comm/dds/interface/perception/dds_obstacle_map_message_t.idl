@@ -1,0 +1,17 @@
+struct dds_obstacle_map_message_t
+{
+	long long utime;
+
+	char type;
+
+	float resolution;
+	long num_rows;
+	long num_cols;
+	long map_r0;
+	long map_c0;
+	long array_r0;
+	long array_c0;
+    
+	long long length;
+	sequence<char,8388608> data;
+};
