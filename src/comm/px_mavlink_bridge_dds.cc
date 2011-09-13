@@ -176,6 +176,11 @@ void
 mavlinkLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 				  const mavlink_message_t* msg, void* user)
 {
+	if (msg->sysid != getSystemID())
+	{
+		return;
+	}
+
 	if (msg->msgid == MAVLINK_MSG_ID_IMAGE_AVAILABLE)
 	{
 		return;
@@ -444,6 +449,11 @@ mavlinkDDSHandler(void* msg, lcm_t* lcm)
 {
 	dds_mavlink_message_t* dds_msg = reinterpret_cast<dds_mavlink_message_t*>(msg);
 
+	if (static_cast<uint8_t>(dds_msg->sysid) != getSystemID())
+	{
+		return;
+	}
+
 	// forward MAVLINK messages from DDS to LCM
 	mavlink_message_t lcm_msg;
 
@@ -555,6 +565,13 @@ main(int argc, char** argv)
 
 	mavlink_message_t_subscription_t* imageLCMSub = 0;
 	mavlink_message_t_subscription_t* mavlinkLCMSub = 0;
+
+	mavlinkLCMSub = mavlink_message_t_subscribe(lcm, "MAVLINK", &mavlinkLCMHandler, 0);
+	px::MavlinkTopic::instance()->advertise();
+
+	px::Handler handler = px::Handler(sigc::bind(sigc::ptr_fun(mavlinkDDSHandler), lcm));
+	px::MavlinkTopic::instance()->subscribe(handler, px::SUBSCRIBE_ALL);
+
 	if (lcm2dds)
 	{
 		// create instance of shared memory client for each possible camera configuration
@@ -575,11 +592,9 @@ main(int argc, char** argv)
 
 		// subscribe to LCM messages
 		imageLCMSub = mavlink_message_t_subscribe(lcm, "IMAGES", &imageLCMHandler, 0);
-		mavlinkLCMSub = mavlink_message_t_subscribe(lcm, "MAVLINK", &mavlinkLCMHandler, 0);
 
 		// advertise DDS topics
 		px::ImageTopic::instance()->advertise();
-		px::MavlinkTopic::instance()->advertise();
 		px::RGBDImageTopic::instance()->advertise();
 
 		// set up thread to check for incoming RGBD data from shared memory
@@ -615,9 +630,6 @@ main(int argc, char** argv)
 		
 		handler = px::Handler(sigc::ptr_fun(rgbdDDSHandler));
 		px::RGBDImageTopic::instance()->subscribe(handler, px::SUBSCRIBE_LATEST);
-
-		handler = px::Handler(sigc::bind(sigc::ptr_fun(mavlinkDDSHandler), lcm));
-		px::MavlinkTopic::instance()->subscribe(handler, px::SUBSCRIBE_ALL);
 	}
 
 	while (!quit)
