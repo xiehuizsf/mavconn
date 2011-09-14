@@ -197,7 +197,7 @@ PxSHMImageClient::getLocalHeight(const mavlink_message_t* msg, float& height)
 }
 
 bool
-PxSHMImageClient::getGPS(const mavlink_message_t* msg, float& lat, float& lon, float& alt)
+PxSHMImageClient::getGPS(const mavlink_message_t* msg, float& lon, float& lat, float& alt)
 {
 	// Decode message
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
@@ -211,8 +211,8 @@ PxSHMImageClient::getGPS(const mavlink_message_t* msg, float& lat, float& lon, f
 		mavlink_image_available_t img;
 		mavlink_msg_image_available_decode(msg, &img);
 
-		lat = img.lat;
 		lon = img.lon;
+		lat = img.lat;
 		alt = img.alt;
 
 		return true;
