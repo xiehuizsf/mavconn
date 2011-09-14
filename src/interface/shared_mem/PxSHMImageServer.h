@@ -78,6 +78,7 @@ public:
 	
 	void writeRGBDImage(const cv::Mat& img, const cv::Mat& imgDepth,
 						uint64_t timestamp, float roll, float pitch, float yaw,
+						float lon, float lat, float alt,
 						float ground_x, float ground_y, float ground_z,
 						const cv::Mat& cameraMatrix);
 
@@ -88,6 +89,7 @@ private:
 	bool writeImageWithCameraInfo(PxSHM::CameraType cameraType,
 								  uint64_t timestamp,
 								  float roll, float pitch, float yaw,
+								  float lon, float lat, float alt,
 								  float ground_x, float ground_y, float ground_z,
 								  const cv::Mat& cameraMatrix,
 								  const cv::Mat& img,

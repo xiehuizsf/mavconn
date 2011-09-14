@@ -49,7 +49,7 @@ DDS_TypeCode* dds_rgbd_image_message_t_get_typecode()
     static DDS_TypeCode dds_rgbd_image_message_t_g_tc_imageData1_sequence = DDS_INITIALIZE_SEQUENCE_TYPECODE(3891200,NULL);
     static DDS_TypeCode dds_rgbd_image_message_t_g_tc_imageData2_sequence = DDS_INITIALIZE_SEQUENCE_TYPECODE(3891200,NULL);
 
-    static DDS_TypeCode_Member dds_rgbd_image_message_t_g_tc_members[18]=
+    static DDS_TypeCode_Member dds_rgbd_image_message_t_g_tc_members[21]=
     {
         {
             (char *)"camera_config",/* Member name */
@@ -138,6 +138,57 @@ DDS_TypeCode* dds_rgbd_image_message_t_get_typecode()
         },
         {
             (char *)"yaw",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
+        {
+            (char *)"lon",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
+        {
+            (char *)"lat",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
+        {
+            (char *)"alt",/* Member name */
             {
                 0,/* Representation ID */
                 DDS_BOOLEAN_FALSE,/* Is a pointer? */
@@ -369,7 +420,7 @@ DDS_TypeCode* dds_rgbd_image_message_t_get_typecode()
         0, /* Ignored */
         0, /* Ignored */
         NULL, /* Ignored */
-        18, /* Number of members */
+        21, /* Number of members */
         dds_rgbd_image_message_t_g_tc_members, /* Members */
         DDS_VM_NONE /* Ignored */
     }}; /* Type code for dds_rgbd_image_message_t*/
@@ -391,15 +442,18 @@ DDS_TypeCode* dds_rgbd_image_message_t_get_typecode()
     dds_rgbd_image_message_t_g_tc_members[6]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_float;
     dds_rgbd_image_message_t_g_tc_members[7]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_float;
     dds_rgbd_image_message_t_g_tc_members[8]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_float;
-    dds_rgbd_image_message_t_g_tc_members[9]._representation._typeCode = (RTICdrTypeCode *)&dds_rgbd_image_message_t_g_tc_camera_matrix_array;
-    dds_rgbd_image_message_t_g_tc_members[10]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
-    dds_rgbd_image_message_t_g_tc_members[11]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
-    dds_rgbd_image_message_t_g_tc_members[12]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
+    dds_rgbd_image_message_t_g_tc_members[9]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_float;
+    dds_rgbd_image_message_t_g_tc_members[10]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_float;
+    dds_rgbd_image_message_t_g_tc_members[11]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_float;
+    dds_rgbd_image_message_t_g_tc_members[12]._representation._typeCode = (RTICdrTypeCode *)&dds_rgbd_image_message_t_g_tc_camera_matrix_array;
     dds_rgbd_image_message_t_g_tc_members[13]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
-    dds_rgbd_image_message_t_g_tc_members[14]._representation._typeCode = (RTICdrTypeCode *)&dds_rgbd_image_message_t_g_tc_imageData1_sequence;
+    dds_rgbd_image_message_t_g_tc_members[14]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
     dds_rgbd_image_message_t_g_tc_members[15]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
     dds_rgbd_image_message_t_g_tc_members[16]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
-    dds_rgbd_image_message_t_g_tc_members[17]._representation._typeCode = (RTICdrTypeCode *)&dds_rgbd_image_message_t_g_tc_imageData2_sequence;
+    dds_rgbd_image_message_t_g_tc_members[17]._representation._typeCode = (RTICdrTypeCode *)&dds_rgbd_image_message_t_g_tc_imageData1_sequence;
+    dds_rgbd_image_message_t_g_tc_members[18]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
+    dds_rgbd_image_message_t_g_tc_members[19]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
+    dds_rgbd_image_message_t_g_tc_members[20]._representation._typeCode = (RTICdrTypeCode *)&dds_rgbd_image_message_t_g_tc_imageData2_sequence;
 
     is_initialized = RTI_TRUE;
 
@@ -440,6 +494,18 @@ RTIBool dds_rgbd_image_message_t_initialize_ex(
     }                
             
     if (!RTICdrType_initFloat(&sample->yaw)) {
+        return RTI_FALSE;
+    }                
+            
+    if (!RTICdrType_initFloat(&sample->lon)) {
+        return RTI_FALSE;
+    }                
+            
+    if (!RTICdrType_initFloat(&sample->lat)) {
+        return RTI_FALSE;
+    }                
+            
+    if (!RTICdrType_initFloat(&sample->alt)) {
         return RTI_FALSE;
     }                
             
@@ -550,6 +616,21 @@ RTIBool dds_rgbd_image_message_t_copy(
             
     if (!RTICdrType_copyFloat(
         &dst->yaw, &src->yaw)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrType_copyFloat(
+        &dst->lon, &src->lon)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrType_copyFloat(
+        &dst->lat, &src->lat)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrType_copyFloat(
+        &dst->alt, &src->alt)) {
         return RTI_FALSE;
     }
             

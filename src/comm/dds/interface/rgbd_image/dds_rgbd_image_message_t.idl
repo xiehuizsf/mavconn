@@ -6,6 +6,9 @@ struct dds_rgbd_image_message_t
 	float roll;
 	float pitch;
 	float yaw;
+	float lon;
+	float lat;
+	float alt;
 	float ground_x;
 	float ground_y;
 	float ground_z;

@@ -363,6 +363,7 @@ bool
 PxSHMImageClient::readRGBDImage(cv::Mat& img, cv::Mat& imgDepth,
 								uint64_t& timestamp,
 								float& roll, float& pitch, float& yaw,
+								float& lon, float& lat, float& alt,
 								float& ground_x, float& ground_y, float& ground_z,
 								cv::Mat& cameraMatrix)
 {
@@ -385,6 +386,7 @@ PxSHMImageClient::readRGBDImage(cv::Mat& img, cv::Mat& imgDepth,
 		}
 
 		if (!readImageWithCameraInfo(timestamp, roll, pitch, yaw,
+									 lon, lat, alt,
 									 ground_x, ground_y, ground_z,
 									 cameraMatrix, img, imgDepth))
 		{
@@ -478,12 +480,13 @@ PxSHMImageClient::readImage(cv::Mat& img, cv::Mat& img2)
 bool
 PxSHMImageClient::readImageWithCameraInfo(uint64_t& timestamp,
 										  float& roll, float& pitch, float& yaw,
+										  float& lon, float& lat, float& alt,
 										  float& ground_x, float& ground_y, float& ground_z,
 										  cv::Mat& cameraMatrix,
 										  cv::Mat& img, cv::Mat& img2)
 {
 	uint32_t dataLength = shm.readDataPacket(data);
-	if (dataLength <= 96)
+	if (dataLength <= 108)
 	{
 		return false;
 	}
@@ -496,11 +499,14 @@ PxSHMImageClient::readImageWithCameraInfo(uint64_t& timestamp,
 	memcpy(&roll, &(data[12]), 4);
 	memcpy(&pitch, &(data[16]), 4);
 	memcpy(&yaw, &(data[20]), 4);
-	memcpy(&ground_x, &(data[24]), 4);
-	memcpy(&ground_y, &(data[28]), 4);
-	memcpy(&ground_z, &(data[32]), 4);
+	memcpy(&lon, &(data[24]), 4);
+	memcpy(&lat, &(data[28]), 4);
+	memcpy(&alt, &(data[32]), 4);
+	memcpy(&ground_x, &(data[36]), 4);
+	memcpy(&ground_y, &(data[40]), 4);
+	memcpy(&ground_z, &(data[44]), 4);
 
-	int mark = 36;
+	int mark = 48;
 	cameraMatrix = cv::Mat(3, 3, CV_32F);
 	for (int i = 0; i < cameraMatrix.rows; ++i)
 	{
@@ -518,16 +524,16 @@ PxSHMImageClient::readImageWithCameraInfo(uint64_t& timestamp,
 	memcpy(&step2, &(data[mark+16]), 4);
 	memcpy(&type2, &(data[mark+20]), 4);
 
-	if (dataLength != 96 + rows * step + rows * step2)
+	if (dataLength != 108 + rows * step + rows * step2)
 	{
 		// data length is not consistent with image type
 		return false;
 	}
 
-	cv::Mat temp(rows, cols, type, &(data[96]), step);
+	cv::Mat temp(rows, cols, type, &(data[108]), step);
 	temp.copyTo(img);
 
-	cv::Mat temp2(rows, cols, type2, &(data[96 + rows * step]), step2);
+	cv::Mat temp2(rows, cols, type2, &(data[108 + rows * step]), step2);
 	temp2.copyTo(img2);
 
 	return true;

@@ -8,8 +8,8 @@
   or consult the RTI Data Distribution Service manual.
 */
 
-#ifndef dds_rgbd_image_message_tPlugin_637283907_h
-#define dds_rgbd_image_message_tPlugin_637283907_h
+#ifndef dds_rgbd_image_message_tPlugin_637283943_h
+#define dds_rgbd_image_message_tPlugin_637283943_h
 
 #include "dds_rgbd_image_message_t.h"
 
@@ -252,4 +252,4 @@ dds_rgbd_image_message_tPlugin_delete(struct PRESTypePlugin *);
 #endif
         
 
-#endif /* dds_rgbd_image_message_tPlugin_637283907_h */
+#endif /* dds_rgbd_image_message_tPlugin_637283943_h */

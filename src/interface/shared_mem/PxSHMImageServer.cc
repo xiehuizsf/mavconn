@@ -219,11 +219,13 @@ PxSHMImageServer::writeKinectImage(const cv::Mat& imgBayer, const cv::Mat& imgDe
 void
 PxSHMImageServer::writeRGBDImage(const cv::Mat& img, const cv::Mat& imgDepth,
 								 uint64_t timestamp, float roll, float pitch, float yaw,
+								 float lon, float lat, float alt,
 								 float ground_x, float ground_y, float ground_z,
 								 const cv::Mat& cameraMatrix)
 {
 	writeImageWithCameraInfo(PxSHM::CAMERA_RGBD,
 							 timestamp, roll, pitch, yaw,
+							 lon, lat, alt,
 							 ground_x, ground_y, ground_z, cameraMatrix,
 							 img, imgDepth);
 
@@ -299,6 +301,7 @@ bool
 PxSHMImageServer::writeImageWithCameraInfo(PxSHM::CameraType cameraType,
 										   uint64_t timestamp,
 										   float roll, float pitch, float yaw,
+										   float lon, float lat, float alt,
 										   float ground_x, float ground_y, float ground_z,
 										   const cv::Mat& cameraMatrix,
 										   const cv::Mat& img,
@@ -310,7 +313,7 @@ PxSHMImageServer::writeImageWithCameraInfo(PxSHM::CameraType cameraType,
 		return false;
 	}
 
-	uint32_t headerLength = 88;
+	uint32_t headerLength = 100;
 
 	if (cameraType == PxSHM::CAMERA_STEREO_8 ||
 		cameraType == PxSHM::CAMERA_STEREO_24 ||
@@ -344,14 +347,17 @@ PxSHMImageServer::writeImageWithCameraInfo(PxSHM::CameraType cameraType,
 	memcpy(&(data[12]), &roll, 4);
 	memcpy(&(data[16]), &pitch, 4);
 	memcpy(&(data[20]), &yaw, 4);
-	memcpy(&(data[24]), &ground_x, 4);
-	memcpy(&(data[28]), &ground_y, 4);
-	memcpy(&(data[32]), &ground_z, 4);
+	memcpy(&(data[24]), &lon, 4);
+	memcpy(&(data[28]), &lat, 4);
+	memcpy(&(data[32]), &alt, 4);
+	memcpy(&(data[36]), &ground_x, 4);
+	memcpy(&(data[40]), &ground_y, 4);
+	memcpy(&(data[44]), &ground_z, 4);
 
 	assert(cameraMatrix.rows == 3);
 	assert(cameraMatrix.cols == 3);
 
-	int mark = 36;
+	int mark = 48;
 	for (int i = 0; i < cameraMatrix.rows; ++i)
 	{
 		for (int j = 0; j < cameraMatrix.cols; ++j)
