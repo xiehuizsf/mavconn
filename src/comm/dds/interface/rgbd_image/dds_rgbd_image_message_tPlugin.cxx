@@ -154,6 +154,15 @@ dds_rgbd_image_message_tPluginSupport_print_data(
     RTICdrType_printFloat(
         &sample->yaw, "yaw", indent_level + 1);
             
+    RTICdrType_printFloat(
+        &sample->ground_x, "ground_x", indent_level + 1);
+            
+    RTICdrType_printFloat(
+        &sample->ground_y, "ground_y", indent_level + 1);
+            
+    RTICdrType_printFloat(
+        &sample->ground_z, "ground_z", indent_level + 1);
+            
     RTICdrType_printArray(
         sample->camera_matrix, (9), RTI_CDR_FLOAT_SIZE,
         (RTICdrTypePrintFunction)RTICdrType_printFloat,
@@ -377,6 +386,21 @@ dds_rgbd_image_message_tPlugin_serialize(
         return RTI_FALSE;
     }
             
+    if (!RTICdrStream_serializeFloat(
+        stream, &sample->ground_x)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_serializeFloat(
+        stream, &sample->ground_y)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_serializeFloat(
+        stream, &sample->ground_z)) {
+        return RTI_FALSE;
+    }
+            
     if (!RTICdrStream_serializePrimitiveArray(
         stream, (void*)sample->camera_matrix, (9), RTI_CDR_FLOAT_TYPE)) {
         return RTI_FALSE;
@@ -517,6 +541,21 @@ dds_rgbd_image_message_tPlugin_deserialize_sample(
             
     if (!RTICdrStream_deserializeFloat(
         stream, &sample->yaw)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_deserializeFloat(
+        stream, &sample->ground_x)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_deserializeFloat(
+        stream, &sample->ground_y)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_deserializeFloat(
+        stream, &sample->ground_z)) {
         return RTI_FALSE;
     }
             
@@ -688,6 +727,18 @@ RTIBool dds_rgbd_image_message_tPlugin_skip(
         return RTI_FALSE;
     }
             
+    if (!RTICdrStream_skipFloat(stream)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_skipFloat(stream)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_skipFloat(stream)) {
+        return RTI_FALSE;
+    }
+            
     if (!RTICdrStream_skipPrimitiveArray(
         stream, (9), RTI_CDR_FLOAT_TYPE)) {
         return RTI_FALSE;
@@ -796,6 +847,15 @@ dds_rgbd_image_message_tPlugin_get_serialized_sample_max_size(
     current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
         current_alignment);
             
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
     current_alignment +=  RTICdrType_getPrimitiveArrayMaxSizeSerialized(
         current_alignment, (9), RTI_CDR_FLOAT_TYPE);
             
@@ -865,6 +925,15 @@ dds_rgbd_image_message_tPlugin_get_serialized_sample_min_size(
         current_alignment);
             
     current_alignment +=  RTICdrType_getLongLongMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
         current_alignment);
             
     current_alignment +=  RTICdrType_getFloatMaxSizeSerialized(
@@ -952,6 +1021,15 @@ dds_rgbd_image_message_tPlugin_get_serialized_sample_size(
         current_alignment);
             
     current_alignment += RTICdrType_getLongLongMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment += RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment += RTICdrType_getFloatMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment += RTICdrType_getFloatMaxSizeSerialized(
         current_alignment);
             
     current_alignment += RTICdrType_getFloatMaxSizeSerialized(

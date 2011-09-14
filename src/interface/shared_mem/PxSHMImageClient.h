@@ -77,6 +77,7 @@ public:
 	bool readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBayer, cv::Mat& imgDepth);
 	bool readRGBDImage(cv::Mat& img, cv::Mat& imgDepth, uint64_t& timestamp,
 					   float& roll, float& pitch, float& yaw,
+					   float& ground_x, float& ground_y, float& ground_z,
 					   cv::Mat& cameraMatrix);
 
 private:
@@ -86,6 +87,7 @@ private:
 	bool readImage(cv::Mat& img, cv::Mat& img2);
 	bool readImageWithCameraInfo(uint64_t& timestamp,
 								 float& roll, float& pitch, float& yaw,
+								 float& ground_x, float& ground_y, float& ground_z,
 								 cv::Mat& cameraMatrix,
 								 cv::Mat& img, cv::Mat& img2);
 

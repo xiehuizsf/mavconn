@@ -258,10 +258,13 @@ rgbdLCMHandler(void)
 			cv::Mat imgColor, imgDepth;
 			uint64_t timestamp;
 			float roll, pitch, yaw;
+			float ground_x, ground_y, ground_z;
 			cv::Mat cameraMatrix;
 
 			if (client.readRGBDImage(imgColor, imgDepth, timestamp,
-									 roll, pitch, yaw, cameraMatrix))
+									 roll, pitch, yaw,
+									 ground_x, ground_y, ground_z,
+									 cameraMatrix))
 			{
 				struct timeval tv;
 				gettimeofday(&tv, 0);
@@ -279,6 +282,9 @@ rgbdLCMHandler(void)
 				dds_rgbd_image_msg.roll = roll;
 				dds_rgbd_image_msg.pitch = pitch;
 				dds_rgbd_image_msg.yaw = yaw;
+				dds_rgbd_image_msg.ground_x = ground_x;
+				dds_rgbd_image_msg.ground_y = ground_y;
+				dds_rgbd_image_msg.ground_z = ground_z;
 
 				for (int r = 0; r < 3; ++r)
 				{
@@ -463,6 +469,7 @@ rgbdDDSHandler(void* msg)
 
 	server.writeRGBDImage(imgColor, imgDepth, dds_msg->timestamp,
 	  					  dds_msg->roll, dds_msg->pitch, dds_msg->yaw,
+	  					  dds_msg->ground_x, dds_msg->ground_y, dds_msg->ground_z,
 						  cameraMatrix);
 
 	if (verbose)

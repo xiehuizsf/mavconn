@@ -6,6 +6,9 @@ struct dds_rgbd_image_message_t
 	float roll;
 	float pitch;
 	float yaw;
+	float ground_x;
+	float ground_y;
+	float ground_z;
 	float camera_matrix[9];
 	long cols;		///< Number of columns in image(s)
 	long rows;		///< Number of rows in image(s)

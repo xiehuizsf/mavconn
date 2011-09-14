@@ -8,8 +8,8 @@
   or consult the RTI Data Distribution Service manual.
 */
 
-#ifndef dds_rgbd_image_message_tSupport_637283856_h
-#define dds_rgbd_image_message_tSupport_637283856_h
+#ifndef dds_rgbd_image_message_tSupport_637283907_h
+#define dds_rgbd_image_message_tSupport_637283907_h
 
 /* Uses */
 #include "dds_rgbd_image_message_t.h"
@@ -80,4 +80,4 @@ DDS_DATAREADER_C(dds_rgbd_image_message_tDataReader, dds_rgbd_image_message_tSeq
 
 
 
-#endif  /* dds_rgbd_image_message_tSupport_637283856_h */
+#endif  /* dds_rgbd_image_message_tSupport_637283907_h */

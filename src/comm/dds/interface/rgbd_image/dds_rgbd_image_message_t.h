@@ -8,8 +8,8 @@
   or consult the RTI Data Distribution Service manual.
 */
 
-#ifndef dds_rgbd_image_message_t_637283856_h
-#define dds_rgbd_image_message_t_637283856_h
+#ifndef dds_rgbd_image_message_t_637283907_h
+#define dds_rgbd_image_message_t_637283907_h
 
 #ifndef NDDS_STANDALONE_TYPE
     #ifdef __cplusplus
@@ -46,6 +46,9 @@ typedef struct dds_rgbd_image_message_t
     DDS_Float  roll;
     DDS_Float  pitch;
     DDS_Float  yaw;
+    DDS_Float  ground_x;
+    DDS_Float  ground_y;
+    DDS_Float  ground_z;
     DDS_Float  camera_matrix[9];
     DDS_Long  cols;
     DDS_Long  rows;
@@ -102,4 +105,4 @@ RTIBool dds_rgbd_image_message_t_copy(
 
 
 
-#endif /* dds_rgbd_image_message_t_637283856_h */
+#endif /* dds_rgbd_image_message_t_637283907_h */
