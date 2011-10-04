@@ -114,6 +114,8 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
 			//
 			//if (msg->msgid != MAVLINK_MSG_ID_DEBUG && msg->msgid != MAVLINK_MSG_ID_STATUSTEXT && msg->msgid != MAVLINK_MSG_ID_SYSTEM_TIME && msg->msgid != MAVLINK_MSG_ID_DEBUG_VECT)
 
+                        // IMU<->COMPUTER FILTER, filters out messages from LCM
+
 			// Only send messages which are in positiv list. This list contains all messages handled by IMU
 			if (       msg->msgid == MAVLINK_MSG_ID_SET_MODE
 					|| msg->msgid == MAVLINK_MSG_ID_HEARTBEAT
@@ -123,14 +125,15 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
 					|| msg->msgid == MAVLINK_MSG_ID_PARAM_REQUEST_LIST
 					|| msg->msgid == MAVLINK_MSG_ID_PARAM_SET
 					|| msg->msgid == MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_SET
-					|| msg->msgid == MAVLINK_MSG_ID_SET_CAM_SHUTTER
+					/*|| msg->msgid == MAVLINK_MSG_ID_SET_CAM_SHUTTER*/
 					|| msg->msgid == MAVLINK_MSG_ID_IMAGE_TRIGGER_CONTROL
 					|| msg->msgid == MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE
+                                        || msg->msgid == MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE
 					|| msg->msgid == MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE
 					|| msg->msgid == MAVLINK_MSG_ID_PING
 					|| msg->msgid == MAVLINK_MSG_ID_STATUSTEXT
 					|| msg->msgid == MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET
-					|| msg->msgid == MAVLINK_MSG_ID_POSITION_CONTROL_OFFSET_SET) {
+                                        || msg->msgid == MAVLINK_MSG_ID_POSITION_CONTROL_OFFSET_SET) {
 				if (verbose || debug)
 					std::cout << std::dec
 							<< "Received and forwarded LCM message with id "
