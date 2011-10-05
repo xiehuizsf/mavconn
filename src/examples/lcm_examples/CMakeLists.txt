@@ -1,12 +1,32 @@
+INCLUDE_DIRECTORIES(
+  ${GLIB2_MAIN_INCLUDE_DIR}
+  ${GLIB2_INTERNAL_INCLUDE_DIR}
+  ${GTHREAD2_MAIN_INCLUDE_DIR}
+)
+
 PIXHAWK_EXECUTABLE(lcmsend lcmsend.cc)
 PIXHAWK_LINK_LIBRARIES(lcmsend
-  lcmext
+    ${GLIB2_LIBRARY}
+  ${GTHREAD2_LIBRARY}
+  mavconn_lcm
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  lcm
 )
 
 PIXHAWK_EXECUTABLE(lcmreceive lcmreceive.cc)
 PIXHAWK_LINK_LIBRARIES(lcmreceive
-  lcmext
-  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${GLIB2_LIBRARY}
   ${GTHREAD2_LIBRARY}
+  mavconn_lcm
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  lcm
+)
+
+PIXHAWK_EXECUTABLE(lcm_send_receive lcm_send_receive.cc)
+PIXHAWK_LINK_LIBRARIES(lcm_send_receive
+  ${GLIB2_LIBRARY}
+  ${GTHREAD2_LIBRARY}
+  mavconn_lcm
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  lcm
 )

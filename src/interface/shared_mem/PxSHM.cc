@@ -36,6 +36,7 @@ This file is part of the PIXHAWK project
 
 #include <limits.h>
 #include <string.h>
+#include <errno.h>
 
 /*
 
@@ -120,7 +121,15 @@ PxSHM::init(int key, PxSHM::Type type, int infoMaxPacketSize, int infoQueueLengt
 	key_t shmkey = key;
 	if ((shmid = shmget(shmkey, i_size + d_size + 12, m)) == -1)
 	{
-		fprintf(stderr, "# ERROR: Unable to get a shared memory segment.\n");
+		fprintf(stderr, "# ERROR: Unable to get a shared memory segment (ERRNO #%d).\n", errno);
+#ifdef __APPLE__
+		if (errno == EACCES) fprintf(stderr, "# Error reason is EACCESS: A shared memory segment is already associated with key and the caller has no permission to access it.\n");
+		if (errno == EEXIST) fprintf(stderr, "# Error reason is EEXIST: Both IPC_CREAT and IPC_EXCL are set in shmflg, and a shared memory segment is already associated with key.\n");
+		if (errno == EINVAL) fprintf(stderr, "# Error reason is EINVAL: No shared memory segment is to be created, and a shared memory segment exists for key, but the size of the segment associated with it is less than size, which is non-zero.\n");
+		if (errno == ENOENT) fprintf(stderr, "# Error reason is ENOENT: IPC_CREAT was not set in shmflg and no shared memory segment associated with key was found.\n");
+		if (errno == ENOMEM) fprintf(stderr, "# Error reason is ENOMEM: There is not enough memory left to created a shared memory segment of the requested size.\n");
+		if (errno == ENOSPC) fprintf(stderr, "# Error reason is ENOSPC: A new shared memory identifier could not be created because the system limit for the number of shared memory identifiers has been reached.\n");
+#endif
 		return false;
 	}
 
