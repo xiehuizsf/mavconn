@@ -78,8 +78,8 @@ public:
 			while(iter != params.end())
 			{
 				mavlink_message_t response;
-				mavlink_msg_param_value_pack(systemid, componentid, &response, (int8_t*)((*iter).first.c_str()), (*iter).second, params.size(), i);
-				mavlink_message_t_publish (lcm, "MAVLINK", &response);
+				mavlink_msg_param_value_pack(systemid, componentid, &response, (*iter).first.c_str(), (*iter).second, MAVLINK_TYPE_FLOAT, params.size(), i);
+				sendMAVLinkMessage(lcm, &response);
 				if (verbose) std::cout << "Sending param " << (*iter).first  << ':' << (*iter).second << std::endl;
 				++iter;
 				i++;
@@ -117,24 +117,26 @@ public:
 
 				// Report back new value
 				mavlink_message_t response;
-				mavlink_msg_param_value_pack(systemid, componentid, &response, set.param_id, set.param_value, params.size(), i);
-				mavlink_message_t_publish (lcm, "MAVLINK", &response);
+				mavlink_msg_param_value_pack(systemid, componentid, &response, set.param_id, set.param_value, MAVLINK_TYPE_FLOAT, params.size(), i);
+				sendMAVLinkMessage(lcm, &response);
 			}
 		}
-		case MAVLINK_MSG_ID_ACTION:
+		case MAVLINK_MSG_ID_COMMAND_SHORT:
 		{
-			mavlink_action_t action;
-			mavlink_msg_action_decode(msg, &action);
-			switch (action.action)
+			mavlink_command_short_t action;
+			mavlink_msg_command_short_decode(msg, &action);
+			switch (action.command)
 			{
-			case MAV_ACTION_STORAGE_READ:
+			case MAV_CMD_PREFLIGHT_STORAGE:
+			{
+				if (action.param1)
 				readParamsFromFile(configFileName);
 				if (verbose) printf("Reading parameters from file %s", configFileName.c_str());
 				break;
-			case MAV_ACTION_STORAGE_WRITE:
 				if (verbose) printf("Writing parameters from file %s", configFileName.c_str());
 				writeParamsToFile(configFileName);
 				break;
+			}
 			}
 		}
 		break;

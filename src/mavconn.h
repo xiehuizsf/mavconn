@@ -50,21 +50,29 @@ This file is part of the MAVCONN project
 
 // LCM transport includes
 #include <lcm/lcm.h>
-#include "comm/lcm/mavlink_message_t.h"
+#include "comm/lcm/mavconn_mavlink_message_t.h"
+#include "comm/lcm/mavconn_mavlink_msg_container_t.h"
 
 // Time
 #include <sys/time.h>
 #include <time.h>
 
-// Parameter client
-#include "core/PxParamClient.h"
-
 // ROS support
 #define PX_ROS_ENABLED	0
 
+enum MAVCONN_LINK_TYPE
+{
+	MAVCONN_LINK_TYPE_LCM,
+	MAVCONN_LINK_TYPE_UDP,
+	MAVCONN_LINK_TYPE_UART_AUTOPILOT,
+	MAVCONN_LINK_TYPE_UART_RADIO,
+	MAVCONN_LINK_TYPE_ROS,
+	MAVCONN_LINK_TYPE_DDS
+};
 
 enum MAVCONN_COMPONENT_IDS
 {
+	PX_COMP_ID_ALL = 0,
 	PX_COMP_ID_CORE = 100,
 	PX_COMP_ID_PING = 101,
 	PX_COMP_ID_ASCTEC = 102,
@@ -97,6 +105,16 @@ static inline uint64_t getSystemTimeUsecs()
 //	mavlink_message_t_publish(lcm, MAVLINK_MAIN, &msg);
 //}
 
+//static void
+//sendMAVLinkMessage(lcm_t * lcm, mavlink_message_t* msg, MAVCONN_LINK_TYPE link_type=MAVCONN_LINK_TYPE_LCM);
+
+inline std::string trimString(std::string& str)
+{
+	str.erase(0, str.find_first_not_of(' '));       // leading spaces
+	str.erase(str.find_last_not_of(' ')+1);         // trailing spaces
+	return str;
+}
+
 // FIXME
 static inline int getSystemID(void)
 {
@@ -118,7 +136,9 @@ static inline int getSystemID(void)
 				configFile >> key;
 				configFile >> value;
 
-				if (value > 0 && value < 256)
+				key = trimString(key);
+
+				if (key == "systemid" && value > 0 && value < 256)
 				{
 					systemId = value;
 				}
@@ -130,13 +150,34 @@ static inline int getSystemID(void)
 	return systemId;
 }
 
-// FIXME: Camera struct is a little large currently
-struct Camera_t
+static inline void
+sendMAVLinkMessage(lcm_t * lcm, mavlink_message_t* msg, MAVCONN_LINK_TYPE link_type=MAVCONN_LINK_TYPE_LCM);
+
+static inline void
+sendMAVLinkMessage(lcm_t * lcm, mavlink_message_t* msg, MAVCONN_LINK_TYPE link_type)
 {
-	uint64_t id; 	  ///< Unique ID of the camera, e.g. the Point Grey product id
-	float caldata[9]; ///< Camera intrinsics
-	float toBody[16]; ///< Transformation matrix from camera to body coordinate frame
-};
+	// Pack a new container
+	static mavconn_mavlink_msg_container_t container;
+	container.link_network_source = link_type;
+	memcpy(&(container.msg), msg, MAVLINK_MAX_PACKET_LEN);
+
+	// Publish the message on the LCM bus
+	mavconn_mavlink_msg_container_t_publish (lcm, MAVLINK_MAIN, &container);
+}
+
+static inline const mavlink_message_t*
+getMAVLinkMsgPtr(const mavconn_mavlink_msg_container_t* container)
+{
+	return (const mavlink_message_t*) &container->msg;
+}
+
+//// FIXME: Camera struct is a little large currently
+//struct Camera_t
+//{
+//	uint64_t id; 	  ///< Unique ID of the camera, e.g. the Point Grey product id
+//	float caldata[9]; ///< Camera intrinsics
+//	float toBody[16]; ///< Transformation matrix from camera to body coordinate frame
+//};
 
 /**struct CamImage_t
 {

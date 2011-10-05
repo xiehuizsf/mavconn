@@ -8,8 +8,8 @@ INCLUDE_DIRECTORIES(
   ${GLIBTOP_INCLUDE_DIR}
 )
 
-PIXHAWK_EXECUTABLE(px_system_control px_core.cc)
-PIXHAWK_LINK_LIBRARIES(px_system_control
+PIXHAWK_EXECUTABLE(mavconn-sysctrl mavconn-core.cc)
+PIXHAWK_LINK_LIBRARIES(mavconn-sysctrl
   mavconn_lcm
   ${GLIB2_LIBRARY}
   ${GTHREAD2_LIBRARY}

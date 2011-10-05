@@ -1,10 +1,13 @@
-struct mavlink_message_t {
-        int8_t len;    ///< Length of payload
-        int8_t seq;   ///< Aircraft ID, id of message sender
-        int8_t sysid;
-        int8_t compid;
-        int8_t msgid;  ///< ID of message in payload
-        int8_t payload[255]; ///< Length set in mavlink/protocol.h, currently 255 bytes
-        int8_t ck_a;   ///< Checksum high byte
-        int8_t ck_b;   ///< Checksum low byte
-    }
+package mavconn;
+
+struct mavlink_message_t
+{
+	int16_t checksum;
+	int8_t magic;
+	int8_t len;
+	int8_t seq;
+	int8_t sysid;
+	int8_t compid;
+	int8_t msgid;
+	int64_t payload64[33];
+}

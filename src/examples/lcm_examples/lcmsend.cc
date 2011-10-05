@@ -3,7 +3,7 @@
 MAVCONN Micro Air Vehicle Flying Robotics Toolkit
 Please see our website at <http://MAVCONN.ethz.ch>
 
-(c) 2009 MAVCONN PROJECT  <http://MAVCONN.ethz.ch>
+(c) 2009-2011 MAVCONN PROJECT  <http://MAVCONN.ethz.ch>
 
 This file is part of the MAVCONN project
 
@@ -32,13 +32,8 @@ This file is part of the MAVCONN project
 
 #include <stdio.h>
 
-// MAVLINK message format includes
-#include "protocol.h"
-#include "mavlink.h"
-
-// LCM transport includes
-#include <lcm/lcm.h>
-#include "comm/lcm/mavlink_message_t.h"
+// MAVCONN Includes
+#include "mavconn.h"
 
 // Latency Benchmarking
 #include <sys/time.h>
@@ -46,36 +41,6 @@ This file is part of the MAVCONN project
 
 // Timer for benchmarking
 struct timeval tv;
-
-static void
-send_mavlink_message(lcm_t * lcm)
-{
-	// The ID of this system. The valid range is 1-127
-	uint8_t systemID = 100;
-
-	// Instatiate a message and set all fields to zero (else values could be also different from zero)
-	mavlink_message_t msg;
-	// Pack the liftoff action message into this space, ready for sending
-	mavlink_action_t action;
-	action.action = MAV_ACTION_LAUNCH;
-	action.target = 1; // Send action to MAV 001
-	mavlink_msg_action_encode(systemID, 0, &msg, &action);
-
-	// Publish the message on the LCM IPC bus
-	mavlink_message_t_publish (lcm, "MAVLINK", &msg);
-
-	///////
-	// Benchmarking the latency
-
-	// Store time of sending, assuming sending does not take longer than one second
-	gettimeofday(&tv, NULL);
-	uint64_t sendTime =  ((uint64_t)tv.tv_sec) * 1000000 + tv.tv_usec;
-
-	// Pack the attitude message
-	mavlink_msg_attitude_pack(systemID, 0, &msg, sendTime, 0.0f, 0.1f, 0.2f, 0, 0, 0);
-	mavlink_message_t_publish(lcm, "MAVLINK", &msg);
-
-}
 
 int
 main (int argc, char ** argv)
@@ -95,14 +60,37 @@ main (int argc, char ** argv)
 		gettimeofday(&tv, NULL);
 		uint64_t lastTime = tv.tv_sec * 1000000 + tv.tv_usec;
 		// Send content
-		send_mavlink_message(lcm);
+		// The ID of this system. The valid range is 1-127
+		uint8_t systemID = getSystemID();
+
+		mavlink_message_t msg;
+		// Pack the liftoff action message into this space, ready for sending
+		mavlink_command_short_t action;
+		action.command = MAV_CMD_NAV_LAND;
+		action.target_system = 1; // Send command to MAV 001
+		action.target_component = PX_COMP_ID_ALL;
+		mavlink_msg_command_short_encode(systemID, 0, &msg, &action);
+
+		// Publish the message on the LCM IPC bus
+		sendMAVLinkMessage(lcm, &msg);
+
+		///////
+		// Benchmarking the latency
+
+		// Store time of sending, assuming sending does not take longer than one second
+		gettimeofday(&tv, NULL);
+
+		// Pack the attitude message
+		mavlink_msg_attitude_pack(systemID, 0, &msg, tv.tv_usec, 0.0f, 0.1f, 0.2f, 0, 0, 0);
+		// Publish the message on the LCM IPC bus
+		sendMAVLinkMessage(lcm, &msg);
 
 		// Take time difference
 		gettimeofday(&tv, NULL);
 		// Difference in milliseconds
 		uint64_t diffTime =  ((uint64_t)tv.tv_sec) * 1000000 + tv.tv_usec - lastTime;
 
-		printf("Sent ACTION message over LCM bus, took %f ms\n", diffTime);
+		printf("Sent COMMAND and ATTITUDE messages over LCM bus, took %f ms\n", diffTime/1000.0f);
 
 		lcm_destroy(lcm);
 		return 0;

@@ -8,7 +8,8 @@ INCLUDE_DIRECTORIES(.
 )
 
 SET_SOURCE_FILES(LCMEXT_SRC_FILES
-  mavlink_message_t.c
+  mavconn_mavlink_msg_container_t.c
+  mavconn_mavlink_message_t.c
   camera_image_message_t.c
   gl_overlay_message_t.c
   obstacle_map_message_t.c

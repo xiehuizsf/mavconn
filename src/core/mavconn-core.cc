@@ -43,6 +43,7 @@ This file is part of the MAVCONN project
 
 // MAVLINK message format includes
 #include "mavconn.h"
+#include "core/PxParamClient.h"
 
 // Latency Benchmarking
 #include <sys/time.h>
@@ -93,13 +94,15 @@ system_state_t static inline mk_system_state_t()
 // Settings
 int systemid = getSystemID();		///< The unique system id of this MAV, 0-255. Has to be consistent across the system
 int compid = MAV_COMP_ID_SYSTEM_CONTROL;		///< The unique component id of this process.
-int systemType = MAV_QUADROTOR;		///< The system type
+int systemType = MAV_TYPE_QUADROTOR;		///< The system type
 bool silent = false;				///< Wether console output should be enabled
 bool verbose = false;				///< Enable verbose output
 bool emitHeartbeat = false;			///< Generate a heartbeat with this process
 bool emitLoad = false;				///< Emit CPU load as debug message 101
 bool debug = false;					///< Enable debug functions and output
 bool cpu_performance = false;		///< Set CPU to performance mode (needs root)
+
+mavlink_heartbeat_t heartbeat;
 
 uint64_t currTime;
 uint64_t lastTime;
@@ -108,22 +111,25 @@ uint64_t lastGCSTime;
 
 PxParamClient* paramClient;
 
-static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,const mavlink_message_t* msg, void * user)
+static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel,const mavconn_mavlink_msg_container_t* container, void * user)
 {
 	if (debug) printf("Received message on channel \"%s\":\n", channel);
 
 	// Handle param messages
-	//paramClient->handleMAVLinkPacket(msg);
+	paramClient->handleMAVLinkPacket(msg);
+
+	lcm_t* lcm = (lcm_t*)user;
+	mavlink_message_t* msg = getMAVLinkMsgPtr(container);
 
 	switch(msg->msgid)
 	{
-	case MAVLINK_MSG_ID_ACTION:
+	case MAVLINK_MSG_ID_COMMAND_SHORT:
 	{
-		if (mavlink_msg_action_get_target(msg) == systemid)
+		if (mavlink_msg_command_short_get_target_system(msg) == systemid)
 		{
-			switch (mavlink_msg_action_get_action(msg))
+			switch (mavlink_msg_command_short_get_command(msg))
 			{
-			case MAV_ACTION_SHUTDOWN:
+			case MAV_CMD_DO_:
 			{
 				if (verbose) std::cerr << "Shutdown received, shutting down system" << std::endl;
 				mavlink_message_t response;
@@ -131,21 +137,21 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,co
 				status.status = MAV_STATE_POWEROFF;
 				status.mode = MAV_MODE_LOCKED;
 				mavlink_msg_sys_status_encode(systemid, compid, &response, &status);
-				mavlink_message_t_publish ((lcm_t*)user, "MAVLINK", &response);
+				sendMAVLinkMessage(lcm, msg);
 				if (system ("halt"))
 					if (verbose) std::cerr << "Shutdown failed." << std::endl;
 
 			}
 			break;
-			case MAV_ACTION_REBOOT:
+			case MAV_CMD_DO:
 			{
 				if (verbose) std::cerr << "Reboot received, rebooting system" << std::endl;
 				mavlink_message_t response;
-				mavlink_sys_status_t status;
-				status.status = MAV_STATE_POWEROFF;
-				status.mode = MAV_MODE_LOCKED;
-				mavlink_msg_sys_status_encode(systemid, compid, &response, &status);
-				mavlink_message_t_publish ((lcm_t*)user, "MAVLINK", &response);
+				mavlink_heartbeat_t status;
+				status.system_status = MAV_STATE_POWEROFF;
+				status.system_mode = MAV_MODE_FLAG_SAFETY_ARMED;
+				mavlink_msg_heartbeat_encode(systemid, compid, &response, &status);
+				sendMAVLinkMessage(lcm, &msg);
 				if(system ("reboot"))
 					if (verbose) std::cerr << "Reboot failed." << std::endl;
 			}
@@ -154,6 +160,43 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,co
 		}
 	}
 	break;
+	case MAVLINK_MSG_ID_COMMAND_LONG:
+		{
+			if (mavlink_msg_action_get_target(msg) == systemid)
+			{
+				switch (mavlink_msg_action_get_action(msg))
+				{
+				case MAV_ACTION_SHUTDOWN:
+				{
+					if (verbose) std::cerr << "Shutdown received, shutting down system" << std::endl;
+					mavlink_message_t response;
+					mavlink_sys_status_t status;
+					status.status = MAV_STATE_POWEROFF;
+					status.mode = MAV_MODE_LOCKED;
+					mavlink_msg_sys_status_encode(systemid, compid, &response, &status);
+					mavlink_message_t_publish ((lcm_t*)user, "MAVLINK", &response);
+					if (system ("halt"))
+						if (verbose) std::cerr << "Shutdown failed." << std::endl;
+
+				}
+				break;
+				case MAV_ACTION_REBOOT:
+				{
+					if (verbose) std::cerr << "Reboot received, rebooting system" << std::endl;
+					mavlink_message_t response;
+					mavlink_sys_status_t status;
+					status.status = MAV_STATE_POWEROFF;
+					status.mode = MAV_MODE_LOCKED;
+					mavlink_msg_sys_status_encode(systemid, compid, &response, &status);
+					mavlink_message_t_publish ((lcm_t*)user, "MAVLINK", &response);
+					if(system ("reboot"))
+						if (verbose) std::cerr << "Reboot failed." << std::endl;
+				}
+				break;
+				}
+			}
+		}
+		break;
 	case MAVLINK_MSG_ID_HEARTBEAT:
 	{
 		switch(mavlink_msg_heartbeat_get_type(msg))
@@ -177,7 +220,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,co
 		{
 			mavlink_message_t r_msg;
 			mavlink_msg_ping_pack(systemid, compid, &r_msg, ping.seq, msg->sysid, msg->compid, r_timestamp);
-			mavlink_message_t_publish((lcm_t*)user, MAVLINK_MAIN, &r_msg);
+			mavlink_message_t_publish(, MAVLINK_MAIN, &r_msg);
 		}
 	}
 	break;
@@ -267,6 +310,10 @@ int main (int argc, char ** argv)
 	uint64_t old_total = cpu.total;
 	uint64_t old_idle = cpu.idle;
 
+	uint8_t baseMode;
+	uint8_t customMode;
+	uint8_t systemStatus;
+
 	printf("\nPX SYSTEM CONTROL STARTED ON MAV %d (COMPONENT ID:%d) - RUNNING..\n\n", systemid, compid);
 
 	while (1)
@@ -291,8 +338,8 @@ int main (int argc, char ** argv)
 			// Send heartbeat if enabled
 			if (emitHeartbeat)
 			{
-				mavlink_msg_system_time_pack(systemid, compid, &msg, currTime);
-				mavlink_message_t_publish (lcm, "MAVLINK", &msg);
+				mavlink_msg_system_time_pack(systemid, compid, &msg, currTime, 0);
+				sendMAVLinkMessage(lcm, &msg);
 
 				lastTime = currTime;
 				if (verbose) std::cout << "Emitting heartbeat" << std::endl;
@@ -300,8 +347,8 @@ int main (int argc, char ** argv)
 				// SEND HEARTBEAT
 
 				// Pack message and get size of encoded byte string
-				mavlink_msg_heartbeat_pack(systemid, compid, &msg, systemType, MAV_AUTOPILOT_PIXHAWK);
-				mavlink_message_t_publish (lcm, "MAVLINK", &msg);
+				mavlink_msg_heartbeat_pack(systemid, compid, &msg, systemType, MAV_AUTOPILOT_PIXHAWK, baseMode, customMode, systemStatus);
+				sendMAVLinkMessage(lcm, &msg);
 			}
 
 			if (emitLoad)
@@ -310,8 +357,9 @@ int main (int argc, char ** argv)
 				glibtop_get_cpu (&cpu);
 				glibtop_get_mem(&memory);
 				float load = ((float)(cpu.total-old_total)-(float)(cpu.idle-old_idle)) / (float)(cpu.total-old_total);
-				mavlink_msg_debug_pack(systemid, compid, &msg, 101, load*100.f);
-				mavlink_message_t_publish(lcm, "MAVLINK", &msg);
+//				mavlink_msg_debug_pack(systemid, compid, &msg, 101, load*100.f);
+//				sendMAVLinkMessage(lcm, &msg);
+				// FIXME V10
 				old_total = cpu.total;
 				old_idle = cpu.idle;
 
@@ -371,7 +419,7 @@ int main (int argc, char ** argv)
 			usleep(10000);
 	}
 
-	mavlink_message_t_unsubscribe (lcm, commSub);
+	mavconn_mavlink_msg_container_t_unsubscribe (lcm, commSub);
 	lcm_destroy (lcm);
 
 	return 0;
