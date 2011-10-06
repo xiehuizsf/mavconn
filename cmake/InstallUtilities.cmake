@@ -49,7 +49,8 @@ FUNCTION(PIXHAWK_INSTALL)
   INSTALL(FILES ${MAVCONNNMEA_HEADERS} DESTINATION ${PIXHAWK_INCLUDE_INSTALL_PATH}/external/nmea/)
 
   SET(MAVCONNLCM_HEADERS
-	${CMAKE_SOURCE_DIR}/src/comm/lcm/mavlink_message_t.h
+	${CMAKE_SOURCE_DIR}/src/comm/lcm/mavconn_mavlink_message_t.h
+	${CMAKE_SOURCE_DIR}/src/comm/lcm/mavconn_mavlink_msg_container_t.h
 	${CMAKE_SOURCE_DIR}/src/comm/lcm/camera_image_message_t.h
 	${CMAKE_SOURCE_DIR}/src/comm/lcm/gl_overlay_message_t.h
 	${CMAKE_SOURCE_DIR}/src/comm/lcm/obstacle_map_message_t.h
@@ -69,7 +70,7 @@ FUNCTION(PIXHAWK_INSTALL)
   INSTALL(FILES ${MAVCONNIMG_HEADERS} DESTINATION ${PIXHAWK_INCLUDE_INSTALL_PATH}/interface/shared_mem/)
 
   SET(MAVCONN_CORE_HEADERS
-	${CMAKE_SOURCE_DIR}/src/core/PxParamClient.h
+	${CMAKE_SOURCE_DIR}/src/core/MAVConnParamClient.h
 	${CMAKE_SOURCE_DIR}/src/core/ParamClientCallbacks.h
   )
   INSTALL(FILES ${MAVCONN_CORE_HEADERS} DESTINATION ${PIXHAWK_INCLUDE_INSTALL_PATH}/core/)

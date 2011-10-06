@@ -255,7 +255,7 @@ int mavconn_mavlink_message_t_publish(lcm_t *lc, const char *channel, const mavc
       return status;
 }
 
-struct _mavconn_mavconn_mavlink_msg_container_t_subscription_t {
+struct _mavconn_mavlink_message_t_subscription_t {
     mavconn_mavlink_message_t_handler_t user_handler;
     void *userdata;
     lcm_subscription_t *lc_h;
@@ -273,18 +273,18 @@ void mavconn_mavlink_message_t_handler_stub (const lcm_recv_buf_t *rbuf,
         return;
     }
 
-    mavconn_mavconn_mavlink_msg_container_t_subscription_t *h = (mavconn_mavconn_mavlink_msg_container_t_subscription_t*) userdata;
+    mavconn_mavlink_message_t_subscription_t *h = (mavconn_mavlink_message_t_subscription_t*) userdata;
     h->user_handler (rbuf, channel, &p, h->userdata);
 
     mavconn_mavlink_message_t_decode_cleanup (&p);
 }
 
-mavconn_mavconn_mavlink_msg_container_t_subscription_t* mavconn_mavlink_message_t_subscribe (lcm_t *lcm, 
+mavconn_mavlink_message_t_subscription_t* mavconn_mavlink_message_t_subscribe (lcm_t *lcm, 
                     const char *channel, 
                     mavconn_mavlink_message_t_handler_t f, void *userdata)
 {
-    mavconn_mavconn_mavlink_msg_container_t_subscription_t *n = (mavconn_mavconn_mavlink_msg_container_t_subscription_t*)
-                       malloc(sizeof(mavconn_mavconn_mavlink_msg_container_t_subscription_t));
+    mavconn_mavlink_message_t_subscription_t *n = (mavconn_mavlink_message_t_subscription_t*)
+                       malloc(sizeof(mavconn_mavlink_message_t_subscription_t));
     n->user_handler = f;
     n->userdata = userdata;
     n->lc_h = lcm_subscribe (lcm, channel, 
@@ -297,13 +297,13 @@ mavconn_mavconn_mavlink_msg_container_t_subscription_t* mavconn_mavlink_message_
     return n;
 }
 
-int mavconn_mavlink_message_t_subscription_set_queue_capacity (mavconn_mavconn_mavlink_msg_container_t_subscription_t* subs, 
+int mavconn_mavlink_message_t_subscription_set_queue_capacity (mavconn_mavlink_message_t_subscription_t* subs, 
                               int num_messages)
 {
     return lcm_subscription_set_queue_capacity (subs->lc_h, num_messages);
 }
 
-int mavconn_mavlink_message_t_unsubscribe(lcm_t *lcm, mavconn_mavconn_mavlink_msg_container_t_subscription_t* hid)
+int mavconn_mavlink_message_t_unsubscribe(lcm_t *lcm, mavconn_mavlink_message_t_subscription_t* hid)
 {
     int status = lcm_unsubscribe (lcm, hid->lc_h);
     if (0 != status) {

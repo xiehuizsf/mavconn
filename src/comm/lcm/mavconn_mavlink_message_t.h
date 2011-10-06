@@ -32,14 +32,14 @@ struct _mavconn_mavlink_message_t
 mavconn_mavlink_message_t   *mavconn_mavlink_message_t_copy(const mavconn_mavlink_message_t *p);
 void mavconn_mavlink_message_t_destroy(mavconn_mavlink_message_t *p);
 
-typedef struct _mavconn_mavconn_mavlink_msg_container_t_subscription_t mavconn_mavconn_mavlink_msg_container_t_subscription_t;
+typedef struct _mavconn_mavlink_message_t_subscription_t mavconn_mavlink_message_t_subscription_t;
 typedef void(*mavconn_mavlink_message_t_handler_t)(const lcm_recv_buf_t *rbuf, 
              const char *channel, const mavconn_mavlink_message_t *msg, void *user);
 
 int mavconn_mavlink_message_t_publish(lcm_t *lcm, const char *channel, const mavconn_mavlink_message_t *p);
-mavconn_mavconn_mavlink_msg_container_t_subscription_t* mavconn_mavlink_message_t_subscribe(lcm_t *lcm, const char *channel, mavconn_mavlink_message_t_handler_t f, void *userdata);
-int mavconn_mavlink_message_t_unsubscribe(lcm_t *lcm, mavconn_mavconn_mavlink_msg_container_t_subscription_t* hid);
-int mavconn_mavlink_message_t_subscription_set_queue_capacity(mavconn_mavconn_mavlink_msg_container_t_subscription_t* subs, 
+mavconn_mavlink_message_t_subscription_t* mavconn_mavlink_message_t_subscribe(lcm_t *lcm, const char *channel, mavconn_mavlink_message_t_handler_t f, void *userdata);
+int mavconn_mavlink_message_t_unsubscribe(lcm_t *lcm, mavconn_mavlink_message_t_subscription_t* hid);
+int mavconn_mavlink_message_t_subscription_set_queue_capacity(mavconn_mavlink_message_t_subscription_t* subs, 
                               int num_messages);
 
 
