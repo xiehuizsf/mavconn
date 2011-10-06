@@ -37,11 +37,12 @@ This file is part of the MAVCONN project
 #include <sstream>
 #include <opencv2/highgui/highgui.hpp>
 
+#include "mavconn.h"
 #include "timer/Timer.h"
 
 // forward declarations
 typedef struct _lcm_t lcm_t;
-typedef struct _mavlink_message_t_subscription_t mavlink_message_t_subscription_t;
+typedef struct _mavconn_mavlink_msg_container_t_subscription_t mavconn_mavlink_msg_container_t_subscription_t;
 typedef struct _lcm_recv_buf_t lcm_recv_buf_t;
 typedef struct __mavlink_message mavlink_message_t;
 
@@ -137,12 +138,12 @@ namespace MAVCONN
             void sendCommand(const WatchdogID& w_id, uint16_t p_id, Command::Enum command);
 
             WatchdogInfo& getWatchdog(uint8_t system_id, uint16_t watchdog_id);
-            static void mavlinkHandler(const lcm_recv_buf_t* rbuf, const char* channel, const mavlink_message_t* msg, void* userData);
+            static void mavlinkHandler(const lcm_recv_buf_t* rbuf, const char* channel, const mavconn_mavlink_msg_container_t* container, void* userData);
             void lcmHandle();
 
             std::map<WatchdogID, WatchdogInfo> watchdogs_;      ///< A map containing all watchdogs which are currently active
             lcm_t* lcm_;                                        ///< The lcm connection
-            mavlink_message_t_subscription_t* subscription_;    ///< The mavlink subscription
+            mavconn_mavlink_msg_container_t_subscription_t* subscription_;    ///< The mavlink subscription
 
         private:
             void createGraphics();

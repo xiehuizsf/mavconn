@@ -31,6 +31,7 @@ This file is part of the MAVCONN project
 #ifndef _Watchdog_H__
 #define _Watchdog_H__
 
+#include "mavconn.h"
 #include <boost/program_options.hpp>
 #include "timer/Timer.h"
 #include "Process.h"
@@ -86,7 +87,7 @@ This file is part of the MAVCONN project
 #define __WATCHDOG_HEARTBEAT_INTERVAL_DEFAULTVALUE 2000
 
 typedef struct _lcm_t lcm_t;
-typedef struct _mavlink_message_t_subscription_t mavlink_message_t_subscription_t;
+typedef struct _mavconn_mavlink_msg_container_t_subscription_t mavconn_mavlink_msg_container_t_subscription_t;
 
 namespace MAVCONN
 {
@@ -164,7 +165,7 @@ namespace MAVCONN
                 Timer timer_;                                       ///< A timer to measure the running time of the processes
                 boost::program_options::variables_map vm_;          ///< The program options value map
                 lcm_t* lcm_;                                        ///< Lcm connection
-                mavlink_message_t_subscription_t* subscription_;    ///< Lcm message subscription
+                mavconn_mavlink_msg_container_t_subscription_t* subscription_;    ///< Lcm message subscription
                 Timer heartbeatTimer_;                              ///< A timer used to wait some time between two heartbeat messages
 
 

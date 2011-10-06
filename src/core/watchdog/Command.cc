@@ -52,9 +52,10 @@ namespace watchdog
     /**
         @brief Callback function for lcm to receive MAVLINK messages.
     */
-    void commandHandler(const lcm_recv_buf_t* rbuf, const char* channel, const mavlink_message_t* msg, void* userData)
+    void commandHandler(const lcm_recv_buf_t* rbuf, const char* channel, const mavconn_mavlink_msg_container_t* container, void* userData)
     {
         Watchdog* _this = static_cast<Watchdog*>(userData);
+        const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
 
         // check if it's a watchdog command message
         if (msg->msgid == MAVLINK_MSG_ID_WATCHDOG_COMMAND)
@@ -162,7 +163,7 @@ namespace watchdog
 
         mavlink_message_t msg;
         mavlink_msg_watchdog_heartbeat_encode(sysid, compid, &msg, &payload);
-        mavlink_message_t_publish(watchdog->getLcm(), "MAVLINK", &msg);
+        sendMAVLinkMessage(watchdog->getLcm(), &msg);
 //std::cout << "--> sent mavlink_watchdog_heartbeat_t" << std::endl;
     }
 
@@ -196,7 +197,7 @@ namespace watchdog
 
         mavlink_message_t msg;
         mavlink_msg_watchdog_process_info_encode(sysid, compid, &msg, &payload);
-        mavlink_message_t_publish(watchdog->getLcm(), "MAVLINK", &msg);
+        sendMAVLinkMessage(watchdog->getLcm(), &msg);
 //std::cout << "--> sent mavlink_watchdog_process_info_t" << std::endl;
     }
 
@@ -225,7 +226,7 @@ namespace watchdog
 
         mavlink_message_t msg;
         mavlink_msg_watchdog_process_status_encode(sysid, compid, &msg, &payload);
-        mavlink_message_t_publish(watchdog->getLcm(), "MAVLINK", &msg);
+        sendMAVLinkMessage(watchdog->getLcm(), &msg);
 //std::cout << "--> sent mavlink_watchdog_process_status_t" << std::endl;
     }
 }

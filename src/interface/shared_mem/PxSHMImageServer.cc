@@ -111,8 +111,9 @@ PxSHMImageServer::writeMonoImage(const cv::Mat& img, uint64_t camId,
 	
 	mavlink_message_t msg;
 	mavlink_msg_image_available_encode(this->sysid, this->compid, &msg, &imginfo);
-	mavlink_message_t_publish (lcm, "IMAGES", &msg);
+	sendMAVLinkImageMessage(lcm, &msg);
 	
+
 	imgSeq++;
 }
 	
@@ -167,7 +168,7 @@ PxSHMImageServer::writeStereoImage(const cv::Mat& imgLeft, uint64_t camIdLeft,
 	
 	mavlink_message_t msg;
 	mavlink_msg_image_available_encode(this->sysid, this->compid, &msg, &imginfo);
-	mavlink_message_t_publish (lcm, "IMAGES", &msg);
+	sendMAVLinkImageMessage(lcm, &msg);
 	
 	imgSeq++;
 }
@@ -211,7 +212,7 @@ PxSHMImageServer::writeKinectImage(const cv::Mat& imgBayer, const cv::Mat& imgDe
 	
 	mavlink_message_t msg;
 	mavlink_msg_image_available_encode(this->sysid, this->compid, &msg, &imginfo);
-	mavlink_message_t_publish (lcm, "IMAGES", &msg);
+	sendMAVLinkImageMessage(lcm, &msg);
 	
 	imgSeq++;
 }

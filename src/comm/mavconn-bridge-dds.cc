@@ -677,8 +677,8 @@ main(int argc, char** argv)
 	mw.init(argc, argv);
 
 	gl_overlay_message_t_subscription_t* overlayLCMSub = 0;
-	mavlink_message_t_subscription_t* imageLCMSub = 0;
-	mavlink_message_t_subscription_t* mavlinkLCMSub = 0;
+	mavconn_mavlink_msg_container_t_subscription_t* imageLCMSub = 0;
+	mavconn_mavlink_msg_container_t_subscription_t* mavlinkLCMSub = 0;
 	obstacle_map_message_t_subscription_t* obstacleMapLCMSub = 0;
 
 	mavlinkLCMSub = mavlink_message_t_subscribe(lcm, "MAVLINK", &mavlinkLCMHandler, 0);

@@ -54,7 +54,7 @@ int sysid = getSystemID();
 int compid = 30;
 bool silent, verbose, stereo_front;
 
-#define CAPTURE_DIR			"/home/pixhawk/dataset_capture/"
+#define CAPTURE_DIR			"dataset_capture/"
 #define IMAGE_CAPTURE_FILE	"imagedata.txt"
 
 using namespace std;
@@ -118,13 +118,15 @@ static void image_writer (void)
 /**
  * @brief Handle incoming MAVLink packets containing images
  */
-static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, const mavlink_message_t* msg, void * user)
+static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, const mavconn_mavlink_msg_container_t* container, void * user)
 {
 	if (recordData && !bPause)
 	{
 		//try to get the lock, if it is still locked by image writer, skip the current image (this is for very slow computers)
 		if(g_mutex_trylock(image_grabbed_mutex))
 		{
+			const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
+
 			// Pointer to shared memory data
 			PxSHMImageClient* client = static_cast<PxSHMImageClient*>(user);
 
@@ -216,19 +218,20 @@ void prepareCaptureFile( ofstream& file, const string& dir, const string& filena
 // Timer for benchmarking
 struct timeval tv;
 
-static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, const mavlink_message_t* msg, void * user)
+static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, const mavconn_mavlink_msg_container_t* container, void * user)
 {
 	lcm_t* lcmMavlink = (lcm_t*) user;
+	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
 
 	switch(msg->msgid)
 	{
-	case MAVLINK_MSG_ID_ACTION:
+	case MAVLINK_MSG_ID_COMMAND_SHORT:
 	{
-		mavlink_action_t act;
-		mavlink_msg_action_decode(msg, &act);
-		switch( act.action )
+		mavlink_command_short_t act;
+		mavlink_msg_command_short_decode(msg, &act);
+		switch( act.command )
 		{
-		case MAV_ACTION_REC_START:
+		case MAV_CMD_DO_CONTROL_VIDEO:
 		{
 			mavlink_message_t msg;
 			mavlink_statustext_t statustext;
@@ -250,21 +253,21 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 				strftime( dateBuf, 80, "%Y%m%d_%H%M%S\0", timeinfo );
 				mavlinkFile.open((string(CAPTURE_DIR) + string(dateBuf) + string(".mavlink")).c_str(), ios::binary | ios::out);
 
-				sprintf((char*)&statustext.text, "px_imagecapture: STARTING RECORDING");
+				sprintf((char*)&statustext.text, "MAVCONN: imagecapture: STARTING RECORDING");
 				mavlink_msg_statustext_encode(sysid, compid, &msg, &statustext);
-				mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &msg);
+				sendMAVLinkMessage(lcmMavlink, &msg);
 				snprintf((char*)&statustext.text, MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN, "%s%s%s", CAPTURE_DIR, dateBuf, ".mavlink");
 				mavlink_msg_statustext_encode(sysid, compid, &msg, &statustext);
-				mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &msg);
+				sendMAVLinkMessage(lcmMavlink, &msg);
 				recordData = true;
 				bPause = false;
 			}
 			else if(bPause)
 			{
 				bPause = false;
-				sprintf((char*)&statustext.text, "px_imagecapture: CONTINUE RECORDING");
+				sprintf((char*)&statustext.text, "MAVCONN: imagecapture: CONTINUE RECORDING");
 				mavlink_msg_statustext_encode(sysid, compid, &msg, &statustext);
-				mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &msg);
+				sendMAVLinkMessage(lcmMavlink, &msg);
 			}
 			break;
 		}
@@ -284,7 +287,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 				mavlink_statustext_t statustext;
 				sprintf((char*)&statustext.text, "px_imagecapture: STOPPING RECORDING");
 				mavlink_msg_statustext_encode(sysid, compid, &msg, &statustext);
-				mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &msg);
+				sendMAVLinkMessage(lcmMavlink, &msg);
 				recordData = false;
 				bPause = false;
 			}
@@ -302,7 +305,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 				sprintf((char*) &statustext.text, "px_imagecapture: PAUSE RECORDING");
 
 				mavlink_msg_statustext_encode(sysid, compid, &msg, &statustext);
-				mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &msg);
+				sendMAVLinkMessage(lcmMavlink, &msg);
 			}
 			break;
 		}
@@ -386,8 +389,8 @@ int main(int argc, char* argv[])
 			return -7;
 		}
 	}
-	mavlink_message_t_subscription_t * img_sub  = mavlink_message_t_subscribe (lcmImage, MAVLINK_IMAGES, &image_handler, cam);
-	mavlink_message_t_subscription_t * comm_sub = mavlink_message_t_subscribe (lcmMavlink, MAVLINK_MAIN, &mavlink_handler, lcmMavlink);
+	mavconn_mavlink_msg_container_t_subscription_t * img_sub  = mavconn_mavlink_msg_container_t_subscribe (lcmImage, MAVLINK_IMAGES, &image_handler, cam);
+	mavconn_mavlink_msg_container_t_subscription_t * comm_sub = mavconn_mavlink_msg_container_t_subscribe (lcmMavlink, MAVLINK_MAIN, &mavlink_handler, lcmMavlink);
 
 	// ----- Creating thread for image handling
 	GThread* lcm_imageThread;
@@ -428,9 +431,9 @@ int main(int argc, char* argv[])
 
 	mavlink_message_t msg;
 	mavlink_statustext_t statustext;
-	sprintf((char*)&statustext.text, "px_imagecapture: Ready for capture");
+	sprintf((char*)&statustext.text, "MAVCONN: imagecapture: Ready for capture");
 	mavlink_msg_statustext_encode(sysid, compid, &msg, &statustext);
-	mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &msg);
+	sendMAVLinkMessage(lcmMavlink, &msg);
 
 	while(1)
 	{
@@ -438,8 +441,8 @@ int main(int argc, char* argv[])
 		lcm_handle(lcmMavlink);
 	}
 
-	mavlink_message_t_unsubscribe (lcmImage, img_sub);
-	mavlink_message_t_unsubscribe (lcmMavlink, comm_sub);
+	mavconn_mavlink_msg_container_t_unsubscribe (lcmImage, img_sub);
+	mavconn_mavlink_msg_container_t_unsubscribe (lcmMavlink, comm_sub);
 	lcm_destroy (lcmImage);
 	lcm_destroy (lcmMavlink);
 	delete cam;

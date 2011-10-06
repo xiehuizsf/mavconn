@@ -44,37 +44,40 @@ struct timeval tv;
 
 static void
 mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
-		const mavlink_message_t* msg, void * user)
+		const mavconn_mavlink_msg_container_t* container, void * user)
 {
+	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
+
 	printf("Received message #%d on channel \"%s\" (sys:%d|comp:%d):\n", msg->msgid, channel, msg->sysid, msg->compid);
 
 	switch(msg->msgid)
 	{
 	uint32_t receiveTime;
 	uint32_t sendTime;
-	case MAVLINK_MSG_ID_ACTION:
+	case MAVLINK_MSG_ID_COMMAND_SHORT:
 		printf("Message ID: %d\n", msg->msgid);
-		printf("Action ID: %d\n", mavlink_msg_action_get_action(msg));
-		printf("Target ID: %d\n", mavlink_msg_action_get_target(msg));
+		printf("Action ID: %d\n", mavlink_msg_command_short_get_command(msg));
+		printf("Target ID: %d\n", mavlink_msg_command_short_get_target_system(msg));
 		printf("\n");
 		break;
 	case MAVLINK_MSG_ID_ATTITUDE:
 		gettimeofday(&tv, NULL);
 		receiveTime = tv.tv_usec;
-		sendTime = mavlink_msg_attitude_get_usec(msg);
+		sendTime = mavlink_msg_attitude_get_time_boot_ms(msg);
 		printf("Received attitude message, transport took %d us\n", (receiveTime - sendTime));
 		break;
-	case MAVLINK_MSG_ID_GPS_RAW:
+	case MAVLINK_MSG_ID_GPS_RAW_INT:
 	{
-		mavlink_gps_raw_t gps;
-		mavlink_msg_gps_raw_decode(msg, &gps);
-		printf("GPS: lat: %f, lon: %f, alt: %f\n", gps.lat, gps.lon, gps.alt);
+		mavlink_gps_raw_int_t gps;
+		mavlink_msg_gps_raw_int_decode(msg, &gps);
+		printf("GPS: lat: %d, lon: %d, alt: %d\n", gps.lat, gps.lon, gps.alt);
 	}
+	break;
 	case MAVLINK_MSG_ID_RAW_PRESSURE:
 	{
 		mavlink_raw_pressure_t p;
 		mavlink_msg_raw_pressure_decode(msg, &p);
-		printf("PRES: %f\n", p.press_abs);
+		printf("PRES: %d\n", p.press_abs);
 	}
 	break;
 	default:
@@ -103,8 +106,8 @@ int main (int argc, char ** argv)
 	if (!lcm)
 		return 1;
 
-	mavlink_message_t_subscription_t * comm_sub =
-			mavlink_message_t_subscribe (lcm, "MAVLINK", &mavlink_handler, NULL);
+	mavconn_mavlink_msg_container_t_subscription_t * comm_sub =
+			mavconn_mavlink_msg_container_t_subscribe (lcm, MAVLINK_MAIN, &mavlink_handler, NULL);
 
 	// Thread
 	GThread* lcm_thread;
@@ -129,7 +132,7 @@ int main (int argc, char ** argv)
 		printf("Waited another second while still receiving data in parallel\n");
 	}
 
-	mavlink_message_t_unsubscribe (lcm, comm_sub);
+	mavconn_mavlink_msg_container_t_unsubscribe (lcm, comm_sub);
 	lcm_destroy (lcm);
 	g_thread_join(lcm_thread);
 	return 0;

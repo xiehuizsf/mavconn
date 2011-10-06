@@ -9,12 +9,17 @@ INCLUDE_DIRECTORIES(.
   ../../external/mvimpact
 )
 
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    # Linux specific code
+    SET(LINUX_SYSTEM_FOUND true)
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
 LINK_DIRECTORIES(
   ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
 )
 
-PIXHAWK_EXECUTABLE(px_imagecapture px_imagecapture.cc)
-PIXHAWK_LINK_LIBRARIES(px_imagecapture
+PIXHAWK_EXECUTABLE(mavconn-imagecapture mavconn-imagecapture.cc)
+PIXHAWK_LINK_LIBRARIES(mavconn-imagecapture
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${OPENCV_CORE_LIBRARY_OPTIMIZED}
   ${OPENCV_HIGHGUI_LIBRARY_OPTIMIZED}
@@ -27,8 +32,8 @@ PIXHAWK_LINK_LIBRARIES(px_imagecapture
   ${Boost_SYSTEM_LIBRARY}
 )
 
-PIXHAWK_EXECUTABLE(px_replay px_replay.cc)
-PIXHAWK_LINK_LIBRARIES(px_replay
+PIXHAWK_EXECUTABLE(mavconn-replay mavconn-replay.cc)
+PIXHAWK_LINK_LIBRARIES(mavconn-replay
   ${OPENCV_CORE_LIBRARY_OPTIMIZED}
   ${OPENCV_HIGHGUI_LIBRARY_OPTIMIZED}
   ${GLIB2_LIBRARY}
@@ -45,14 +50,22 @@ SET_SOURCE_FILES(CAMERA_SRC_FILES
   PxCameraCapture.cc
   PxCameraManager.cc
   PxCameraManagerFactory.cc
-  PxBluefoxCamera.cc
-  PxBluefoxCameraManager.cc
-  PxBluefoxStereoCamera.cc
   PxFireflyCamera.cc
   PxFireflyCameraManager.cc
   PxFireflyStereoCamera.cc
+  PxOpenCVCamera.cc
+  PxOpenCVCameraManager.cc
   PxStereoCamera.cc
 )
+
+IF(LINUX_SYSTEM_FOUND)
+SET_SOURCE_FILES(CAMERA_SRC_FILES
+  ${CAMERA_SRC_FILES}
+  PxBluefoxCamera.cc
+  PxBluefoxCameraManager.cc
+  PxBluefoxStereoCamera.cc
+)
+ENDIF(LINUX_SYSTEM_FOUND)
 
 # WARNING: Do not link mvDeviceManager and OPENCV_HIGHGUI_LIBRARY_OPTIMIZED
 # to the same executable/library as there is some unknown cross-interaction
@@ -62,26 +75,35 @@ PIXHAWK_LINK_LIBRARIES(pxcam
   ${DC_LIBRARY_OPTIMIZED}
   ${GLIBMM2_LIBRARY}
   ${OPENCV_CORE_LIBRARY_OPTIMIZED}
+  ${OPENCV_HIGHGUI_LIBRARY_OPTIMIZED}
   ${SIGC++_LIBRARY}
   lcm
   mavconn_lcm
   mavconn_shm
+)
+
+IF(LINUX_SYSTEM_FOUND)
+PIXHAWK_LINK_LIBRARIES(pxcam
   mvDeviceManager
 )
+ENDIF(LINUX_SYSTEM_FOUND)
+
 SET_TARGET_PROPERTIES(pxcam PROPERTIES COMPILE_FLAGS "-D_REENTRANT")
 
-PIXHAWK_EXECUTABLE(px_camera
-  px_camera.cc
+PIXHAWK_EXECUTABLE(mavconn-camera
+  mavconn-camera.cc
 )
-PIXHAWK_LINK_LIBRARIES(px_camera
+PIXHAWK_LINK_LIBRARIES(mavconn-camera
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   ${OPENCV_IMGPROC_LIBRARY_OPTIMIZED}
+    ${GLIB2_LIBRARY}
+  ${GTHREAD2_LIBRARY}
   pxcam
 )
 
-PIXHAWK_EXECUTABLE(px_view px_view.cc)
-PIXHAWK_LINK_LIBRARIES(px_view
+PIXHAWK_EXECUTABLE(mavconn-view mavconn-view.cc)
+PIXHAWK_LINK_LIBRARIES(mavconn-view
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${OPENCV_CORE_LIBRARY_OPTIMIZED}
   ${OPENCV_IMGPROC_LIBRARY_OPTIMIZED}

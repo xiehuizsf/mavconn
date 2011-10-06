@@ -92,8 +92,10 @@ lcm_t* lcm;
  * @param user LCM user
  */
 static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel,
-		const mavlink_message_t* msg, void * user)
+		const mavconn_mavlink_msg_container_t* container, void * user)
 {
+	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
+
 	// Send message over UDP
 	int link = *(static_cast<int*>(user));
 	static uint8_t buf[MAVLINK_MAX_PACKET_LEN];
@@ -170,7 +172,7 @@ void* udp_wait(void* lcm_ptr)
 					printf("\n(SYS: %d/COMP: %d/UDP) Received message from UDP with %i payload bytes and %i total length\n",
 							msg.sysid, msg.compid, msg.len, recsize);
 				}
-				mavlink_message_t_publish (lcm, "MAVLINK", &msg);
+				sendMAVLinkMessage(lcm, &msg);
 			}
 		}
 
@@ -276,8 +278,8 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	mavlink_message_t_subscription_t * comm_sub =
-			mavlink_message_t_subscribe (lcm, "MAVLINK", &mavlink_handler, &sock);
+	mavconn_mavlink_msg_container_t_subscription_t * comm_sub =
+			mavconn_mavlink_msg_container_t_subscribe (lcm, MAVLINK_MAIN, &mavlink_handler, &sock);
 
 	// Initialize LCM receiver thread
 	GThread* lcm_thread;
@@ -308,7 +310,7 @@ int main(int argc, char* argv[])
 	{
 		sleep(1); // Sleep one second
 	}
-	mavlink_message_t_unsubscribe (lcm, comm_sub);
+	mavconn_mavlink_msg_container_t_unsubscribe(lcm, comm_sub);
 	lcm_destroy (lcm);
 	close(sock);
 

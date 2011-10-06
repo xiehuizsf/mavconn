@@ -66,6 +66,8 @@ enum MAVCONN_LINK_TYPE
 	MAVCONN_LINK_TYPE_UDP,
 	MAVCONN_LINK_TYPE_UART_AUTOPILOT,
 	MAVCONN_LINK_TYPE_UART_RADIO,
+	MAVCONN_LINK_TYPE_UART_VICON,
+	MAVCONN_LINK_TYPE_UART,
 	MAVCONN_LINK_TYPE_ROS,
 	MAVCONN_LINK_TYPE_DDS
 };
@@ -163,6 +165,21 @@ sendMAVLinkMessage(lcm_t * lcm, mavlink_message_t* msg, MAVCONN_LINK_TYPE link_t
 
 	// Publish the message on the LCM bus
 	mavconn_mavlink_msg_container_t_publish (lcm, MAVLINK_MAIN, &container);
+}
+
+static inline void
+sendMAVLinkImageMessage(lcm_t * lcm, mavlink_message_t* msg, MAVCONN_LINK_TYPE link_type=MAVCONN_LINK_TYPE_LCM);
+
+static inline void
+sendMAVLinkImageMessage(lcm_t * lcm, mavlink_message_t* msg, MAVCONN_LINK_TYPE link_type)
+{
+	// Pack a new container
+	static mavconn_mavlink_msg_container_t container;
+	container.link_network_source = link_type;
+	memcpy(&(container.msg), msg, MAVLINK_MAX_PACKET_LEN);
+
+	// Publish the message on the LCM bus
+	mavconn_mavlink_msg_container_t_publish (lcm, MAVLINK_IMAGES, &container);
 }
 
 static inline const mavlink_message_t*

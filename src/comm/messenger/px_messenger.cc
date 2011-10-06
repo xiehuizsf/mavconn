@@ -50,7 +50,7 @@ void send_reset(void) {
 	p.param_id[14] = 0;
 	mavlink_msg_param_set_encode(getSystemID(), PX_COMP_ID_MESSENGER, &msg, &p);
 
-	mavlink_message_t_publish(lcm, "MAVLINK", &msg);
+	sendMAVLinkMessage(lcm, &msg);
 }
 
 int main(int argc, char* argv[]) {

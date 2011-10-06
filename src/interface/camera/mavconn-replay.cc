@@ -155,8 +155,8 @@ int main(int argc, char* argv[])
 			exit(EXIT_FAILURE);
 
 		//cam = new PxSharedMemServer(sysid, compid, 640, 480, 8, 1, 2011);
-		//mavlink_message_t_subscription_t * img_sub  = mavlink_message_t_subscribe (lcmImage, MAVLINK_IMAGES, &image_handler, cam);
-		//mavlink_message_t_subscription_t * comm_sub = mavlink_message_t_subscribe (lcmMavlink, MAVLINK_MAIN, &mavlink_handler, lcmMavlink);
+		//mavconn_mavlink_msg_container_t_subscription_t * img_sub  = mavlink_message_t_subscribe (lcmImage, MAVLINK_IMAGES, &image_handler, cam);
+		//mavconn_mavlink_msg_container_t_subscription_t * comm_sub = mavlink_message_t_subscribe (lcmMavlink, MAVLINK_MAIN, &mavlink_handler, lcmMavlink);
 
 		printf("px_replay: Found left camera image stream, loading image list...\n");
 
@@ -284,8 +284,8 @@ int main(int argc, char* argv[])
 		//the following bytes are the message without magic number (see mavlink_msg_to_send_buffer() for details)
 		memcpy((char *)&msg, (char *)buf+sizeof(uint64_t)+1,MAVLINK_MAX_PACKET_LEN-1);
 		//the checksums follow directly after the payload, so copy them to their fields in mavlink_message_t
-		msg.ck_a = *(sizeof(uint64_t) + buf + msg.len + MAVLINK_CORE_HEADER_LEN + 1);
-		msg.ck_b = *(sizeof(uint64_t) + buf + msg.len + MAVLINK_CORE_HEADER_LEN + 2);
+		//msg.ck_a = *(sizeof(uint64_t) + buf + msg.len + MAVLINK_CORE_HEADER_LEN + 1);
+		//msg.ck_b = *(sizeof(uint64_t) + buf + msg.len + MAVLINK_CORE_HEADER_LEN + 2);
 
 		//check for image triggered message, load the image and put it to the shared memory
 		if (do_images && msg.msgid == MAVLINK_MSG_ID_IMAGE_TRIGGERED)
@@ -349,7 +349,7 @@ int main(int argc, char* argv[])
 					usleep(usecs_to_wait - usecs_gone);
 				}
 			}
-			mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &msg);
+			sendMAVLinkMessage(lcmMavlink, &msg);
 			last_time = time;
 			last_current_time = current_time;
 		}

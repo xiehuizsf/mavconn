@@ -43,7 +43,7 @@ This file is part of the MAVCONN project
 
 // MAVLINK message format includes
 #include "mavconn.h"
-#include "core/PxParamClient.h"
+#include "core/MAVConnParamClient.h"
 
 // Latency Benchmarking
 #include <sys/time.h>
@@ -109,51 +109,60 @@ uint64_t lastTime;
 
 uint64_t lastGCSTime;
 
-PxParamClient* paramClient;
+MAVConnParamClient* paramClient;
 
 static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel,const mavconn_mavlink_msg_container_t* container, void * user)
 {
 	if (debug) printf("Received message on channel \"%s\":\n", channel);
 
+	lcm_t* lcm = (lcm_t*)user;
+	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
+
 	// Handle param messages
 	paramClient->handleMAVLinkPacket(msg);
-
-	lcm_t* lcm = (lcm_t*)user;
-	mavlink_message_t* msg = getMAVLinkMsgPtr(container);
 
 	switch(msg->msgid)
 	{
 	case MAVLINK_MSG_ID_COMMAND_SHORT:
 	{
-		if (mavlink_msg_command_short_get_target_system(msg) == systemid)
+		mavlink_command_short_t cmd;
+		mavlink_msg_command_short_decode(msg, &cmd);
+		if (cmd.target_system == getSystemID())
 		{
-			switch (mavlink_msg_command_short_get_command(msg))
+			switch (cmd.command)
 			{
-			case MAV_CMD_DO_:
+			case MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN:
 			{
-				if (verbose) std::cerr << "Shutdown received, shutting down system" << std::endl;
-				mavlink_message_t response;
-				mavlink_sys_status_t status;
-				status.status = MAV_STATE_POWEROFF;
-				status.mode = MAV_MODE_LOCKED;
-				mavlink_msg_sys_status_encode(systemid, compid, &response, &status);
-				sendMAVLinkMessage(lcm, msg);
-				if (system ("halt"))
-					if (verbose) std::cerr << "Shutdown failed." << std::endl;
+				int ret = 0;
+				if (cmd.param2 == 2)
+				{
+					if (verbose) printf("Shutdown received, shutting down system\n");
+					ret = system ("halt");
+					if (ret) if (verbose) std::cerr << "Shutdown failed." << std::endl;
+				}
+				else if (cmd.param2 == 1)
+				{
+					if (verbose) printf("Reboot received, rebooting system\n");
+					ret = system ("reboot");
+					if(ret) if (verbose) std::cerr << "Reboot failed." << std::endl;
+				}
 
-			}
-			break;
-			case MAV_CMD_DO:
-			{
-				if (verbose) std::cerr << "Reboot received, rebooting system" << std::endl;
-				mavlink_message_t response;
-				mavlink_heartbeat_t status;
-				status.system_status = MAV_STATE_POWEROFF;
-				status.system_mode = MAV_MODE_FLAG_SAFETY_ARMED;
-				mavlink_msg_heartbeat_encode(systemid, compid, &response, &status);
-				sendMAVLinkMessage(lcm, &msg);
-				if(system ("reboot"))
-					if (verbose) std::cerr << "Reboot failed." << std::endl;
+				if (cmd.confirmation)
+				{
+					mavlink_message_t response;
+					mavlink_command_ack_t ack;
+					ack.command = cmd.command;
+					if (ret == 0)
+					{
+						ack.result = 0;
+					}
+					else
+					{
+						ack.result = 1;
+					}
+					mavlink_msg_command_ack_encode(getSystemID(), compid, &response, &ack);
+					sendMAVLinkMessage(lcm, &response);
+				}
 			}
 			break;
 			}
@@ -162,46 +171,14 @@ static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel,con
 	break;
 	case MAVLINK_MSG_ID_COMMAND_LONG:
 		{
-			if (mavlink_msg_action_get_target(msg) == systemid)
-			{
-				switch (mavlink_msg_action_get_action(msg))
-				{
-				case MAV_ACTION_SHUTDOWN:
-				{
-					if (verbose) std::cerr << "Shutdown received, shutting down system" << std::endl;
-					mavlink_message_t response;
-					mavlink_sys_status_t status;
-					status.status = MAV_STATE_POWEROFF;
-					status.mode = MAV_MODE_LOCKED;
-					mavlink_msg_sys_status_encode(systemid, compid, &response, &status);
-					mavlink_message_t_publish ((lcm_t*)user, "MAVLINK", &response);
-					if (system ("halt"))
-						if (verbose) std::cerr << "Shutdown failed." << std::endl;
 
-				}
-				break;
-				case MAV_ACTION_REBOOT:
-				{
-					if (verbose) std::cerr << "Reboot received, rebooting system" << std::endl;
-					mavlink_message_t response;
-					mavlink_sys_status_t status;
-					status.status = MAV_STATE_POWEROFF;
-					status.mode = MAV_MODE_LOCKED;
-					mavlink_msg_sys_status_encode(systemid, compid, &response, &status);
-					mavlink_message_t_publish ((lcm_t*)user, "MAVLINK", &response);
-					if(system ("reboot"))
-						if (verbose) std::cerr << "Reboot failed." << std::endl;
-				}
-				break;
-				}
-			}
 		}
 		break;
 	case MAVLINK_MSG_ID_HEARTBEAT:
 	{
 		switch(mavlink_msg_heartbeat_get_type(msg))
 		{
-		case OCU:
+		case MAV_TYPE_GCS:
 			gettimeofday(&tv, NULL);
 			uint64_t currTime =  ((uint64_t)tv.tv_sec) * 1000000 + tv.tv_usec;
 			// Groundstation present
@@ -220,7 +197,7 @@ static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel,con
 		{
 			mavlink_message_t r_msg;
 			mavlink_msg_ping_pack(systemid, compid, &r_msg, ping.seq, msg->sysid, msg->compid, r_timestamp);
-			mavlink_message_t_publish(, MAVLINK_MAIN, &r_msg);
+			sendMAVLinkMessage(lcm, &r_msg);
 		}
 	}
 	break;
@@ -280,8 +257,8 @@ int main (int argc, char ** argv)
 //	paramClient->setParamValue("SYS_ID", systemid);
 //	paramClient->readParamsFromFile("px_system_control.cfg");
 
-	mavlink_message_t_subscription_t * commSub =
-			mavlink_message_t_subscribe (lcm, "MAVLINK", &mavlink_handler, lcm);
+	mavconn_mavlink_msg_container_t_subscription_t * commSub =
+			mavconn_mavlink_msg_container_t_subscribe (lcm, MAVLINK_MAIN, &mavlink_handler, lcm);
 
 	// Thread
 	GThread* lcm_thread;

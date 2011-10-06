@@ -98,8 +98,10 @@ lcm_t* lcm;               ///< Reference to LCM bus
 * @param user LCM user
 */
 static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
-		const mavlink_message_t* msg, void * user)
+		const mavconn_mavlink_msg_container_t* container, void * user)
 {
+	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
+
 	int fd = *(static_cast<int*>(user));
 	if (fd == -1)
 	{
@@ -119,7 +121,8 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
 			// Only send messages which are in positiv list. This list contains all messages handled by IMU
 			if (       msg->msgid == MAVLINK_MSG_ID_SET_MODE
 					|| msg->msgid == MAVLINK_MSG_ID_HEARTBEAT
-					|| msg->msgid == MAVLINK_MSG_ID_ACTION
+					|| msg->msgid == MAVLINK_MSG_ID_COMMAND_SHORT
+					|| msg->msgid == MAVLINK_MSG_ID_COMMAND_LONG
 					|| msg->msgid == MAVLINK_MSG_ID_SYSTEM_TIME
 					|| msg->msgid == MAVLINK_MSG_ID_REQUEST_DATA_STREAM
 					|| msg->msgid == MAVLINK_MSG_ID_PARAM_REQUEST_LIST
@@ -128,11 +131,12 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
 					/*|| msg->msgid == MAVLINK_MSG_ID_SET_CAM_SHUTTER*/
 					|| msg->msgid == MAVLINK_MSG_ID_IMAGE_TRIGGER_CONTROL
 					|| msg->msgid == MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE
-                                        || msg->msgid == MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE
+                    || msg->msgid == MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE
 					|| msg->msgid == MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE
 					|| msg->msgid == MAVLINK_MSG_ID_PING
 					|| msg->msgid == MAVLINK_MSG_ID_STATUSTEXT
-					|| msg->msgid == MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET
+					|| msg->msgid == MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT
+					|| msg->msgid == MAVLINK_MSG_ID_SET_GLOBAL_POSITION_SETPOINT_INT
                                         || msg->msgid == MAVLINK_MSG_ID_POSITION_CONTROL_OFFSET_SET) {
 				if (verbose || debug)
 					std::cout << std::dec
@@ -153,31 +157,31 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
 		}
 
 		if (pc2serial && msg->sysid == systemid && (
-			   msg->msgid == MAVLINK_MSG_ID_WAYPOINT
-			|| msg->msgid == MAVLINK_MSG_ID_WAYPOINT_ACK
-			|| msg->msgid == MAVLINK_MSG_ID_WAYPOINT_CLEAR_ALL
-			|| msg->msgid == MAVLINK_MSG_ID_WAYPOINT_COUNT
-			|| msg->msgid == MAVLINK_MSG_ID_WAYPOINT_CURRENT
-			|| msg->msgid == MAVLINK_MSG_ID_WAYPOINT_REACHED
-			|| msg->msgid == MAVLINK_MSG_ID_WAYPOINT_REQUEST
-			|| msg->msgid == MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST
-			|| msg->msgid == MAVLINK_MSG_ID_WAYPOINT_SET_CURRENT
-                        || msg->msgid == MAVLINK_MSG_ID_GPS_SET_GLOBAL_ORIGIN
-                       || msg->msgid == MAVLINK_MSG_ID_GPS_LOCAL_ORIGIN_SET
+			   msg->msgid == MAVLINK_MSG_ID_MISSION_ITEM
+			|| msg->msgid == MAVLINK_MSG_ID_MISSION_ACK
+			|| msg->msgid == MAVLINK_MSG_ID_MISSION_CLEAR_ALL
+			|| msg->msgid == MAVLINK_MSG_ID_MISSION_COUNT
+			|| msg->msgid == MAVLINK_MSG_ID_MISSION_CURRENT
+			|| msg->msgid == MAVLINK_MSG_ID_MISSION_ITEM_REACHED
+			|| msg->msgid == MAVLINK_MSG_ID_MISSION_REQUEST
+			|| msg->msgid == MAVLINK_MSG_ID_MISSION_REQUEST_LIST
+			|| msg->msgid == MAVLINK_MSG_ID_MISSION_SET_CURRENT
+                        || msg->msgid == MAVLINK_MSG_ID_SET_GPS_GLOBAL_ORIGIN
+                       || msg->msgid == MAVLINK_MSG_ID_GPS_GLOBAL_ORIGIN
 			|| msg->msgid == MAVLINK_MSG_ID_HEARTBEAT
 			|| msg->msgid == MAVLINK_MSG_ID_PARAM_VALUE
 			|| msg->msgid == MAVLINK_MSG_ID_STATUSTEXT
-			|| msg->msgid == MAVLINK_MSG_ID_ACTION_ACK
+			|| msg->msgid == MAVLINK_MSG_ID_COMMAND_ACK
 			|| msg->msgid == MAVLINK_MSG_ID_SYS_STATUS
 			|| msg->msgid == MAVLINK_MSG_ID_SYSTEM_TIME
-			|| msg->msgid == MAVLINK_MSG_ID_AUX_STATUS
-			|| msg->msgid == MAVLINK_MSG_ID_BOOT
-			|| msg->msgid == MAVLINK_MSG_ID_CONTROL_STATUS
+			|| msg->msgid == MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT
+			|| msg->msgid == MAVLINK_MSG_ID_ROLL_PITCH_YAW_SPEED_THRUST_SETPOINT
+			|| msg->msgid == MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT
 			|| msg->msgid == MAVLINK_MSG_ID_DEBUG
 			|| msg->msgid == MAVLINK_MSG_ID_DEBUG_VECT
 			|| msg->msgid == MAVLINK_MSG_ID_GPS_STATUS
-			|| msg->msgid == MAVLINK_MSG_ID_GLOBAL_POSITION
-			|| msg->msgid == MAVLINK_MSG_ID_LOCAL_POSITION
+			|| msg->msgid == MAVLINK_MSG_ID_GLOBAL_POSITION_INT
+			|| msg->msgid == MAVLINK_MSG_ID_LOCAL_POSITION_NED
 			|| msg->msgid == MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT
 			|| msg->msgid == MAVLINK_MSG_ID_ATTITUDE))
 		{
@@ -207,7 +211,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
 			{
 				mavlink_message_t r_msg;
 				mavlink_msg_ping_pack(systemid, compid, &r_msg, ping.seq, msg->sysid, msg->compid, r_timestamp);
-				mavlink_message_t_publish(lcm, MAVLINK_MAIN, &r_msg);
+				sendMAVLinkMessage(lcm, &r_msg);
 			}
 		}
 	}
@@ -492,7 +496,15 @@ void* serial_wait(void* serial_ptr)
 
 			// Send out packets to LCM
 			// Send over LCM
-			mavlink_message_t_publish (lcm, "MAVLINK", &message);
+
+			if (pc2serial)
+			{
+				sendMAVLinkMessage(lcm, &message, MAVCONN_LINK_TYPE_UART_VICON);
+			}
+			else
+			{
+				sendMAVLinkMessage(lcm, &message, MAVCONN_LINK_TYPE_UART);
+			}
 		}
 	}
 	return NULL;
@@ -581,8 +593,8 @@ int main(int argc, char* argv[])
 		// Only initialize g thread if not already done
 	}
 
-	mavlink_message_t_subscription_t * comm_sub =
-			mavlink_message_t_subscribe (lcm, "MAVLINK", &mavlink_handler, (void*)fd_ptr);
+	mavconn_mavlink_msg_container_t_subscription_t * comm_sub =
+			mavconn_mavlink_msg_container_t_subscribe (lcm, MAVLINK_MAIN, &mavlink_handler, (void*)fd_ptr);
 	if (!silent) printf("Subscribed to %s LCM channel.\n", "MAVLINK");
 
 	// Run indefinitely while the LCM and serial threads handle the data
@@ -635,7 +647,7 @@ int main(int argc, char* argv[])
 			{
 				// SEND OUT TIME MESSAGE
 				// send message as close to time aquisition as possible
-				mavlink_msg_system_time_pack(systemid, compid, &msg, currTime);
+				mavlink_msg_system_time_pack(systemid, compid, &msg, currTime, 0);
 				// Send message over serial port
 				int messageLength = mavlink_msg_to_send_buffer(buffer, &msg);
 				int written = write(fd, (char*)buffer, messageLength);
@@ -649,7 +661,7 @@ int main(int argc, char* argv[])
 	}
 
 	// Disconnect from LCM
-	mavlink_message_t_unsubscribe (lcm, comm_sub);
+	mavconn_mavlink_msg_container_t_unsubscribe (lcm, comm_sub);
 	lcm_destroy (lcm);
 	close_port(fd);
 

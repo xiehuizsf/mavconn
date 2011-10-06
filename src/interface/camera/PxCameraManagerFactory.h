@@ -13,6 +13,7 @@ public:
 private:
 	static PxCameraManagerPtr bluefoxCameraManager;
 	static PxCameraManagerPtr fireflyCameraManager;
+	static PxCameraManagerPtr opencvCameraManager;
 };
 
 #endif

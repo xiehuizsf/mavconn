@@ -1,5 +1,5 @@
 /*
- * PxParamClient.h
+ * MAVConnParamClient.h
  *
  *  Created on: 24.04.2010
  *      Author: user
@@ -27,10 +27,10 @@ typedef std::tr1::unordered_map< std::string, PCCallback* > PxParameterCallbackM
 typedef std::list<PCCallback*> PxCallbackList;
 typedef PxParameterMap::value_type ParamPair;
 
-class PxParamClient
+class MAVConnParamClient
 {
 public:
-	PxParamClient(int systemid, int componentid, lcm_t* lcm, const std::string& configFileName="", bool verbose=false) :
+	MAVConnParamClient(int systemid, int componentid, lcm_t* lcm, const std::string& configFileName="", bool verbose=false) :
 		systemid(systemid),
 		componentid(componentid),
 		lcm(lcm),
@@ -43,7 +43,7 @@ public:
 		}
 	}
 
-	~PxParamClient()
+	~MAVConnParamClient()
 	{
 		for (PxCallbackList::iterator iter = callbacks.begin(); iter != callbacks.end(); ++iter)
 			delete (*iter);
@@ -71,7 +71,7 @@ public:
 		case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
 		{
 			// Start sending parameters
-			if (verbose) printf("PxParamClient: Requested parameters, sending them now..\n");
+			if (verbose) printf("MAVConnParamClient: Requested parameters, sending them now..\n");
 
 			uint16_t i = 0;
 			PxParameterMap::const_iterator iter = params.begin();

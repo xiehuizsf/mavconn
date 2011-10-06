@@ -75,8 +75,10 @@ mavlink_data_transmission_handshake_t req, ack;
 /**
  * @brief Handle incoming MAVLink packets containing images
  */
-static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, const mavlink_message_t* msg, void * user)
+static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, const mavconn_mavlink_msg_container_t* container, void * user)
 {
+	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
+
 	// Pointer to shared memory data
 	PxSharedMemClient* client = static_cast<PxSharedMemClient*>(user);
 
@@ -117,7 +119,7 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 		ack.jpg_quality = req.jpg_quality;
 
 		mavlink_msg_data_transmission_handshake_encode(sysid, compid, &tmp, &ack);
-		mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &tmp);
+		sendMAVLinkMessage(lcmMavlink, &tmp);
 
 		// Send image data (split up into smaller chunks first, then sent over MAVLink)
 		uint8_t data[PACKET_PAYLOAD];
@@ -142,7 +144,7 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 			}
 			// Send ENCAPSULATED_IMAGE packet
 			mavlink_msg_encapsulated_data_pack(sysid, compid, &tmp, i, data);
-			mavlink_message_t_publish(lcmMavlink, MAVLINK_MAIN, &tmp);
+			sendMAVLinkMessage(lcmMavlink, &tmp);
 			if (verbose) printf("sent packet %02d successfully\n", i+1);
 		}
 	}
@@ -151,8 +153,10 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 /**
  * @brief Handle incoming MAVLink packets containing ACTION messages
  */
-static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, const mavlink_message_t* msg, void * user)
+static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, const mavconn_mavlink_msg_container_t* container, void * user)
 {
+	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
+
 	if (msg->msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE)
 	{
 		mavlink_msg_data_transmission_handshake_decode(msg, &req);
@@ -210,8 +214,8 @@ int main(int argc, char* argv[])
 		exit(EXIT_FAILURE);
 
 	PxSharedMemClient* cam = new PxSharedMemClient();
-	mavlink_message_t_subscription_t * img_sub  = mavlink_message_t_subscribe (lcmImage, "IMAGES", &image_handler, cam);
-	mavlink_message_t_subscription_t * comm_sub = mavlink_message_t_subscribe (lcmMavlink, "MAVLINK", &mavlink_handler, lcmMavlink);
+	mavconn_mavlink_msg_container_t_subscription_t * img_sub  = mavconn_mavlink_msg_container_t_subscribe (lcmImage, "IMAGES", &image_handler, cam);
+	mavconn_mavlink_msg_container_t_subscription_t * comm_sub = mavconn_mavlink_msg_container_t_subscribe (lcmMavlink, "MAVLINK", &mavlink_handler, lcmMavlink);
 
 	cout << "MAVLINK client ready, waiting for data..." << endl;
 
@@ -249,8 +253,8 @@ int main(int argc, char* argv[])
 
 	cout << "Everything done successfully - Exiting" << endl;
 
-	mavlink_message_t_unsubscribe (lcmImage, img_sub);
-	mavlink_message_t_unsubscribe (lcmMavlink, comm_sub);
+	mavconn_mavlink_msg_container_t_unsubscribe (lcmImage, img_sub);
+	mavconn_mavlink_msg_container_t_unsubscribe (lcmMavlink, comm_sub);
 	lcm_destroy (lcmImage);
 	lcm_destroy (lcmMavlink);
 	delete cam;

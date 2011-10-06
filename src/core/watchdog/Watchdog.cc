@@ -424,7 +424,7 @@ namespace watchdog
         // connect to lcm and subscribe for mavlink messages
         this->lcm_ = lcm_create(url);
         if (this->lcm_)
-            this->subscription_ = mavlink_message_t_subscribe(this->lcm_, "MAVLINK", &commandHandler, this);
+            this->subscription_ = mavconn_mavlink_msg_container_t_subscribe(this->lcm_, MAVLINK_MAIN, &commandHandler, this);
     }
 
     void Watchdog::lcmDisconnect()
@@ -433,7 +433,7 @@ namespace watchdog
         if (this->lcm_)
         {
             if (this->subscription_)
-                mavlink_message_t_unsubscribe(this->lcm_, this->subscription_);
+            	mavconn_mavlink_msg_container_t_unsubscribe(this->lcm_, this->subscription_);
 
             lcm_destroy(this->lcm_);
         }

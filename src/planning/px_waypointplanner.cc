@@ -16,6 +16,7 @@
 #include "PxVector3.h"
 
 #include "mavconn.h"
+#include "core/MAVConnParamClient.h"
 #include <glib.h>
 
 namespace config = boost::program_options;
@@ -34,17 +35,17 @@ bool posReached;						///< boolean for position reached
 uint64_t timestamp_lastoutside_orbit = 0;///< timestamp when the MAV was last outside the orbit or had the wrong yaw value
 uint64_t timestamp_firstinside_orbit = 0;///< timestamp when the MAV was the first time after a waypoint change inside the orbit and had the correct yaw value
 
-std::vector<mavlink_waypoint_t*> waypoints1;	///< vector1 that holds the waypoints
-std::vector<mavlink_waypoint_t*> waypoints2;	///< vector2 that holds the waypoints
+std::vector<mavlink_mission_item_t*> waypoints1;	///< vector1 that holds the waypoints
+std::vector<mavlink_mission_item_t*> waypoints2;	///< vector2 that holds the waypoints
 
-std::vector<mavlink_waypoint_t*>* waypoints = &waypoints1;					///< pointer to the currently active waypoint vector
-std::vector<mavlink_waypoint_t*>* waypoints_receive_buffer = &waypoints2;	///< pointer to the receive buffer waypoint vector
+std::vector<mavlink_mission_item_t*>* waypoints = &waypoints1;					///< pointer to the currently active waypoint vector
+std::vector<mavlink_mission_item_t*>* waypoints_receive_buffer = &waypoints2;	///< pointer to the receive buffer waypoint vector
 
 //==== variables needed for communication protocol ====
 uint8_t systemid = getSystemID();          		///< indicates the ID of the system
-uint8_t compid = MAV_COMP_ID_WAYPOINTPLANNER;	///< indicates the component ID of the waypointplanner
+uint8_t compid = MAV_COMP_ID_MISSIONPLANNER;	///< indicates the component ID of the waypointplanner
 
-PxParamClient* paramClient;
+MAVConnParamClient* paramClient;
 
 enum PX_WAYPOINTPLANNER_STATES
 {
@@ -72,14 +73,14 @@ uint64_t timestamp_last_send_setpoint = 0;
 void send_waypoint_ack(uint8_t target_systemid, uint8_t target_compid, uint8_t type)
 {
     mavlink_message_t msg;
-    mavlink_waypoint_ack_t wpa;
+    mavlink_mission_ack_t wpa;
 
     wpa.target_system = target_systemid;
     wpa.target_component = target_compid;
     wpa.type = type;
 
-    mavlink_msg_waypoint_ack_encode(systemid, compid, &msg, &wpa);
-    mavlink_message_t_publish(lcm, "MAVLINK", &msg);
+    mavlink_msg_mission_ack_encode(systemid, compid, &msg, &wpa);
+    sendMAVLinkMessage(lcm, &msg);
 
     usleep(paramClient->getParamValue("PROTOCOLDELAY"));
 
@@ -99,15 +100,15 @@ void send_waypoint_current(uint16_t seq)
 {
     if(seq < waypoints->size())
     {
-        mavlink_waypoint_t *cur = waypoints->at(seq);
+        mavlink_mission_item_t *cur = waypoints->at(seq);
 
         mavlink_message_t msg;
-        mavlink_waypoint_current_t wpc;
+        mavlink_mission_current_t wpc;
 
         wpc.seq = cur->seq;
 
-        mavlink_msg_waypoint_current_encode(systemid, compid, &msg, &wpc);
-        mavlink_message_t_publish(lcm, "MAVLINK", &msg);
+        mavlink_msg_mission_current_encode(systemid, compid, &msg, &wpc);
+        sendMAVLinkMessage(lcm, &msg);
 
         usleep(paramClient->getParamValue("PROTOCOLDELAY"));
 
@@ -131,13 +132,13 @@ void send_setpoint(uint16_t seq)
 {
     if(seq < waypoints->size())
     {
-        mavlink_waypoint_t *cur = waypoints->at(seq);
+        mavlink_mission_item_t *cur = waypoints->at(seq);
 
         mavlink_message_t msg;
-        mavlink_local_position_setpoint_set_t PControlSetPoint;
+        mavlink_set_local_position_setpoint_t PControlSetPoint;
 
         // send new set point to local IMU
-        if (cur->frame == MAV_FRAME_LOCAL || cur->frame == MAV_FRAME_LOCAL_ENU)
+        if (cur->frame == MAV_FRAME_LOCAL_NED || cur->frame == MAV_FRAME_LOCAL_ENU)
         {
             PControlSetPoint.target_system = systemid;
             PControlSetPoint.target_component = MAV_COMP_ID_IMU;
@@ -146,8 +147,8 @@ void send_setpoint(uint16_t seq)
             PControlSetPoint.z = cur->z;
             PControlSetPoint.yaw = cur->param4;
 
-            mavlink_msg_local_position_setpoint_set_encode(systemid, compid, &msg, &PControlSetPoint);
-            mavlink_message_t_publish(lcm, "MAVLINK", &msg);
+            mavlink_msg_set_local_position_setpoint_encode(systemid, compid, &msg, &PControlSetPoint);
+            sendMAVLinkMessage(lcm, &msg);
 
             usleep(paramClient->getParamValue("PROTOCOLDELAY"));
             if (verbose) printf("Sent new setpoint: X: %f, Y: %f, Z: %f\n", cur->x, cur->y, cur->z);
@@ -171,14 +172,14 @@ void send_setpoint(uint16_t seq)
 void send_waypoint_count(uint8_t target_systemid, uint8_t target_compid, uint16_t count)
 {
     mavlink_message_t msg;
-    mavlink_waypoint_count_t wpc;
+    mavlink_mission_count_t wpc;
 
     wpc.target_system = target_systemid;
     wpc.target_component = target_compid;
     wpc.count = count;
 
-    mavlink_msg_waypoint_count_encode(systemid, compid, &msg, &wpc);
-    mavlink_message_t_publish(lcm, "MAVLINK", &msg);
+    mavlink_msg_mission_count_encode(systemid, compid, &msg, &wpc);
+    sendMAVLinkMessage(lcm, &msg);
 
     if (verbose) printf("Sent waypoint count (%u) to ID %u\n", wpc.count, wpc.target_system);
 
@@ -190,11 +191,11 @@ void send_waypoint(uint8_t target_systemid, uint8_t target_compid, uint16_t seq)
     if (seq < waypoints->size())
     {
         mavlink_message_t msg;
-        mavlink_waypoint_t *wp = waypoints->at(seq);
+        mavlink_mission_item_t *wp = waypoints->at(seq);
         wp->target_system = target_systemid;
         wp->target_component = target_compid;
-        mavlink_msg_waypoint_encode(systemid, compid, &msg, wp);
-        mavlink_message_t_publish(lcm, "MAVLINK", &msg);
+        mavlink_msg_mission_item_encode(systemid, compid, &msg, wp);
+        sendMAVLinkMessage(lcm, &msg);
         if (verbose) printf("Sent waypoint %u to ID %u\n", wp->seq, wp->target_system);
 
         usleep(paramClient->getParamValue("PROTOCOLDELAY"));
@@ -208,12 +209,12 @@ void send_waypoint(uint8_t target_systemid, uint8_t target_compid, uint16_t seq)
 void send_waypoint_request(uint8_t target_systemid, uint8_t target_compid, uint16_t seq)
 {
 	mavlink_message_t msg;
-	mavlink_waypoint_request_t wpr;
+	mavlink_mission_request_t wpr;
 	wpr.target_system = target_systemid;
 	wpr.target_component = target_compid;
 	wpr.seq = seq;
-	mavlink_msg_waypoint_request_encode(systemid, compid, &msg, &wpr);
-	mavlink_message_t_publish(lcm, "MAVLINK", &msg);
+	mavlink_msg_mission_request_encode(systemid, compid, &msg, &wpr);
+	sendMAVLinkMessage(lcm, &msg);
 	if (verbose) printf("Sent waypoint request %u to ID %u\n", wpr.seq, wpr.target_system);
 
 	usleep(paramClient->getParamValue("PROTOCOLDELAY"));
@@ -229,12 +230,12 @@ void send_waypoint_request(uint8_t target_systemid, uint8_t target_compid, uint1
 void send_waypoint_reached(uint16_t seq)
 {
     mavlink_message_t msg;
-    mavlink_waypoint_reached_t wp_reached;
+    mavlink_mission_item_reached_t wp_reached;
 
     wp_reached.seq = seq;
 
-    mavlink_msg_waypoint_reached_encode(systemid, compid, &msg, &wp_reached);
-    mavlink_message_t_publish(lcm, "MAVLINK", &msg);
+    mavlink_msg_mission_item_reached_encode(systemid, compid, &msg, &wp_reached);
+    sendMAVLinkMessage(lcm, &msg);
 
     if (verbose) printf("Sent waypoint %u reached message\n", wp_reached.seq);
 
@@ -245,7 +246,7 @@ float distanceToSegment(uint16_t seq, float x, float y, float z)
 {
     if (seq < waypoints->size())
     {
-        mavlink_waypoint_t *cur = waypoints->at(seq);
+        mavlink_mission_item_t *cur = waypoints->at(seq);
 
         const PxVector3 A(cur->x, cur->y, cur->z);
         const PxVector3 C(x, y, z);
@@ -253,7 +254,7 @@ float distanceToSegment(uint16_t seq, float x, float y, float z)
         // seq not the second last waypoint
         if ((uint16_t)(seq+1) < waypoints->size())
         {
-            mavlink_waypoint_t *next = waypoints->at(seq+1);
+            mavlink_mission_item_t *next = waypoints->at(seq+1);
             const PxVector3 B(next->x, next->y, next->z);
             const float r = (B-A).dot(C-A) / (B-A).lengthSquared();
             if (r >= 0 && r <= 1)
@@ -286,7 +287,7 @@ float distanceToPoint(uint16_t seq, float x, float y, float z)
 {
     if (seq < waypoints->size())
     {
-        mavlink_waypoint_t *cur = waypoints->at(seq);
+        mavlink_mission_item_t *cur = waypoints->at(seq);
 
         const PxVector3 A(cur->x, cur->y, cur->z);
         const PxVector3 C(x, y, z);
@@ -300,8 +301,10 @@ float distanceToPoint(uint16_t seq, float x, float y, float z)
     return -1.f;
 }
 
-static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, const mavlink_message_t* msg, void * user)
+static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel, const mavconn_mavlink_msg_container_t* container, void * user)
 {
+	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
+
     // Handle param messages
     paramClient->handleMAVLinkPacket(msg);
 
@@ -335,8 +338,8 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
         {
             if(msg->sysid == systemid && current_active_wp_id < waypoints->size())
             {
-                mavlink_waypoint_t *wp = waypoints->at(current_active_wp_id);
-                if(wp->frame == MAV_FRAME_LOCAL || wp->frame == MAV_FRAME_LOCAL_ENU)
+                mavlink_mission_item_t *wp = waypoints->at(current_active_wp_id);
+                if(wp->frame == MAV_FRAME_LOCAL_NED || wp->frame == MAV_FRAME_LOCAL_ENU)
                 {
                     mavlink_attitude_t att;
                     mavlink_msg_attitude_decode(msg, &att);
@@ -364,16 +367,16 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
             break;
         }
 
-    case MAVLINK_MSG_ID_LOCAL_POSITION:
+    case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
         {
             if(msg->sysid == systemid && current_active_wp_id < waypoints->size())
             {
-                mavlink_waypoint_t *wp = waypoints->at(current_active_wp_id);
+                mavlink_mission_item_t *wp = waypoints->at(current_active_wp_id);
 
-                if(wp->frame == MAV_FRAME_LOCAL || wp->frame == MAV_FRAME_LOCAL_ENU)
+                if(wp->frame == MAV_FRAME_LOCAL_NED || wp->frame == MAV_FRAME_LOCAL_ENU)
                 {
-                    mavlink_local_position_t pos;
-                    mavlink_msg_local_position_decode(msg, &pos);
+                    mavlink_local_position_ned_t pos;
+                    mavlink_msg_local_position_ned_decode(msg, &pos);
                     if (debug) printf("Received new position: x: %f | y: %f | z: %f\n", pos.x, pos.y, pos.z);
 
                     posReached = false;
@@ -400,14 +403,14 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
             break;
         }
 
-    case MAVLINK_MSG_ID_ACTION: // special action from ground station
+    case MAVLINK_MSG_ID_COMMAND_SHORT: // special action from ground station
         {
-            mavlink_action_t action;
-            mavlink_msg_action_decode(msg, &action);
-            if(action.target == systemid)
+            mavlink_command_short_t action;
+            mavlink_msg_command_short_decode(msg, &action);
+            if(action.target_system == systemid)
             {
-                if (verbose) std::cerr << "Waypoint: received message with action " << action.action << std::endl;
-                switch (action.action)
+                if (verbose) std::cerr << "Waypoint: received message with command " << action.command << std::endl;
+                switch (action.command)
                 {
                     //				case MAV_ACTION_LAUNCH:
                     //					if (verbose) std::cerr << "Launch received" << std::endl;
@@ -440,10 +443,10 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
             break;
         }
 
-    case MAVLINK_MSG_ID_WAYPOINT_ACK:
+    case MAVLINK_MSG_ID_MISSION_ACK:
         {
-            mavlink_waypoint_ack_t wpa;
-            mavlink_msg_waypoint_ack_decode(msg, &wpa);
+            mavlink_mission_ack_t wpa;
+            mavlink_msg_mission_ack_decode(msg, &wpa);
 
             if((msg->sysid == protocol_current_partner_systemid && msg->compid == protocol_current_partner_compid) && (wpa.target_system == systemid && wpa.target_component == compid))
             {
@@ -462,10 +465,10 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
             break;
         }
 
-    case MAVLINK_MSG_ID_WAYPOINT_SET_CURRENT:
+    case MAVLINK_MSG_ID_MISSION_SET_CURRENT:
         {
-            mavlink_waypoint_set_current_t wpc;
-            mavlink_msg_waypoint_set_current_decode(msg, &wpc);
+            mavlink_mission_set_current_t wpc;
+            mavlink_msg_mission_set_current_decode(msg, &wpc);
 
             if(wpc.target_system == systemid && wpc.target_component == compid)
             {
@@ -505,10 +508,10 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
             break;
         }
 
-    case MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST:
+    case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:
         {
-            mavlink_waypoint_request_list_t wprl;
-            mavlink_msg_waypoint_request_list_decode(msg, &wprl);
+            mavlink_mission_request_list_t wprl;
+            mavlink_msg_mission_request_list_decode(msg, &wprl);
             if(wprl.target_system == systemid && wprl.target_component == compid)
             {
                 protocol_timestamp_lastaction = now;
@@ -539,10 +542,10 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
             break;
         }
 
-    case MAVLINK_MSG_ID_WAYPOINT_REQUEST:
+    case MAVLINK_MSG_ID_MISSION_REQUEST:
         {
-            mavlink_waypoint_request_t wpr;
-            mavlink_msg_waypoint_request_decode(msg, &wpr);
+            mavlink_mission_request_t wpr;
+            mavlink_msg_mission_request_decode(msg, &wpr);
             if(msg->sysid == protocol_current_partner_systemid && msg->compid == protocol_current_partner_compid && wpr.target_system == systemid && wpr.target_component == compid)
             {
                 protocol_timestamp_lastaction = now;
@@ -587,10 +590,10 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
             break;
         }
 
-    case MAVLINK_MSG_ID_WAYPOINT_COUNT:
+    case MAVLINK_MSG_ID_MISSION_COUNT:
         {
-            mavlink_waypoint_count_t wpc;
-            mavlink_msg_waypoint_count_decode(msg, &wpc);
+            mavlink_mission_count_t wpc;
+            mavlink_msg_mission_count_decode(msg, &wpc);
             if(wpc.target_system == systemid && wpc.target_component == compid)
             {
                 protocol_timestamp_lastaction = now;
@@ -646,10 +649,10 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
             break;
         }
 
-    case MAVLINK_MSG_ID_WAYPOINT:
+    case MAVLINK_MSG_ID_MISSION_ITEM:
         {
-            mavlink_waypoint_t wp;
-            mavlink_msg_waypoint_decode(msg, &wp);
+            mavlink_mission_item_t wp;
+            mavlink_msg_mission_item_decode(msg, &wp);
 
             if((msg->sysid == protocol_current_partner_systemid && msg->compid == protocol_current_partner_compid) && (wp.target_system == systemid && wp.target_component == compid))
             {
@@ -664,8 +667,8 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 
                     current_state = PX_WPP_GETLIST_GETWPS;
                     protocol_current_wp_id = wp.seq + 1;
-                    mavlink_waypoint_t* newwp = new mavlink_waypoint_t;
-                    memcpy(newwp, &wp, sizeof(mavlink_waypoint_t));
+                    mavlink_mission_item_t* newwp = new mavlink_mission_item_t;
+                    memcpy(newwp, &wp, sizeof(mavlink_mission_item_t));
                     waypoints_receive_buffer->push_back(newwp);
 
                     if (verbose) printf ("Added new waypoint to list. X= %f\t Y= %f\t Z= %f\t Yaw= %f\n", newwp->x, newwp->y, newwp->z, newwp->param4);
@@ -682,7 +685,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
                         }
 
                         // switch the waypoints list
-                        std::vector<mavlink_waypoint_t*>* waypoints_temp = waypoints;
+                        std::vector<mavlink_mission_item_t*>* waypoints_temp = waypoints;
                         waypoints = waypoints_receive_buffer;
                         waypoints_receive_buffer = waypoints_temp;
 
@@ -759,10 +762,10 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
             break;
         }
 
-		case MAVLINK_MSG_ID_WAYPOINT_CLEAR_ALL:
+		case MAVLINK_MSG_ID_MISSION_CLEAR_ALL:
         {
-            mavlink_waypoint_clear_all_t wpca;
-            mavlink_msg_waypoint_clear_all_decode(msg, &wpca);
+            mavlink_mission_clear_all_t wpca;
+            mavlink_msg_mission_clear_all_decode(msg, &wpca);
 
             if(wpca.target_system == systemid && wpca.target_component == compid && current_state == PX_WPP_IDLE)
             {
@@ -797,7 +800,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
     {
         if (current_active_wp_id < waypoints->size())
         {
-            mavlink_waypoint_t *cur_wp = waypoints->at(current_active_wp_id);
+            mavlink_mission_item_t *cur_wp = waypoints->at(current_active_wp_id);
 
             if (timestamp_firstinside_orbit == 0)
             {
@@ -874,9 +877,9 @@ int main(int argc, char* argv[])
     if (!lcm)
         return 1;
 
-    mavlink_message_t_subscription_t * comm_sub = mavlink_message_t_subscribe (lcm, "MAVLINK", &mavlink_handler, NULL);
+    mavconn_mavlink_msg_container_t_subscription_t * comm_sub = mavconn_mavlink_msg_container_t_subscribe (lcm, "MAVLINK", &mavlink_handler, NULL);
 
-    paramClient = new PxParamClient(systemid, compid, lcm, configFile, verbose);
+    paramClient = new MAVConnParamClient(systemid, compid, lcm, configFile, verbose);
     paramClient->setParamValue("POSFILTER", 1.f);
     paramClient->setParamValue("SETPOINTDELAY", 1000000);
     paramClient->setParamValue("PROTOCOLDELAY", 40);
@@ -931,7 +934,7 @@ int main(int argc, char* argv[])
 
             while (!wpfile.eof())
             {
-                mavlink_waypoint_t *wp = new mavlink_waypoint_t();
+                mavlink_mission_item_t *wp = new mavlink_mission_item_t();
 
                 uint16_t temp;
 
@@ -999,6 +1002,6 @@ int main(int argc, char* argv[])
         lcm_handle (lcm);
     }
 
-    mavlink_message_t_unsubscribe (lcm, comm_sub);
+    mavconn_mavlink_msg_container_t_unsubscribe (lcm, comm_sub);
     lcm_destroy (lcm);
 }

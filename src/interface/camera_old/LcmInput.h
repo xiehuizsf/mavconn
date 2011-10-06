@@ -52,7 +52,7 @@ namespace MAVCONN
             static void image_handler(const lcm_recv_buf_t* rbuf, const char* channel, const mavlink_message_t* msg, void* userData);
 
             lcm_t* lcm_;
-            mavlink_message_t_subscription_t* subscription_;
+            mavconn_mavlink_msg_container_t_subscription_t* subscription_;
             PxSharedMemClient imageClient_;
             unsigned long interval_;
             Timer timeoutTimer_;

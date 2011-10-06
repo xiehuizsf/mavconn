@@ -43,7 +43,7 @@ char rotor(void)
 	return displayChar[count];
 }
 
-void* infoThread(void* clientData)
+void infoThread(void* clientData)
 		{
 	double lastTime = PxVicon::getTime();
 
@@ -96,7 +96,7 @@ int main(int argc, char** argv)
 
 	mavlink_message_t msg;
 	mavlink_attitude_t attMsg;
-	mavlink_local_position_t posMsg;
+	mavlink_local_position_ned_t posMsg;
 
 	uint8_t systemid = getSystemID();
 	uint8_t componentid = PX_COMP_ID_MAVLINK_BRIDGE_VICON;
@@ -148,7 +148,7 @@ int main(int argc, char** argv)
 						pose.pitch,
 						pose.yaw);
 
-				mavlink_message_t_publish (lcm, "MAVLINK", &msg);
+				sendMAVLinkMessage(lcm, &msg);
 
 				// ROS Output ****************************************************
 #if PX_ROS_ENABLED

@@ -41,6 +41,7 @@ This file is part of the PIXHAWK project
 
 #include <interface/shared_mem/PxSHMImageServer.h>
 #include "mavconn.h"
+#include "core/MAVConnParamClient.h"
 
 #include "PxCameraManagerFactory.h"
 
@@ -49,7 +50,7 @@ bool emitDelay = false;
 int compid = 2;
 std::string configFile;		///< Configuration file for parameters
 
-PxParamClient* paramClient;
+MAVConnParamClient* paramClient;
 uint32_t interval = 0;
 
 typedef struct _bufferIMU
@@ -116,10 +117,12 @@ signalHandler(int signal)
 */
 void
 mavlinkHandler(const lcm_recv_buf_t* rbuf, const char* channel,
-			   const mavlink_message_t* msg, void* user)
+			   const mavconn_mavlink_msg_container_t* container, void* user)
 {
 	boost::circular_buffer<bufferIMU_t>* dataBuffer =
 			reinterpret_cast<boost::circular_buffer<bufferIMU_t>*>(user);
+
+	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
 
 	// Handle param messages
 	paramClient->handleMAVLinkPacket(msg);
@@ -306,13 +309,13 @@ int main(int argc, char* argv[])
 	boost::circular_buffer<bufferIMU_t>::iterator dataIterator = dataBuffer.begin();
 	//<-- guarded by messageMutex
 
-	mavlink_message_t_subscription_t* mavlinkSub = NULL;
+	mavconn_mavlink_msg_container_t_subscription_t* mavlinkSub = NULL;
 	if (trigger)
 	{
-		mavlinkSub = mavlink_message_t_subscribe(lcm, "MAVLINK", &mavlinkHandler, &dataBuffer);
+		mavlinkSub = mavconn_mavlink_msg_container_t_subscribe(lcm, MAVLINK_MAIN, &mavlinkHandler, &dataBuffer);
 		if (!verbose)
 		{
-			fprintf(stderr, "# INFO: Subscribed to %s LCM channel.\n", "MAVLINK");
+			fprintf(stderr, "# INFO: Subscribed to %s LCM channel.\n", MAVLINK_MAIN);
 		}
 
 		try
@@ -340,7 +343,7 @@ int main(int argc, char* argv[])
 		processingDoneCond = new Glib::Cond;
 	}
 
-    paramClient = new PxParamClient(getSystemID(), compid, lcm, configFile, verbose);
+    paramClient = new MAVConnParamClient(getSystemID(), compid, lcm, configFile, verbose);
     paramClient->setParamValue("MINIMGINTERVAL", 0);
     paramClient->setParamValue("EXPOSURE", exposure);
     paramClient->setParamValue("GAIN", gain);
@@ -352,7 +355,7 @@ int main(int argc, char* argv[])
 	PxCameraManagerPtr camManager = PxCameraManagerFactory::generate(camType);
 	if (camManager.get() == 0)
 	{
-		fprintf(stderr, "# ERROR: Unknown camera type: %s\n. Please choose either bluefox or firefly.", camType.c_str());
+		fprintf(stderr, "# ERROR: Unknown camera type: %s\n. Please choose either bluefox, firefly or opencv.\n", camType.c_str());
 		exit(EXIT_FAILURE);
 	}
 
@@ -440,7 +443,7 @@ int main(int argc, char* argv[])
 		{
 			mavlink_message_t triggerMsg;
 			mavlink_msg_image_trigger_control_pack(getSystemID(), PX_COMP_ID_CAMERA, &triggerMsg, 0);
-			mavlink_message_t_publish(lcm, "MAVLINK", &triggerMsg);
+			sendMAVLinkMessage(lcm, &triggerMsg);
 		}
 	}
 
@@ -453,7 +456,7 @@ int main(int argc, char* argv[])
 
 	if (useStereo)
 	{
-		fprintf(stderr, "# INFO: Opening stereo with serial #%lu and #%lu, trigger is: enabled\n", camSerial, camSerialRight);
+		fprintf(stderr, "# INFO: Opening stereo with serial #%llu and #%llu, trigger is: enabled\n", camSerial, camSerialRight);
 		if (!pxStereoCam->init())
 		{
 			fprintf(stderr, "# ERROR: Cannot initialize stereo setup.\n");
@@ -470,7 +473,7 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		fprintf(stderr, "# INFO: Opening camera with serial #%lu, trigger is: %s\n", camSerial, (trigger) ? "enabled" : "disabled");
+		fprintf(stderr, "# INFO: Opening camera with serial #%llu, trigger is: %s\n", camSerial, (trigger) ? "enabled" : "disabled");
 		if (!pxCam->init())
 		{
 			fprintf(stderr, "# ERROR: Cannot initialize camera setup.\n");
@@ -559,7 +562,7 @@ int main(int argc, char* argv[])
 			{
 				mavlink_message_t triggerMsg;
 				mavlink_msg_image_trigger_control_pack(getSystemID(), PX_COMP_ID_CAMERA, &triggerMsg, 1);
-				mavlink_message_t_publish(lcm, "MAVLINK", &triggerMsg);
+				sendMAVLinkMessage(lcm, &triggerMsg);
 			}
 			if (!verbose)
 			{
@@ -975,7 +978,7 @@ int main(int argc, char* argv[])
 							{
 								mavlink_message_t msg;
 								mavlink_msg_debug_vect_pack(getSystemID(), 9, &msg, "CAM", lastShutter, (float)(timestamp - lastShutter)/1000.f, 0.f, 0.f);
-								mavlink_message_t_publish(lcm, "MAVLINK", &msg);
+								sendMAVLinkMessage(lcm, &msg);
 							}
 
 							//sanity check, timestamp has to be < 1000 ms in any case, otherwise there is an sync error with the IMU timer
@@ -996,7 +999,7 @@ int main(int argc, char* argv[])
 							{
 								mavlink_message_t msg;
 								mavlink_msg_debug_vect_pack(getSystemID(), 9, &msg, "CAM", lastShutter, -(float)(lastShutter - timestamp)/1000.f, 0.f, 0.f);
-								mavlink_message_t_publish(lcm, "MAVLINK", &msg);
+								sendMAVLinkMessage(lcm, &msg);
 							}
 
 							//printf("WARNING: IMU Time before Systemtime!\n");
@@ -1091,7 +1094,7 @@ int main(int argc, char* argv[])
 	if (trigger)
 	{
 		imageThread->join();
-		mavlink_message_t_unsubscribe(lcm, mavlinkSub);
+		mavconn_mavlink_msg_container_t_unsubscribe(lcm, mavlinkSub);
 		lcmThread->join();
 	}
 

@@ -14,23 +14,23 @@ IF(GPS_FOUND)
 INCLUDE_DIRECTORIES(${GPS_INCLUDE_DIR})
 ENDIF(GPS_FOUND)
 
-PIXHAWK_EXECUTABLE(px_ping px_ping.cc)
-PIXHAWK_LINK_LIBRARIES(px_ping
+PIXHAWK_EXECUTABLE(mavconn-ping mavconn-ping.cc)
+PIXHAWK_LINK_LIBRARIES(mavconn-ping
   mavconn_lcm
   ${GLIB2_LIBRARY}
   ${GTHREAD2_LIBRARY}
 )
 
-PIXHAWK_EXECUTABLE(px_mavlink_bridge_serial px_mavlinkserial.cc)
-PIXHAWK_LINK_LIBRARIES(px_mavlink_bridge_serial
+PIXHAWK_EXECUTABLE(mavconn-bridge-serial mavconn-bridge-serial.cc)
+PIXHAWK_LINK_LIBRARIES(mavconn-bridge-serial
   mavconn_lcm
   ${GLIB2_LIBRARY}
   ${GTHREAD2_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
 )
 
-PIXHAWK_EXECUTABLE(px_mavlink_bridge_udp px_udplink.cc)
-PIXHAWK_LINK_LIBRARIES(px_mavlink_bridge_udp
+PIXHAWK_EXECUTABLE(mavconn-bridge-udp mavconn-bridge-udp.cc)
+PIXHAWK_LINK_LIBRARIES(mavconn-bridge-udp
   mavconn_lcm
   ${GLIB2_LIBRARY}
   ${GTHREAD2_LIBRARY}
@@ -61,8 +61,8 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
   ENDIF(CMAKE_SYSTEM_PROCESSOR MATCHES "i[3-6]|x86_64")
 ENDIF(CMAKE_SYSTEM_NAME MATCHES "Linux")
 
-PIXHAWK_EXECUTABLE(px_mavlink_bridge_dds px_mavlink_bridge_dds.cc PxZip.cc)
-PIXHAWK_LINK_LIBRARIES(px_mavlink_bridge_dds
+PIXHAWK_EXECUTABLE(mavconn-mavlink_bridge_dds mavconn-mavlink_bridge_dds.cc PxZip.cc)
+PIXHAWK_LINK_LIBRARIES(mavconn-mavlink_bridge_dds
   dl
   nsl
   rt
@@ -82,16 +82,16 @@ ENDIF(JPEG_TURBO_FOUND)
 ENDIF(SIGC++_FOUND)
 ENDIF(GLIBMM2_FOUND)
 
-PIXHAWK_EXECUTABLE_CONDITIONAL(px_gpsd CONDITION GPS_FOUND FILES px_gpsd.cc)
-PIXHAWK_LINK_LIBRARIES(px_gpsd
+PIXHAWK_EXECUTABLE_CONDITIONAL(mavconn-gpsd CONDITION GPS_FOUND FILES mavconn-gpsd.cc)
+PIXHAWK_LINK_LIBRARIES(mavconn-gpsd
   mavconn_lcm
   ${GPS_LIBRARY}
   ${GPS_LIBRARY_OPTIMIZED}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
 )
 
-PIXHAWK_EXECUTABLE(px_imagestreamer px_imagestreamer.cc)
-PIXHAWK_LINK_LIBRARIES(px_imagestreamer
+PIXHAWK_EXECUTABLE(mavconn-imagestreamer mavconn-imagestreamer.cc)
+PIXHAWK_LINK_LIBRARIES(mavconn-imagestreamer
   mavconn_lcm
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${OPENCV_CORE_LIBRARY_OPTIMIZED}
@@ -108,8 +108,8 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
   IF(CMAKE_SYSTEM_PROCESSOR MATCHES "i[3-6]|x86_64")
     IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
     
-      PIXHAWK_EXECUTABLE(px_vicon_bridge PxTransform.cc px_vicon_bridge.cc PxVicon.cc)
-      PIXHAWK_LINK_LIBRARIES(px_vicon_bridge
+      PIXHAWK_EXECUTABLE(mavconn-bridge-vicon PxTransform.cc mavconn-bridge-vicon.cc PxVicon.cc)
+      PIXHAWK_LINK_LIBRARIES(mavconn-bridge-vicon
         mavconn_lcm
 	${CV_LIBRARY}
 	ViconDataStreamSDK_CPP

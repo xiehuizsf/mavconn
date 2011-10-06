@@ -31,6 +31,7 @@ This file is part of the MAVCONN project
 #ifndef _Command_H__
 #define _Command_H__
 
+#include "mavconn.h"
 #include "inttypes.h"
 #include <signal.h>
 #include <string>
@@ -84,7 +85,7 @@ namespace MAVCONN
         class Process;
 
         uint16_t getWatchdogID();
-        void commandHandler(const lcm_recv_buf_t* rbuf, const char* channel, const mavlink_message_t* msg, void* userData);
+        void commandHandler(const lcm_recv_buf_t* rbuf, const char* channel, const mavconn_mavlink_msg_container_t* container, void* userData);
         void handleWatchdogCommand(Watchdog* watchdog, const Process& process, uint8_t command);
         void sendWatchdogCommandHeartbeat(Watchdog* watchdog);
         void sendWatchdogCommandProcessInfo(Watchdog* watchdog, const Process& process);

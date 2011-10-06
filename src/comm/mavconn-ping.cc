@@ -78,9 +78,11 @@ std::vector<uint64_t> emitTimes; ///< List containing the timestamps when each p
 * @param user LCM user
 */
 static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
-		const mavlink_message_t* msg, void * user)
+		const mavconn_mavlink_msg_container_t* container, void * user)
 {
-	//printf("RECEIVED: %d %d %d\n", msg->sysid, msg->compid, msg->msgid);
+	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
+
+	lcm_t* lcm = (lcm_t*)user;
 
 	// Do not accept messages originating from this component
 	if (msg->sysid != sysid || msg->compid != compid)
@@ -104,7 +106,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
 				{
 					mavlink_message_t r_msg;
 					mavlink_msg_ping_pack(sysid, compid, &r_msg, ping.seq, msg->sysid, msg->compid, r_timestamp);
-					mavlink_message_t_publish((lcm_t*)user, MAVLINK_MAIN, &r_msg);
+					sendMAVLinkMessage(lcm, &r_msg);
 				}
 				else
 				{
@@ -113,7 +115,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
 						    // This is a response to a ping request
 							uint64_t sendTime = emitTimes.at(ping.seq);
 							uint64_t roundTrip = r_timestamp - sendTime;
-							printf("Response: SYS: %d\t COMP: %d\t roundtrip time: %lu\n", msg->sysid, msg->compid, roundTrip);
+							printf("Response: SYS: %d\t COMP: %d\t roundtrip time: %llu\n", msg->sysid, msg->compid, roundTrip);
 						}
 				}
 			}
@@ -194,8 +196,8 @@ int main(int argc, char* argv[])
 		// Only initialize g thread if not already done
 	}
 
-	mavlink_message_t_subscription_t * comm_sub =
-			mavlink_message_t_subscribe (lcm, MAVLINK_MAIN, &mavlink_handler, (void*)lcm);
+	mavconn_mavlink_msg_container_t_subscription_t * comm_sub =
+			mavconn_mavlink_msg_container_t_subscribe (lcm, MAVLINK_MAIN, &mavlink_handler, (void*)lcm);
 	if (!silent) printf("Subscribed to %s LCM channel.\n", MAVLINK_MAIN);
 
 	if( (lcm_thread = g_thread_create((GThreadFunc)lcm_wait, (void *)lcm, TRUE, &err)) == NULL)
@@ -219,7 +221,7 @@ int main(int argc, char* argv[])
 		// Send out request for ping responses
 		mavlink_msg_ping_pack(sysid, compid, &msg, seq, 0, 0, time);
 		seq++;
-		mavlink_message_t_publish(lcm, MAVLINK_MAIN, &msg);
+		sendMAVLinkMessage(lcm, &msg);
 		usleep(pingInterval);
 		if (debug) printf("Sent MAVLink PING seq: %d\n", seq);
 	}
@@ -232,7 +234,7 @@ int main(int argc, char* argv[])
 	}
 
 	// Disconnect from LCM
-	mavlink_message_t_unsubscribe (lcm, comm_sub);
+	mavconn_mavlink_msg_container_t_unsubscribe (lcm, comm_sub);
 	lcm_destroy (lcm);
 
 	g_thread_join(lcm_thread);

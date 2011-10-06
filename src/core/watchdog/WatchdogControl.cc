@@ -29,7 +29,7 @@ This file is part of the MAVCONN project
 ========================================================================*/
 
 #include "WatchdogControl.h"
-#include <mavconn.h>
+#include "mavconn.h"
 #include <iostream>
 
 // If no heartbeat was received for __WATCHDOG_CONTROL_TIMEOUT seconds, the watchdog is removed from the map
@@ -66,7 +66,7 @@ namespace MAVCONN
         // connect to lcm and subscribe for mavlink messages
         this->lcm_ = lcm_create("udpm://");
         if (this->lcm_)
-            this->subscription_ = mavlink_message_t_subscribe(this->lcm_, "MAVLINK", &WatchdogControl::mavlinkHandler, this);
+            this->subscription_ = mavconn_mavlink_msg_container_t_subscribe(this->lcm_, MAVLINK_MAIN, &WatchdogControl::mavlinkHandler, this);
 
         this->createGraphics();
     }
@@ -80,7 +80,7 @@ namespace MAVCONN
         if (this->lcm_)
         {
             if (this->subscription_)
-                mavlink_message_t_unsubscribe(this->lcm_, this->subscription_);
+                mavconn_mavlink_msg_container_t_unsubscribe(this->lcm_, this->subscription_);
 
             lcm_destroy(this->lcm_);
         }
@@ -175,9 +175,10 @@ namespace MAVCONN
     /**
         @brief Callback for lcm mavlink messages.
     */
-    /* static */ void WatchdogControl::mavlinkHandler(const lcm_recv_buf_t* rbuf, const char* channel, const mavlink_message_t* msg, void* userData)
+    /* static */ void WatchdogControl::mavlinkHandler(const lcm_recv_buf_t* rbuf, const char* channel, const mavconn_mavlink_msg_container_t* container, void* userData)
     {
         WatchdogControl* _this = static_cast<WatchdogControl*>(userData);
+        const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
 
         switch (msg->msgid)
         {
@@ -265,7 +266,7 @@ namespace MAVCONN
 
         mavlink_message_t msg;
         mavlink_msg_watchdog_command_encode(sysid, compid, &msg, &payload);
-        mavlink_message_t_publish(this->lcm_, "MAVLINK", &msg);
+        sendMAVLinkMessage(this->lcm_, &msg);
 //std::cout << "--> sent mavlink_watchdog_command_t " << payload.target_system_id << " / " << payload.watchdog_id << " / " << payload.process_id << " / " << (int)payload.command_id << std::endl;
     }
 

@@ -179,7 +179,7 @@ int main(int argc, char* argv[])
 //		// Only initialize g thread if not already done
 //	}
 
-//	mavlink_message_t_subscription_t * comm_sub =
+//	mavconn_mavlink_msg_container_t_subscription_t * comm_sub =
 //			mavlink_message_t_subscribe (lcm, "MAVLINK", &mavlink_handler, (void*)fd_ptr);
 //	if (!silent) printf("Subscribed to %s LCM channel.\n", "MAVLINK");
 
@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
 		mavlink_message_t msg;
 		sprintf((char*)&statustext.text, "ERROR: Could not connect to GPSD");
 		mavlink_msg_statustext_encode(systemid, compid, &msg, &statustext);
-		mavlink_message_t_publish(lcm, MAVLINK_MAIN, &msg);
+		sendMAVLinkMessage(lcm, &msg);
 		usleep(50000);
 		exit(EXIT_FAILURE);
 	}
@@ -242,7 +242,7 @@ int main(int argc, char* argv[])
 					mavlink_statustext_t statustext;
 					sprintf((char*)&statustext.text, "ERROR, GPS DIED: Data %d times invalid!", ignoreCount);
 					mavlink_msg_statustext_encode(systemid, compid, &msg, &statustext);
-					mavlink_message_t_publish(lcm, MAVLINK_MAIN, &msg);
+					sendMAVLinkMessage(lcm, &msg);
 					exit(EXIT_FAILURE);
 				}
 				
@@ -316,7 +316,7 @@ int main(int argc, char* argv[])
 
 				// Send message
 				mavlink_msg_gps_status_encode(systemid, compid, &msg, &status);
-				mavlink_message_t_publish(lcm, MAVLINK_MAIN, &msg);
+				sendMAVLinkMessage(lcm, &msg);
 
 				// FIXME Currently required a 3D fix
 				if (gpsdata->fix.mode > 2)
@@ -324,8 +324,8 @@ int main(int argc, char* argv[])
 					// New data arrived, forward to LCM
 
 					mavlink_message_t msg;
-					mavlink_gps_raw_t gps;
-					gps.usec = gpsdata->fix.time * 1000000llU;
+					mavlink_gps_raw_int_t gps;
+					gps.time_usec = gpsdata->fix.time * 1000000llU;
 					gps.fix_type = gpsdata->fix.mode;
 					gps.lat = gpsdata->fix.latitude;
 					gps.lon = gpsdata->fix.longitude;
@@ -339,10 +339,10 @@ int main(int argc, char* argv[])
 						// Altitude is invalid
 						gps.alt = 0;
 					}
-					gps.usec = gpsdata->fix.time;
-					gps.v = gpsdata->fix.speed;
-					mavlink_msg_gps_raw_encode(systemid, compid, &msg, &gps);
-					mavlink_message_t_publish(lcm, MAVLINK_MAIN, &msg);
+					gps.time_usec = gpsdata->fix.time;
+					gps.vel = gpsdata->fix.speed*100;
+					mavlink_msg_gps_raw_int_encode(systemid, compid, &msg, &gps);
+					sendMAVLinkMessage(lcm, &msg);
 					if (debug)
 					{
 #if (GPSD_API_MAJOR_VERSION > 3)
@@ -402,7 +402,7 @@ int main(int argc, char* argv[])
 		mavlink_message_t msg;
 		sprintf((char*)&statustext.text, "ERROR: Could not connect to GPSD");
 		mavlink_msg_statustext_encode(systemid, compid, &msg, &statustext);
-		mavlink_message_t_publish(lcm, MAVLINK_MAIN, &msg);
+		sendMAVLinkMessage(lcm, &msg);
 		usleep(50000);
 		lcm_destroy (lcm);
 		gps_close(gpsdata);

@@ -87,7 +87,7 @@ namespace MAVCONN
             SequenceOutput* sequenceOutput_;
             VideoOutput* videoOutput_;
             lcm_t* lcm_;
-            mavlink_message_t_subscription_t* subscription_;
+            mavconn_mavlink_msg_container_t_subscription_t* subscription_;
             bool bReceivedHeartbeat_;
             Timer heartbeatTimer_;
     };

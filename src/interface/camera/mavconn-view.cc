@@ -70,8 +70,10 @@ signalHandler(int signal)
  */
 void
 imageHandler(const lcm_recv_buf_t* rbuf, const char* channel,
-			 const mavlink_message_t* msg, void* user)
+			 const mavconn_mavlink_msg_container_t* container, void* user)
 {
+	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
+
 	// Pointer to shared memory data
 	std::vector<PxSHMImageClient>* clientVec =
 			reinterpret_cast< std::vector<PxSHMImageClient>* >(user);
@@ -214,7 +216,7 @@ int main(int argc, char* argv[])
 	fprintf(stderr, "# INFO: Image client ready, waiting for images..\n");
 
 	// Subscribe to MAVLink messages on the image channel
-	mavlink_message_t_subscription_t* imgSub = mavlink_message_t_subscribe(lcm, "IMAGES", &imageHandler, &clientVec);
+	mavconn_mavlink_msg_container_t_subscription_t* imgSub = mavconn_mavlink_msg_container_t_subscribe(lcm, MAVLINK_IMAGES, &imageHandler, &clientVec);
 
 	signal(SIGINT, signalHandler);
 
@@ -226,7 +228,7 @@ int main(int argc, char* argv[])
 		lcm_handle(lcm);
 	}
 
-	mavlink_message_t_unsubscribe(lcm, imgSub);
+	mavconn_mavlink_msg_container_t_unsubscribe(lcm, imgSub);
 	lcm_destroy(lcm);
 
 	return 0;
