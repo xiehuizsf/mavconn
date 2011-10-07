@@ -5,8 +5,8 @@
  *      Author: user
  */
 
-#ifndef PXPARAMCLIENT_H_
-#define PXPARAMCLIENT_H_
+#ifndef MAVCONNPARAMCLIENT_H_
+#define MAVCONNPARAMCLIENT_H_
 
 #include <inttypes.h>
 #include <cstdlib>
@@ -283,4 +283,4 @@ public:
 	}
 };
 
-#endif /* PXPARAMCLIENT_H_ */
+#endif /* MAVCONNPARAMCLIENT_H_ */
