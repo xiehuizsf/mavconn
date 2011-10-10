@@ -153,10 +153,10 @@ static inline int getSystemID(void)
 }
 
 static inline void
-sendMAVLinkMessage(lcm_t * lcm, mavlink_message_t* msg, MAVCONN_LINK_TYPE link_type=MAVCONN_LINK_TYPE_LCM);
+sendMAVLinkMessage(lcm_t * lcm, const mavlink_message_t* msg, MAVCONN_LINK_TYPE link_type=MAVCONN_LINK_TYPE_LCM);
 
 static inline void
-sendMAVLinkMessage(lcm_t * lcm, mavlink_message_t* msg, MAVCONN_LINK_TYPE link_type)
+sendMAVLinkMessage(lcm_t * lcm, const mavlink_message_t* msg, MAVCONN_LINK_TYPE link_type)
 {
 	// Pack a new container
 	static mavconn_mavlink_msg_container_t container;
@@ -168,10 +168,10 @@ sendMAVLinkMessage(lcm_t * lcm, mavlink_message_t* msg, MAVCONN_LINK_TYPE link_t
 }
 
 static inline void
-sendMAVLinkImageMessage(lcm_t * lcm, mavlink_message_t* msg, MAVCONN_LINK_TYPE link_type=MAVCONN_LINK_TYPE_LCM);
+sendMAVLinkImageMessage(lcm_t * lcm, const mavlink_message_t* msg, MAVCONN_LINK_TYPE link_type=MAVCONN_LINK_TYPE_LCM);
 
 static inline void
-sendMAVLinkImageMessage(lcm_t * lcm, mavlink_message_t* msg, MAVCONN_LINK_TYPE link_type)
+sendMAVLinkImageMessage(lcm_t * lcm, const mavlink_message_t* msg, MAVCONN_LINK_TYPE link_type)
 {
 	// Pack a new container
 	static mavconn_mavlink_msg_container_t container;
