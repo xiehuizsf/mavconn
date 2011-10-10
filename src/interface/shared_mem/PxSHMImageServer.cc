@@ -63,8 +63,7 @@ PxSHMImageServer::getCameraConfig(void) const
 
 void
 PxSHMImageServer::writeMonoImage(const cv::Mat& img, uint64_t camId,
-								 uint64_t timestamp, float roll, float pitch, float yaw,
-								 float z, float lon, float lat, float alt, float ground_x, float ground_y, float ground_z,
+								 uint64_t timestamp, const mavlink_image_triggered_t &image_data,
 								 uint32_t exposure)
 {
 	PxSHM::CameraType cameraType;
@@ -98,16 +97,17 @@ PxSHMImageServer::writeMonoImage(const cv::Mat& img, uint64_t camId,
 	imginfo.key = (int)this->key;
 	imginfo.exposure = exposure;
 	imginfo.gain = 1;//gain;
-	imginfo.roll = roll;
-	imginfo.pitch = pitch;
-	imginfo.yaw = yaw;
-	imginfo.local_z = z;
-	imginfo.lon = lon;
-	imginfo.lat = lat;
-	imginfo.alt = alt;
-	imginfo.ground_x = ground_x;
-	imginfo.ground_y = ground_y;
-	imginfo.ground_z = ground_z;
+
+	imginfo.roll = image_data.roll;
+	imginfo.pitch = image_data.pitch;
+	imginfo.yaw = image_data.yaw;
+	imginfo.local_z = image_data.local_z;
+	imginfo.lon = image_data.lon;
+	imginfo.lat = image_data.lat;
+	imginfo.alt = image_data.alt;
+	imginfo.ground_x = image_data.ground_x;
+	imginfo.ground_y = image_data.ground_y;
+	imginfo.ground_z = image_data.ground_z;
 	
 	mavlink_message_t msg;
 	mavlink_msg_image_available_encode(this->sysid, this->compid, &msg, &imginfo);
@@ -116,13 +116,12 @@ PxSHMImageServer::writeMonoImage(const cv::Mat& img, uint64_t camId,
 
 	imgSeq++;
 }
-	
+
 void
 PxSHMImageServer::writeStereoImage(const cv::Mat& imgLeft, uint64_t camIdLeft,
-								   const cv::Mat& imgRight, uint64_t camIdRight,
-								   uint64_t timestamp, float roll, float pitch, float yaw,
-								   float z, float lon, float lat, float alt, float ground_x, float ground_y, float ground_z,
-								   uint32_t exposure)
+									  const cv::Mat& imgRight, uint64_t camIdRight,
+									  uint64_t timestamp, const mavlink_image_triggered_t &image_data,
+									  uint32_t exposure)
 {
 	PxSHM::CameraType cameraType;
 	if (imgLeft.channels() == 1)
@@ -155,17 +154,18 @@ PxSHMImageServer::writeStereoImage(const cv::Mat& imgLeft, uint64_t camIdLeft,
 	imginfo.key = (int)this->key;
 	imginfo.exposure = exposure;
 	imginfo.gain = 1;//gain;
-	imginfo.roll = roll;
-	imginfo.pitch = pitch;
-	imginfo.yaw = yaw;
-	imginfo.local_z = z;
-	imginfo.lon = lon;
-	imginfo.lat = lat;
-	imginfo.alt = alt;
-	imginfo.ground_x = ground_x;
-	imginfo.ground_y = ground_y;
-	imginfo.ground_z = ground_z;
 	
+	imginfo.roll = image_data.roll;
+	imginfo.pitch = image_data.pitch;
+	imginfo.yaw = image_data.yaw;
+	imginfo.local_z = image_data.local_z;
+	imginfo.lon = image_data.lon;
+	imginfo.lat = image_data.lat;
+	imginfo.alt = image_data.alt;
+	imginfo.ground_x = image_data.ground_x;
+	imginfo.ground_y = image_data.ground_y;
+	imginfo.ground_z = image_data.ground_z;
+
 	mavlink_message_t msg;
 	mavlink_msg_image_available_encode(this->sysid, this->compid, &msg, &imginfo);
 	sendMAVLinkImageMessage(lcm, &msg);

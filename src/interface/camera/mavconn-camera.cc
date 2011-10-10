@@ -55,21 +55,8 @@ uint32_t interval = 0;
 
 typedef struct _bufferIMU
 {
-	uint64_t timestamp;
-//	uint64_t delay;
-	uint32_t sequence;
-	float roll;
-	float pitch;
-	float yaw;
-	float z;
-	float lon;
-	float lat;
-	float alt;
-	float ground_x;
-	float ground_y;
-	float ground_z;
-	uint8_t msgid;
-	uint8_t data[MAVLINK_MAX_PAYLOAD_LEN];
+	mavlink_image_triggered_t msg;
+	//uint64_t delay;
 } bufferIMU_t;
 
 const int MAGIC_MAX_BUFFER_AND_RETRY = 100;		// Size of the message buffer for LCM messages and maximum number of skipped/dropped frames before stopping when a mismatch happens
@@ -129,22 +116,11 @@ mavlinkHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 
 	if (msg->msgid == MAVLINK_MSG_ID_IMAGE_TRIGGERED)
 	{
+
 		mavlink_image_triggered_t trigger;
 		mavlink_msg_image_triggered_decode(msg, &trigger);
 		bufferIMU_t data;
-		data.msgid = MAVLINK_MSG_ID_IMAGE_TRIGGERED;
-		data.timestamp = trigger.timestamp;
-		data.sequence = trigger.seq;
-		data.roll = trigger.roll;
-		data.pitch = trigger.pitch;
-		data.yaw = trigger.yaw;
-		data.z = trigger.local_z;
-		data.lat = trigger.lat;
-		data.lon = trigger.lon;
-		data.alt = trigger.alt;
-		data.ground_x = trigger.ground_x;
-		data.ground_y = trigger.ground_y;
-		data.ground_z = trigger.ground_z;
+		memcpy(&data.msg, &trigger, sizeof(mavlink_image_triggered_t));
 
 //			gettimeofday(&tv, NULL);
 //			uint64_t tt = ((uint64_t)tv.tv_sec) * 1000000 + tv.tv_usec;
@@ -456,7 +432,7 @@ int main(int argc, char* argv[])
 
 	if (useStereo)
 	{
-		fprintf(stderr, "# INFO: Opening stereo with serial #%llu and #%llu, trigger is: enabled\n", camSerial, camSerialRight);
+		fprintf(stderr, "# INFO: Opening stereo with serial #%llu and #%llu, trigger is: enabled\n", (long long unsigned) camSerial, (long long unsigned) camSerialRight);
 		if (!pxStereoCam->init())
 		{
 			fprintf(stderr, "# ERROR: Cannot initialize stereo setup.\n");
@@ -473,7 +449,7 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		fprintf(stderr, "# INFO: Opening camera with serial #%llu, trigger is: %s\n", camSerial, (trigger) ? "enabled" : "disabled");
+		fprintf(stderr, "# INFO: Opening camera with serial #%llu, trigger is: %s\n", (long long unsigned) camSerial, (trigger) ? "enabled" : "disabled");
 		if (!pxCam->init())
 		{
 			fprintf(stderr, "# ERROR: Cannot initialize camera setup.\n");
@@ -505,16 +481,7 @@ int main(int argc, char* argv[])
 //	uint64_t lastMessageDelay = 0;
 	uint64_t timestamp = 0;
 	uint64_t lastTimestamp = 0;
-	float roll = 0.f;
-	float pitch = 0.f;
-	float yaw = 0.f;
-	float z = 0.f;
-	float lon = 0.f;
-	float lat = 0.f;
-	float alt = 0.f;
-	float gx = 0.f;
-	float gy = 0.f;
-	float gz = 0.f;
+	mavlink_image_triggered_t image_data;
 	uint32_t lastSequenceNum = 0;		// the embedded sequence number of the image before
 	uint32_t lastMessageSequence = 0;		// the sequence number of the last used message
 	uint32_t messageSequence = 0;			// the sequence number of the current message
@@ -653,7 +620,7 @@ int main(int argc, char* argv[])
 
 			// there is something in the buffer, read the sequence number of the message
 			dataIterator = dataBuffer.begin();
-			lastMessageSequence = ((bufferIMU_t)(*dataIterator)).sequence;
+			lastMessageSequence = ((bufferIMU_t)(*dataIterator)).msg.seq;
 
 			// three cases are possible:
 			// the message has a lower ID then we have to skip this message
@@ -664,7 +631,7 @@ int main(int argc, char* argv[])
 			// the message has the right sequence number, skip the message and we're done
 			else if (lastMessageSequence == skippedFrames+1)
 			{
-				lastShutter = ((bufferIMU_t)(*dataIterator)).timestamp;
+				lastShutter = ((bufferIMU_t)(*dataIterator)).msg.timestamp;
 //				lastMessageDelay = ((bufferIMU_t)(*dataIterator)).delay;
 				dataBuffer.pop_front();
 				found = true;
@@ -942,7 +909,7 @@ int main(int argc, char* argv[])
 
 					// there is something in the buffer, read the sequence number of the message
 					dataIterator = dataBuffer.begin();
-					messageSequence = ((bufferIMU_t)(*dataIterator)).sequence;
+					messageSequence = ((bufferIMU_t)(*dataIterator)).msg.seq;
 
 					uint32_t neededMessageSequence = lastMessageSequence + skippedFrames + 1;
 
@@ -956,17 +923,8 @@ int main(int argc, char* argv[])
 					// the message has the right sequence number, read the data do stuff and so on
 					else if (messageSequence == neededMessageSequence)
 					{
-						lastShutter = ((bufferIMU_t)(*dataIterator)).timestamp;
-						roll = ((bufferIMU_t)(*dataIterator)).roll;
-						pitch = ((bufferIMU_t)(*dataIterator)).pitch;
-						yaw = ((bufferIMU_t)(*dataIterator)).yaw;
-						z = ((bufferIMU_t)(*dataIterator)).z;
-						lon = ((bufferIMU_t)(*dataIterator)).lon;
-						lat = ((bufferIMU_t)(*dataIterator)).lat;
-						alt = ((bufferIMU_t)(*dataIterator)).alt;
-						gx = ((bufferIMU_t)(*dataIterator)).ground_x;
-						gy = ((bufferIMU_t)(*dataIterator)).ground_y;
-						gz = ((bufferIMU_t)(*dataIterator)).ground_z;
+						lastShutter = ((bufferIMU_t)(*dataIterator)).msg.timestamp;
+						memcpy(&image_data, &((bufferIMU_t)(*dataIterator)).msg, sizeof(mavlink_image_triggered_t));
 						if (timestamp > lastShutter)
 						{
 							if (verbose)
@@ -1061,7 +1019,7 @@ int main(int argc, char* argv[])
 					lastTimestamp = timestamp;
 					if (useStereo)
 					{
-						server.writeStereoImage(frame, camSerial, frameRight, camSerialRight, timestamp, roll, pitch, yaw, z, lon, lat, alt, gx, gy, gz, exposure);
+						server.writeStereoImage(frame, camSerial, frameRight, camSerialRight, timestamp, image_data, exposure);
 					}
 					else
 					{
@@ -1074,7 +1032,7 @@ int main(int argc, char* argv[])
 							frame.copyTo(gray);
 						}
 
-						server.writeMonoImage(gray, camSerial, timestamp, roll, pitch, yaw, z, lon, lat, alt, gx, gy, gz, exposure);
+						server.writeMonoImage(gray, camSerial, timestamp, image_data, exposure);
 					}
 				}
 			}

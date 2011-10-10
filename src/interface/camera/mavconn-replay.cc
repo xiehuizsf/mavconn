@@ -326,11 +326,11 @@ int main(int argc, char* argv[])
 				{
 					if(ir)
 					{
-						cam.writeStereoImage(image_left, camid_left, image_right, camid_right, itrg.timestamp, itrg.roll, itrg.pitch, itrg.yaw, itrg.local_z, itrg.lon, itrg.lat, itrg.alt, itrg.ground_x, itrg.ground_y, itrg.ground_z, 0);
+						cam.writeStereoImage(image_left, camid_left, image_right, camid_right, itrg.timestamp, itrg, 0);
 					}
 					else
 					{
-						cam.writeMonoImage(image_left, camid_left, itrg.timestamp, itrg.roll, itrg.pitch, itrg.yaw, itrg.local_z, itrg.lon, itrg.lat, itrg.alt, itrg.ground_x, itrg.ground_y, itrg.ground_z, 0);
+						cam.writeMonoImage(image_left, camid_left, itrg.timestamp, itrg, 0);
 					}
 				}
 			}

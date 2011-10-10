@@ -444,12 +444,19 @@ imageDDSHandler(void* msg)
 										   dds_msg->imageData1.length(),
 										   img);
 
-		server.writeMonoImage(img, dds_msg->cam_id1, dds_msg->timestamp,
-							  dds_msg->roll, dds_msg->pitch, dds_msg->yaw,
-							  dds_msg->z,
-							  dds_msg->lon, dds_msg->lat, dds_msg->alt,
-							  dds_msg->ground_x, dds_msg->ground_y, dds_msg->ground_z,
-							  dds_msg->exposure);
+		mavlink_image_triggered_t itrg;
+		itrg.roll = dds_msg->roll;
+		itrg.pitch = dds_msg->pitch;
+		itrg.yaw = dds_msg->yaw;
+		itrg.local_z = dds_msg->z;
+		itrg.lon = dds_msg->lon;
+		itrg.lat = dds_msg->lat;
+		itrg.alt = dds_msg->alt;
+		itrg.ground_x = dds_msg->ground_x;
+		itrg.ground_y = dds_msg->ground_y;
+		itrg.ground_z = dds_msg->ground_z;
+
+		server.writeMonoImage(img, dds_msg->cam_id1, dds_msg->timestamp, itrg, dds_msg->exposure);
 	}
 	else if (dds_msg->camera_type == PxSHM::CAMERA_STEREO_8 ||
 			 dds_msg->camera_type == PxSHM::CAMERA_STEREO_24)
@@ -465,13 +472,20 @@ imageDDSHandler(void* msg)
 										   dds_msg->imageData2.length(),
 										   imgRight);
 
+		mavlink_image_triggered_t itrg;
+		itrg.roll = dds_msg->roll;
+		itrg.pitch = dds_msg->pitch;
+		itrg.yaw = dds_msg->yaw;
+		itrg.local_z = dds_msg->z;
+		itrg.lon = dds_msg->lon;
+		itrg.lat = dds_msg->lat;
+		itrg.alt = dds_msg->alt;
+		itrg.ground_x = dds_msg->ground_x;
+		itrg.ground_y = dds_msg->ground_y;
+		itrg.ground_z = dds_msg->ground_z;
+
 		server.writeStereoImage(imgLeft, dds_msg->cam_id1, imgRight, 0,
-								dds_msg->timestamp,
-								dds_msg->roll, dds_msg->pitch, dds_msg->yaw,
-								dds_msg->z,
-								dds_msg->lon, dds_msg->lat, dds_msg->alt,
-								dds_msg->ground_x, dds_msg->ground_y, dds_msg->ground_z,
-								dds_msg->exposure);
+								dds_msg->timestamp, itrg, dds_msg->exposure);
 	}
 	else if (dds_msg->camera_type == PxSHM::CAMERA_KINECT)
 	{
