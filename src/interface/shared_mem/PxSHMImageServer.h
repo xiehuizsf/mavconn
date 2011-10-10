@@ -62,14 +62,12 @@ public:
 	int getCameraConfig(void) const;
 
 	void writeMonoImage(const cv::Mat& img, uint64_t camId,
-						uint64_t timestamp, float roll, float pitch, float yaw,
-						float z, float lon, float lat, float alt, float ground_x, float ground_y, float ground_z,
+						uint64_t timestamp, const mavlink_image_triggered_t &image_data,
 						uint32_t exposure);
 	
 	void writeStereoImage(const cv::Mat& imgLeft, uint64_t camIdLeft,
 						  const cv::Mat& imgRight, uint64_t camIdRight,
-						  uint64_t timestamp, float roll, float pitch, float yaw,
-						  float z, float lon, float lat, float alt, float ground_x, float ground_y, float ground_z,
+						  uint64_t timestamp, const mavlink_image_triggered_t &image_data,
 						  uint32_t exposure);
 	
 	void writeKinectImage(const cv::Mat& imgBayer, const cv::Mat& imgDepth,

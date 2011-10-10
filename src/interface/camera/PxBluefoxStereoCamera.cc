@@ -124,6 +124,12 @@ PxBluefoxStereoCamera::grabFrame(cv::Mat& imageLeft, cv::Mat& imageRight,
 	}
 	while (imageAvailable != ALL_IMAGES_AVAILABLE);
 
+	if (cameraLeft->imageSequenceNr != cameraRight->imageSequenceNr)
+	{
+		fprintf(stderr, "# ERROR: Left and right image sequence numbers mismatch, grabbing failed.\n");
+		return false;
+	}
+
 	cameraLeft->image.copyTo(imageLeft);
 	cameraRight->image.copyTo(imageRight);
 	sequenceNum = cameraLeft->imageSequenceNr;
@@ -134,8 +140,12 @@ PxBluefoxStereoCamera::grabFrame(cv::Mat& imageLeft, cv::Mat& imageRight,
 	if (sequenceNum > lastSequenceNum)
 	{
 		skippedFrames = sequenceNum - lastSequenceNum - 1;
-
 		lastSequenceNum = sequenceNum;
+	}
+	else
+	{
+		// sequence numbers wrong!
+		return false;
 	}
 
 	return true;
@@ -163,8 +173,8 @@ PxBluefoxStereoCamera::leftImageHandler(void)
 			const mvIMPACT::acquire::Request* request = cameraLeft->functionInterface->getRequest(requestNr);
 			if (cameraLeft->functionInterface->isRequestOK(request))
 			{
+				imageMutex.lock();
 				cameraLeft->convertToCvMat(request, cameraLeft->image);
-
 				cameraLeft->imageSequenceNr = request->infoFrameNr.read();
 
 				if (mode == PxCameraConfig::AUTO_MODE)
@@ -175,7 +185,6 @@ PxBluefoxStereoCamera::leftImageHandler(void)
 					cameraRight->setGainDB(request->infoGain_dB.read());
 				}
 
-				imageMutex.lock();
 				imageAvailable |= LEFT_IMAGE_AVAILABLE;
 				imageAvailableCond->signal();
 				imageMutex.unlock();
@@ -213,11 +222,10 @@ PxBluefoxStereoCamera::rightImageHandler(void)
 			const mvIMPACT::acquire::Request* request = cameraRight->functionInterface->getRequest(requestNr);
 			if (cameraRight->functionInterface->isRequestOK(request))
 			{
+				imageMutex.lock();
 				cameraRight->convertToCvMat(request, cameraRight->image);
-
 				cameraRight->imageSequenceNr = request->infoFrameNr.read();
 
-				imageMutex.lock();
 				imageAvailable |= RIGHT_IMAGE_AVAILABLE;
 				imageAvailableCond->signal();
 				imageMutex.unlock();
