@@ -8,8 +8,8 @@
   or consult the RTI Data Distribution Service manual.
 */
 
-#ifndef dds_mavlink_message_tPlugin_1221720989_h
-#define dds_mavlink_message_tPlugin_1221720989_h
+#ifndef dds_mavlink_message_tPlugin_1221720744_h
+#define dds_mavlink_message_tPlugin_1221720744_h
 
 #include "dds_mavlink_message_t.h"
 
@@ -252,4 +252,4 @@ dds_mavlink_message_tPlugin_delete(struct PRESTypePlugin *);
 #endif
         
 
-#endif /* dds_mavlink_message_tPlugin_1221720989_h */
+#endif /* dds_mavlink_message_tPlugin_1221720744_h */

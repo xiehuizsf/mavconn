@@ -251,14 +251,14 @@ mavlinkLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 	dds_mavlink_message_t dds_msg;
 	dds_mavlink_message_t_initialize(&dds_msg);
 
+	dds_msg.checksum = msg->checksum;
+	dds_msg.magic = msg->magic;
 	dds_msg.len = msg->len;
 	dds_msg.seq = msg->seq;
 	dds_msg.sysid = msg->sysid;
 	dds_msg.compid = msg->compid;
 	dds_msg.msgid = msg->msgid;
-	memcpy(dds_msg.payload, msg->payload, 255);
-	dds_msg.ck_a = msg->ck_a;
-	dds_msg.ck_b = msg->ck_b;
+	memcpy(dds_msg.payload64, msg->payload64, 33 * sizeof(int64_t));
 
 	px::MavlinkTopic::instance()->publish(&dds_msg);
 
@@ -578,14 +578,14 @@ mavlinkDDSHandler(void* msg, lcm_t* lcm)
 	// forward MAVLINK messages from DDS to LCM
 	mavlink_message_t lcm_msg;
 
+	lcm_msg.checksum = dds_msg->checksum;
+	lcm_msg.magic = dds_msg->magic;
 	lcm_msg.len = dds_msg->len;
 	lcm_msg.seq = dds_msg->seq;
 	lcm_msg.sysid = dds_msg->sysid;
 	lcm_msg.compid = dds_msg->compid;
 	lcm_msg.msgid = dds_msg->msgid;
-	memcpy(lcm_msg.payload, dds_msg->payload, 255);
-	lcm_msg.ck_a = dds_msg->ck_a;
-	lcm_msg.ck_b = dds_msg->ck_b;
+	memcpy(lcm_msg.payload64, dds_msg->payload64, 33 * sizeof(int64_t));
 
 	sendMAVLinkMessage(lcm, &lcm_msg);
 

@@ -45,10 +45,44 @@ DDS_TypeCode* dds_mavlink_message_t_get_typecode()
 {
     static RTIBool is_initialized = RTI_FALSE;
 
-    static DDS_TypeCode dds_mavlink_message_t_g_tc_payload_array = DDS_INITIALIZE_ARRAY_TYPECODE(1,255,NULL,NULL);
+    static DDS_TypeCode dds_mavlink_message_t_g_tc_payload64_array = DDS_INITIALIZE_ARRAY_TYPECODE(1,33,NULL,NULL);
 
     static DDS_TypeCode_Member dds_mavlink_message_t_g_tc_members[8]=
     {
+        {
+            (char *)"checksum",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
+        {
+            (char *)"magic",/* Member name */
+            {
+                0,/* Representation ID */
+                DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                -1, /* Bitfield bits */
+                NULL/* Member type code is assigned later */
+            },
+            0, /* Ignored */
+            0, /* Ignored */
+            0, /* Ignored */
+            NULL, /* Ignored */
+            DDS_BOOLEAN_FALSE, /* Is a key? */
+            DDS_PRIVATE_MEMBER,/* Ignored */
+            0,/* Ignored */
+            NULL/* Ignored */
+        },
         {
             (char *)"len",/* Member name */
             {
@@ -135,41 +169,7 @@ DDS_TypeCode* dds_mavlink_message_t_get_typecode()
             NULL/* Ignored */
         },
         {
-            (char *)"payload",/* Member name */
-            {
-                0,/* Representation ID */
-                DDS_BOOLEAN_FALSE,/* Is a pointer? */
-                -1, /* Bitfield bits */
-                NULL/* Member type code is assigned later */
-            },
-            0, /* Ignored */
-            0, /* Ignored */
-            0, /* Ignored */
-            NULL, /* Ignored */
-            DDS_BOOLEAN_FALSE, /* Is a key? */
-            DDS_PRIVATE_MEMBER,/* Ignored */
-            0,/* Ignored */
-            NULL/* Ignored */
-        },
-        {
-            (char *)"ck_a",/* Member name */
-            {
-                0,/* Representation ID */
-                DDS_BOOLEAN_FALSE,/* Is a pointer? */
-                -1, /* Bitfield bits */
-                NULL/* Member type code is assigned later */
-            },
-            0, /* Ignored */
-            0, /* Ignored */
-            0, /* Ignored */
-            NULL, /* Ignored */
-            DDS_BOOLEAN_FALSE, /* Is a key? */
-            DDS_PRIVATE_MEMBER,/* Ignored */
-            0,/* Ignored */
-            NULL/* Ignored */
-        },
-        {
-            (char *)"ck_b",/* Member name */
+            (char *)"payload64",/* Member name */
             {
                 0,/* Representation ID */
                 DDS_BOOLEAN_FALSE,/* Is a pointer? */
@@ -206,16 +206,16 @@ DDS_TypeCode* dds_mavlink_message_t_get_typecode()
         return &dds_mavlink_message_t_g_tc;
     }
 
-    dds_mavlink_message_t_g_tc_payload_array._data._typeCode = (RTICdrTypeCode *)&DDS_g_tc_char;
+    dds_mavlink_message_t_g_tc_payload64_array._data._typeCode = (RTICdrTypeCode *)&DDS_g_tc_longlong;
 
-    dds_mavlink_message_t_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_char;
+    dds_mavlink_message_t_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_short;
     dds_mavlink_message_t_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_char;
     dds_mavlink_message_t_g_tc_members[2]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_char;
     dds_mavlink_message_t_g_tc_members[3]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_char;
     dds_mavlink_message_t_g_tc_members[4]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_char;
-    dds_mavlink_message_t_g_tc_members[5]._representation._typeCode = (RTICdrTypeCode *)&dds_mavlink_message_t_g_tc_payload_array;
+    dds_mavlink_message_t_g_tc_members[5]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_char;
     dds_mavlink_message_t_g_tc_members[6]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_char;
-    dds_mavlink_message_t_g_tc_members[7]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_char;
+    dds_mavlink_message_t_g_tc_members[7]._representation._typeCode = (RTICdrTypeCode *)&dds_mavlink_message_t_g_tc_payload64_array;
 
     is_initialized = RTI_TRUE;
 
@@ -232,6 +232,14 @@ RTIBool dds_mavlink_message_t_initialize_ex(
     dds_mavlink_message_t* sample,RTIBool allocatePointers)
 {
 
+    if (!RTICdrType_initShort(&sample->checksum)) {
+        return RTI_FALSE;
+    }                
+            
+    if (!RTICdrType_initChar(&sample->magic)) {
+        return RTI_FALSE;
+    }                
+            
     if (!RTICdrType_initChar(&sample->len)) {
         return RTI_FALSE;
     }                
@@ -253,17 +261,9 @@ RTIBool dds_mavlink_message_t_initialize_ex(
     }                
                 
     if (!RTICdrType_initArray(
-        sample->payload, (255), RTI_CDR_CHAR_SIZE)) {
+        sample->payload64, (33), RTI_CDR_LONG_LONG_SIZE)) {
         return RTI_FALSE;
     }
-            
-    if (!RTICdrType_initChar(&sample->ck_a)) {
-        return RTI_FALSE;
-    }                
-            
-    if (!RTICdrType_initChar(&sample->ck_b)) {
-        return RTI_FALSE;
-    }                
             
 
     return RTI_TRUE;
@@ -286,6 +286,16 @@ RTIBool dds_mavlink_message_t_copy(
     const dds_mavlink_message_t* src)
 {        
 
+    if (!RTICdrType_copyShort(
+        &dst->checksum, &src->checksum)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrType_copyChar(
+        &dst->magic, &src->magic)) {
+        return RTI_FALSE;
+    }
+            
     if (!RTICdrType_copyChar(
         &dst->len, &src->len)) {
         return RTI_FALSE;
@@ -312,17 +322,7 @@ RTIBool dds_mavlink_message_t_copy(
     }
             
     if (!RTICdrType_copyArray(
-        dst->payload, src->payload, (255), RTI_CDR_CHAR_SIZE)) {
-        return RTI_FALSE;
-    }
-            
-    if (!RTICdrType_copyChar(
-        &dst->ck_a, &src->ck_a)) {
-        return RTI_FALSE;
-    }
-            
-    if (!RTICdrType_copyChar(
-        &dst->ck_b, &src->ck_b)) {
+        dst->payload64, src->payload64, (33), RTI_CDR_LONG_LONG_SIZE)) {
         return RTI_FALSE;
     }
             

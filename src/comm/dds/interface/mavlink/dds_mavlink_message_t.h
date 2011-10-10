@@ -8,8 +8,8 @@
   or consult the RTI Data Distribution Service manual.
 */
 
-#ifndef dds_mavlink_message_t_1221720989_h
-#define dds_mavlink_message_t_1221720989_h
+#ifndef dds_mavlink_message_t_1221720744_h
+#define dds_mavlink_message_t_1221720744_h
 
 #ifndef NDDS_STANDALONE_TYPE
     #ifdef __cplusplus
@@ -40,14 +40,14 @@ extern const char *dds_mavlink_message_tTYPENAME;
 
 typedef struct dds_mavlink_message_t
 {
+    DDS_Short  checksum;
+    DDS_Char  magic;
     DDS_Char  len;
     DDS_Char  seq;
     DDS_Char  sysid;
     DDS_Char  compid;
     DDS_Char  msgid;
-    DDS_Char  payload[255];
-    DDS_Char  ck_a;
-    DDS_Char  ck_b;
+    DDS_LongLong  payload64[33];
 
 } dds_mavlink_message_t;
     
@@ -95,4 +95,4 @@ RTIBool dds_mavlink_message_t_copy(
 
 
 
-#endif /* dds_mavlink_message_t_1221720989_h */
+#endif /* dds_mavlink_message_t_1221720744_h */

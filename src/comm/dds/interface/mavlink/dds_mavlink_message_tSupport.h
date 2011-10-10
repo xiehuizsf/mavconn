@@ -8,8 +8,8 @@
   or consult the RTI Data Distribution Service manual.
 */
 
-#ifndef dds_mavlink_message_tSupport_1221720989_h
-#define dds_mavlink_message_tSupport_1221720989_h
+#ifndef dds_mavlink_message_tSupport_1221720744_h
+#define dds_mavlink_message_tSupport_1221720744_h
 
 /* Uses */
 #include "dds_mavlink_message_t.h"
@@ -80,4 +80,4 @@ DDS_DATAREADER_C(dds_mavlink_message_tDataReader, dds_mavlink_message_tSeq, dds_
 
 
 
-#endif  /* dds_mavlink_message_tSupport_1221720989_h */
+#endif  /* dds_mavlink_message_tSupport_1221720744_h */

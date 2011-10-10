@@ -136,6 +136,12 @@ dds_mavlink_message_tPluginSupport_print_data(
     }
 
 
+    RTICdrType_printShort(
+        &sample->checksum, "checksum", indent_level + 1);
+            
+    RTICdrType_printChar(
+        &sample->magic, "magic", indent_level + 1);
+            
     RTICdrType_printChar(
         &sample->len, "len", indent_level + 1);
             
@@ -152,15 +158,9 @@ dds_mavlink_message_tPluginSupport_print_data(
         &sample->msgid, "msgid", indent_level + 1);
             
     RTICdrType_printArray(
-        sample->payload, (255), RTI_CDR_CHAR_SIZE,
-        (RTICdrTypePrintFunction)RTICdrType_printChar,
-        "payload", indent_level + 1);
-            
-    RTICdrType_printChar(
-        &sample->ck_a, "ck_a", indent_level + 1);
-            
-    RTICdrType_printChar(
-        &sample->ck_b, "ck_b", indent_level + 1);
+        sample->payload64, (33), RTI_CDR_LONG_LONG_SIZE,
+        (RTICdrTypePrintFunction)RTICdrType_printLongLong,
+        "payload64", indent_level + 1);
             
 
 }
@@ -288,6 +288,16 @@ dds_mavlink_message_tPlugin_serialize(
 
   if(serialize_sample) {
 
+    if (!RTICdrStream_serializeShort(
+        stream, &sample->checksum)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_serializeChar(
+        stream, &sample->magic)) {
+        return RTI_FALSE;
+    }
+            
     if (!RTICdrStream_serializeChar(
         stream, &sample->len)) {
         return RTI_FALSE;
@@ -314,17 +324,7 @@ dds_mavlink_message_tPlugin_serialize(
     }
             
     if (!RTICdrStream_serializePrimitiveArray(
-        stream, (void*)sample->payload, (255), RTI_CDR_CHAR_TYPE)) {
-        return RTI_FALSE;
-    }
-            
-    if (!RTICdrStream_serializeChar(
-        stream, &sample->ck_a)) {
-        return RTI_FALSE;
-    }
-            
-    if (!RTICdrStream_serializeChar(
-        stream, &sample->ck_b)) {
+        stream, (void*)sample->payload64, (33), RTI_CDR_LONG_LONG_TYPE)) {
         return RTI_FALSE;
     }
             
@@ -366,6 +366,16 @@ dds_mavlink_message_tPlugin_deserialize_sample(
 
     if(deserialize_sample) {
 
+    if (!RTICdrStream_deserializeShort(
+        stream, &sample->checksum)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_deserializeChar(
+        stream, &sample->magic)) {
+        return RTI_FALSE;
+    }
+            
     if (!RTICdrStream_deserializeChar(
         stream, &sample->len)) {
         return RTI_FALSE;
@@ -392,17 +402,7 @@ dds_mavlink_message_tPlugin_deserialize_sample(
     }
             
     if (!RTICdrStream_deserializePrimitiveArray(
-        stream, (void*)sample->payload, (255), RTI_CDR_CHAR_TYPE)) {
-        return RTI_FALSE;
-    }
-            
-    if (!RTICdrStream_deserializeChar(
-        stream, &sample->ck_a)) {
-        return RTI_FALSE;
-    }
-            
-    if (!RTICdrStream_deserializeChar(
-        stream, &sample->ck_b)) {
+        stream, (void*)sample->payload64, (33), RTI_CDR_LONG_LONG_TYPE)) {
         return RTI_FALSE;
     }
             
@@ -461,6 +461,14 @@ RTIBool dds_mavlink_message_tPlugin_skip(
 
     if (skip_sample) {
 
+    if (!RTICdrStream_skipShort(stream)) {
+        return RTI_FALSE;
+    }
+            
+    if (!RTICdrStream_skipChar(stream)) {
+        return RTI_FALSE;
+    }
+            
     if (!RTICdrStream_skipChar(stream)) {
         return RTI_FALSE;
     }
@@ -482,15 +490,7 @@ RTIBool dds_mavlink_message_tPlugin_skip(
     }
             
     if (!RTICdrStream_skipPrimitiveArray(
-        stream, (255), RTI_CDR_CHAR_TYPE)) {
-        return RTI_FALSE;
-    }
-            
-    if (!RTICdrStream_skipChar(stream)) {
-        return RTI_FALSE;
-    }
-            
-    if (!RTICdrStream_skipChar(stream)) {
+        stream, (33), RTI_CDR_LONG_LONG_TYPE)) {
         return RTI_FALSE;
     }
             
@@ -533,6 +533,12 @@ dds_mavlink_message_tPlugin_get_serialized_sample_max_size(
     }
 
 
+    current_alignment +=  RTICdrType_getShortMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getCharMaxSizeSerialized(
+        current_alignment);
+            
     current_alignment +=  RTICdrType_getCharMaxSizeSerialized(
         current_alignment);
             
@@ -549,13 +555,7 @@ dds_mavlink_message_tPlugin_get_serialized_sample_max_size(
         current_alignment);
             
     current_alignment +=  RTICdrType_getPrimitiveArrayMaxSizeSerialized(
-        current_alignment, (255), RTI_CDR_CHAR_TYPE);
-            
-    current_alignment +=  RTICdrType_getCharMaxSizeSerialized(
-        current_alignment);
-            
-    current_alignment +=  RTICdrType_getCharMaxSizeSerialized(
-        current_alignment);
+        current_alignment, (33), RTI_CDR_LONG_LONG_TYPE);
             
     if (include_encapsulation) {
         current_alignment += encapsulation_size;
@@ -592,6 +592,12 @@ dds_mavlink_message_tPlugin_get_serialized_sample_min_size(
     }
 
 
+    current_alignment +=  RTICdrType_getShortMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment +=  RTICdrType_getCharMaxSizeSerialized(
+        current_alignment);
+            
     current_alignment +=  RTICdrType_getCharMaxSizeSerialized(
         current_alignment);
             
@@ -608,13 +614,7 @@ dds_mavlink_message_tPlugin_get_serialized_sample_min_size(
         current_alignment);
             
     current_alignment +=  RTICdrType_getPrimitiveArrayMaxSizeSerialized(
-        current_alignment, (255), RTI_CDR_CHAR_TYPE);
-            
-    current_alignment +=  RTICdrType_getCharMaxSizeSerialized(
-        current_alignment);
-            
-    current_alignment +=  RTICdrType_getCharMaxSizeSerialized(
-        current_alignment);
+        current_alignment, (33), RTI_CDR_LONG_LONG_TYPE);
             
     if (include_encapsulation) {
         current_alignment += encapsulation_size;
@@ -658,6 +658,12 @@ dds_mavlink_message_tPlugin_get_serialized_sample_size(
     }
 
 
+    current_alignment += RTICdrType_getShortMaxSizeSerialized(
+        current_alignment);
+            
+    current_alignment += RTICdrType_getCharMaxSizeSerialized(
+        current_alignment);
+            
     current_alignment += RTICdrType_getCharMaxSizeSerialized(
         current_alignment);
             
@@ -674,13 +680,7 @@ dds_mavlink_message_tPlugin_get_serialized_sample_size(
         current_alignment);
             
     current_alignment += RTICdrType_getPrimitiveArrayMaxSizeSerialized(
-        current_alignment, (255), RTI_CDR_CHAR_TYPE);
-            
-    current_alignment += RTICdrType_getCharMaxSizeSerialized(
-        current_alignment);
-            
-    current_alignment += RTICdrType_getCharMaxSizeSerialized(
-        current_alignment);
+        current_alignment, (33), RTI_CDR_LONG_LONG_TYPE);
             
     if (include_encapsulation) {
         current_alignment += encapsulation_size;

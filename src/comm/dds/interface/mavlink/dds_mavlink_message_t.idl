@@ -1,11 +1,11 @@
 struct dds_mavlink_message_t
 {
-	char len;    ///< Length of payload
-        char seq;   ///< Aircraft ID, id of message sender
-        char sysid;
-        char compid;
-        char msgid;  ///< ID of message in payload
-        char payload[255]; ///< Length set in mavlink/protocol.h, currently 255 bytes
-        char ck_a;   ///< Checksum high byte
-        char ck_b;   ///< Checksum low byte
+	short checksum;
+	char magic;
+	char len;
+	char seq;
+	char sysid;
+	char compid;
+	char msgid;
+	long long payload64[33];
 };
