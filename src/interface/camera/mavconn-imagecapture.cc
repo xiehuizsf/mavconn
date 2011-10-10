@@ -225,92 +225,88 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 
 	switch(msg->msgid)
 	{
-	case MAVLINK_MSG_ID_COMMAND_SHORT:
+	case MAVLINK_MSG_ID_COMMAND_LONG:
 	{
-		mavlink_command_short_t act;
-		mavlink_msg_command_short_decode(msg, &act);
-		switch( act.command )
+		mavlink_command_long_t command;
+		mavlink_msg_command_long_decode(msg, &command);
+		if (command.command == MAV_CMD_DO_CONTROL_VIDEO)
 		{
-		case MAV_CMD_DO_CONTROL_VIDEO:
-		{
-			mavlink_message_t msg;
-			mavlink_statustext_t statustext;
-			if (!recordData)
+			if (command.param4 == 1 || command.param4 == 2)
 			{
-				// start recording image data
-				if (verbose) printf("Starting recording.\n");
-
-				// preparing data folder and data file
-				time_t rawtime;
-				time( &rawtime );
-				struct tm* timeinfo = localtime(&rawtime);
-				captureDir = createCaptureDirectory(CAPTURE_DIR, timeinfo);
-				captureDirLeft = captureDir + std::string("left/");
-				captureDirRight = captureDir + std::string("right/");
-				prepareCaptureFile(imageDataFile, captureDir, IMAGE_CAPTURE_FILE, "imagenumber, timestamp, roll, pitch, yaw, lat, lon, alt, local_z, ground truth X, ground truth Y, ground truth Z", "IMAGE", timeinfo);
-
-				char dateBuf[80];
-				strftime( dateBuf, 80, "%Y%m%d_%H%M%S\0", timeinfo );
-				mavlinkFile.open((string(CAPTURE_DIR) + string(dateBuf) + string(".mavlink")).c_str(), ios::binary | ios::out);
-
-				sprintf((char*)&statustext.text, "MAVCONN: imagecapture: STARTING RECORDING");
-				mavlink_msg_statustext_encode(sysid, compid, &msg, &statustext);
-				sendMAVLinkMessage(lcmMavlink, &msg);
-				snprintf((char*)&statustext.text, MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN, "%s%s%s", CAPTURE_DIR, dateBuf, ".mavlink");
-				mavlink_msg_statustext_encode(sysid, compid, &msg, &statustext);
-				sendMAVLinkMessage(lcmMavlink, &msg);
-				recordData = true;
-				bPause = false;
-			}
-			else if(bPause)
-			{
-				bPause = false;
-				sprintf((char*)&statustext.text, "MAVCONN: imagecapture: CONTINUE RECORDING");
-				mavlink_msg_statustext_encode(sysid, compid, &msg, &statustext);
-				sendMAVLinkMessage(lcmMavlink, &msg);
-			}
-			break;
-		}
-
-		case MAV_ACTION_REC_STOP:
-		{
-			if (recordData)
-			{
-				// stop recording image data
-				if (verbose) printf("Stop recording.\n");
-
-				imageDataFile << endl << "### EOF" << endl;
-				imageDataFile.close();
-				mavlinkFile.close();
-
 				mavlink_message_t msg;
 				mavlink_statustext_t statustext;
-				sprintf((char*)&statustext.text, "px_imagecapture: STOPPING RECORDING");
-				mavlink_msg_statustext_encode(sysid, compid, &msg, &statustext);
-				sendMAVLinkMessage(lcmMavlink, &msg);
-				recordData = false;
-				bPause = false;
-			}
-			break;
-		}
+				if (!recordData)
+				{
+					// start recording image data
+					if (verbose) printf("Starting recording.\n");
 
-		case MAV_ACTION_REC_PAUSE:
-		{
-			// pause recording data
-			mavlink_message_t msg;
-			mavlink_statustext_t statustext;
-			if (!bPause && recordData)
+					// preparing data folder and data file
+					time_t rawtime;
+					time( &rawtime );
+					struct tm* timeinfo = localtime(&rawtime);
+					captureDir = createCaptureDirectory(CAPTURE_DIR, timeinfo);
+					captureDirLeft = captureDir + std::string("left/");
+					captureDirRight = captureDir + std::string("right/");
+					prepareCaptureFile(imageDataFile, captureDir, IMAGE_CAPTURE_FILE, "imagenumber, timestamp, roll, pitch, yaw, lat, lon, alt, local_z, ground truth X, ground truth Y, ground truth Z", "IMAGE", timeinfo);
+
+					char dateBuf[80];
+					strftime( dateBuf, 80, "%Y%m%d_%H%M%S\0", timeinfo );
+					mavlinkFile.open((string(CAPTURE_DIR) + string(dateBuf) + string(".mavlink")).c_str(), ios::binary | ios::out);
+
+					sprintf((char*)&statustext.text, "MAVCONN: imagecapture: STARTING RECORDING");
+					mavlink_msg_statustext_encode(sysid, compid, &msg, &statustext);
+					sendMAVLinkMessage(lcmMavlink, &msg);
+					snprintf((char*)&statustext.text, MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN, "%s%s%s", CAPTURE_DIR, dateBuf, ".mavlink");
+					mavlink_msg_statustext_encode(sysid, compid, &msg, &statustext);
+					sendMAVLinkMessage(lcmMavlink, &msg);
+					recordData = true;
+					bPause = false;
+				}
+				else if(bPause)
+				{
+					bPause = false;
+					sprintf((char*)&statustext.text, "MAVCONN: imagecapture: CONTINUE RECORDING");
+					mavlink_msg_statustext_encode(sysid, compid, &msg, &statustext);
+					sendMAVLinkMessage(lcmMavlink, &msg);
+				}
+			}
+			else if (command.param4 == 0)
 			{
-				bPause = true;
-				sprintf((char*) &statustext.text, "px_imagecapture: PAUSE RECORDING");
+				if (recordData)
+				{
+					// stop recording image data
+					if (verbose) printf("Stop recording.\n");
 
-				mavlink_msg_statustext_encode(sysid, compid, &msg, &statustext);
-				sendMAVLinkMessage(lcmMavlink, &msg);
+					imageDataFile << endl << "### EOF" << endl;
+					imageDataFile.close();
+					mavlinkFile.close();
+
+					mavlink_message_t msg;
+					mavlink_statustext_t statustext;
+					sprintf((char*)&statustext.text, "px_imagecapture: STOPPING RECORDING");
+					mavlink_msg_statustext_encode(sysid, compid, &msg, &statustext);
+					sendMAVLinkMessage(lcmMavlink, &msg);
+					recordData = false;
+					bPause = false;
+				}
 			}
-			break;
+
+//		case MAV_ACTION_REC_PAUSE:
+//		{
+//			// pause recording data
+//			mavlink_message_t msg;
+//			mavlink_statustext_t statustext;
+//			if (!bPause && recordData)
+//			{
+//				bPause = true;
+//				sprintf((char*) &statustext.text, "px_imagecapture: PAUSE RECORDING");
+//
+//				mavlink_msg_statustext_encode(sysid, compid, &msg, &statustext);
+//				sendMAVLinkMessage(lcmMavlink, &msg);
+//			}
+//			break;
+//		}
 		}
-		}
-		break;
 	}
 
 	default:
