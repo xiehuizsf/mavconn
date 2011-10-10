@@ -15,7 +15,7 @@ PxCameraManagerFactory::generate(const std::string& type)
 {
 	bool blueFoxSupported = false;
 #ifdef __linux
-	blueFoblueFoxSupported = true;
+	blueFoxSupported = true;
 #endif
 
 	// return singleton instance of device-specific camera manager

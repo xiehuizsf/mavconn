@@ -61,8 +61,11 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
   ENDIF(CMAKE_SYSTEM_PROCESSOR MATCHES "i[3-6]|x86_64")
 ENDIF(CMAKE_SYSTEM_NAME MATCHES "Linux")
 
-PIXHAWK_EXECUTABLE(mavconn-mavlink_bridge_dds mavconn-mavlink_bridge_dds.cc PxZip.cc)
-PIXHAWK_LINK_LIBRARIES(mavconn-mavlink_bridge_dds
+PIXHAWK_EXECUTABLE(mavconn-bridge-dds mavconn-bridge-dds.cc PxZip.cc)
+PIXHAWK_LINK_LIBRARIES(mavconn-bridge-dds
+  mavconn_lcm
+  mavconn_shm
+  mavconn_dds
   dl
   nsl
   rt
@@ -73,9 +76,6 @@ PIXHAWK_LINK_LIBRARIES(mavconn-mavlink_bridge_dds
   ${GLIBMM2_LIBRARY}
   ${SIGC++_LIBRARY}
   ${ZLIB_LIBRARY}
-  mavconn_dds
-  mavconn_lcm
-  mavconn_shm
 )
 ENDIF(RTI_FOUND)
 ENDIF(JPEG_TURBO_FOUND)

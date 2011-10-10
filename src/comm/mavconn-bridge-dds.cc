@@ -1,3 +1,36 @@
+/*=====================================================================
+
+PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
+
+(c) 2009-2011 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
+
+This file is part of the PIXHAWK project
+
+    PIXHAWK is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    PIXHAWK is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+
+/**
+* @file
+*   @brief Bridge between MAVCONN/LCM and DDS.
+*
+*   Bridge between MAVCONN/LCM and DDS.
+*
+*   @author Lionel Heng  <hengli@inf.ethz.ch>
+*
+*/
+
 #include <mavconn.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -60,8 +93,9 @@ overlayLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 
 void
 imageLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
-				const mavlink_message_t* msg, void* user)
+				const mavconn_mavlink_msg_container_t* container, void* user)
 {
+	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
 	for (size_t i = 0; i < imageClientVec.size(); ++i)
 	{
 		PxSHMImageClient& client = imageClientVec.at(i);
@@ -200,8 +234,9 @@ imageLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 
 void
 mavlinkLCMHandler(const lcm_recv_buf_t* rbuf, const char* channel,
-				  const mavlink_message_t* msg, void* user)
+				  const mavconn_mavlink_msg_container_t* container, void* user)
 {
+	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
 	if (msg->sysid != getSystemID())
 	{
 		return;
@@ -552,7 +587,7 @@ mavlinkDDSHandler(void* msg, lcm_t* lcm)
 	lcm_msg.ck_a = dds_msg->ck_a;
 	lcm_msg.ck_b = dds_msg->ck_b;
 
-	mavlink_message_t_publish(lcm, "MAVLINK", &lcm_msg);
+	sendMAVLinkMessage(lcm, &lcm_msg);
 
 	if (verbose)
 	{
@@ -681,7 +716,7 @@ main(int argc, char** argv)
 	mavconn_mavlink_msg_container_t_subscription_t* mavlinkLCMSub = 0;
 	obstacle_map_message_t_subscription_t* obstacleMapLCMSub = 0;
 
-	mavlinkLCMSub = mavlink_message_t_subscribe(lcm, "MAVLINK", &mavlinkLCMHandler, 0);
+	mavlinkLCMSub = mavconn_mavlink_msg_container_t_subscribe(lcm, "MAVLINK", &mavlinkLCMHandler, 0);
 	px::MavlinkTopic::instance()->advertise();
 
 	px::Handler handler = px::Handler(sigc::bind(sigc::ptr_fun(mavlinkDDSHandler), lcm));
@@ -709,7 +744,7 @@ main(int argc, char** argv)
 
 		// subscribe to LCM messages
 		overlayLCMSub = gl_overlay_message_t_subscribe(lcm, "GL_OVERLAY", &overlayLCMHandler, 0);
-		imageLCMSub = mavlink_message_t_subscribe(lcm, "IMAGES", &imageLCMHandler, 0);
+		imageLCMSub = mavconn_mavlink_msg_container_t_subscribe(lcm, "IMAGES", &imageLCMHandler, 0);
 		obstacleMapLCMSub = obstacle_map_message_t_subscribe(lcm, "OBSTACLE_MAP", &obstacleMapLCMHandler, 0);
 
 		// advertise DDS topics
@@ -768,7 +803,7 @@ main(int argc, char** argv)
 
 	if (lcm2dds)
 	{
-		mavlink_message_t_unsubscribe(lcm, mavlinkLCMSub);
+		mavconn_mavlink_msg_container_t_unsubscribe(lcm, mavlinkLCMSub);
 
 		dds_gl_overlay_message_t_finalize(&dds_overlay_msg);
 		dds_image_message_t_finalize(&dds_image_msg);
