@@ -376,6 +376,12 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	if (trigger && camType.compare("opencv") == 0)
+	{
+		fprintf(stderr, "# ERROR: OpenCV camera does not support triggering.\n");
+		exit(EXIT_FAILURE);
+	}
+
 	// Disable trigger
 	if (!verbose)
 	{
