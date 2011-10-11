@@ -234,7 +234,7 @@ int main(int argc, char* argv[])
 									("trigger,t", config::bool_switch(&trigger)->default_value(false), "Enable hardware trigger (Firefly MV: INPUT: GPIO0, OUTPUT: GPIO2)")
 									("triggerslave", config::bool_switch(&triggerslave)->default_value(false), "Enable if another px_camera process is already controlling the imu trigger settings")
 									("automode,a", config::bool_switch(&automode)->default_value(false), "Enable auto brightness/gain/exposure/gamma")
-									("type", config::value<std::string>(&camType)->default_value("unknown"), "Camera type: {bluefox|firefly]")
+									("type", config::value<std::string>(&camType)->default_value("opencv"), "Camera type: {opencv|bluefox|firefly]")
 									("serial_right", config::value<uint64_t>(&camSerialRight)->default_value(0), "Enable stereo camera mode. Expects serial # of the right camera as argument. This will also enable (and only work with) the hardware trigger. Left cam is master.")
 									("serial", config::value<uint64_t>(&camSerial)->default_value(0), "Serial # of the camera to select")
 									("orientation", config::value<std::string>(&camOrientation)->default_value("downward"), "Orientation of camera: [downward|forward]")
@@ -331,7 +331,7 @@ int main(int argc, char* argv[])
 	PxCameraManagerPtr camManager = PxCameraManagerFactory::generate(camType);
 	if (camManager.get() == 0)
 	{
-		fprintf(stderr, "# ERROR: Unknown camera type: %s\n. Please choose either bluefox, firefly or opencv.\n", camType.c_str());
+		fprintf(stderr, "# ERROR: Unknown camera type: %s\n. Please choose either --type bluefox, firefly or opencv.\n", camType.c_str());
 		exit(EXIT_FAILURE);
 	}
 
@@ -698,6 +698,10 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "without trigger...\n");
 	}
 
+	fprintf(stderr, "\nYou can view the camera image by launching mavconn-view\n");
+
+	uint8_t grabFailCount = 0;
+
 	//========= MAIN LOOP =========
 	while (!quit)
 	{
@@ -766,8 +770,13 @@ int main(int argc, char* argv[])
 				{
 					if (!verbose)
 					{
+						grabFailCount++;
 						fprintf(stderr, "# INFO: Cannot grab frame.\n");
 					}
+				}
+				else
+				{
+					grabFailCount = 0;
 				}
 			}
 			else
@@ -776,10 +785,21 @@ int main(int argc, char* argv[])
 				{
 					if (!verbose)
 					{
+						grabFailCount++;
 						fprintf(stderr, "# INFO: Cannot grab frame.\n");
 					}
 				}
+				else
+				{
+					grabFailCount = 0;
+				}
 			}
+		}
+
+		if(grabFailCount > 4)
+		{
+			fprintf(stderr, "# ERROR: Too many consecutive grab fails, exiting.\n");
+			exit(-1);
 		}
 
 		// 	Get timestamp immediately after image capture
@@ -1051,9 +1071,10 @@ int main(int argc, char* argv[])
 
 	if (trigger)
 	{
-		imageThread->join();
 		mavconn_mavlink_msg_container_t_unsubscribe(lcm, mavlinkSub);
 		lcmThread->join();
+		//imageThread->join();
+		usleep(1000000); //instead of joining which can hang forever when camera crashed just sleep 100ms
 	}
 
 	// Disconnect from LCM

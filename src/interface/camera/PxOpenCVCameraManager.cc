@@ -15,13 +15,22 @@ PxOpenCVCameraManager::~PxOpenCVCameraManager()
 PxCameraPtr
 PxOpenCVCameraManager::generateCamera(uint64_t captureIndex)
 {
-	return PxCameraPtr(new PxOpenCVCamera(getCamera(captureIndex)));
+	cv::VideoCapture *cap = getCamera(captureIndex);
+	if(cap->isOpened())
+	{
+		return PxCameraPtr(new PxOpenCVCamera(cap));
+	}
+	else
+	{
+		fprintf(stderr, "# ERROR: No OpenCV camera found.\n");
+		return PxCameraPtr();
+	}
 }
 
 PxStereoCameraPtr
 PxOpenCVCameraManager::generateStereoCamera(uint64_t serialNum1, uint64_t serialNum2)
 {
-	fprintf(stderr, "# ERROR: OpenCV cam does not support stereo");
+	fprintf(stderr, "# ERROR: OpenCV camera does not support stereo.\n");
 	return PxStereoCameraPtr();
 }
 

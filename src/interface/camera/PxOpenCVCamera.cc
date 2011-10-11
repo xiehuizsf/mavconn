@@ -99,8 +99,6 @@ bool
 PxOpenCVCamera::start(void)
 {
 	//start transmission
-	camera->grab();
-
 	return true;
 }
 
@@ -114,9 +112,12 @@ bool
 PxOpenCVCamera::grabFrame(cv::Mat& image, uint32_t& skippedFrames,
 						   uint32_t& sequenceNum)
 {
-	camera->retrieve(image);
-	camera->grab();
-	return true;
+	bool res = camera->grab();
+	if(res)
+	{
+		res = camera->retrieve(image);
+	}
+	return res;
 }
 
 bool

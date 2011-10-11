@@ -70,8 +70,8 @@ ENDIF(LINUX_SYSTEM_FOUND)
 # WARNING: Do not link mvDeviceManager and OPENCV_HIGHGUI_LIBRARY_OPTIMIZED
 # to the same executable/library as there is some unknown cross-interaction
 # between these 2 libraries which causes the camera API to work incorrectly.
-PIXHAWK_LIBRARY(pxcam SHARED ${CAMERA_SRC_FILES})
-PIXHAWK_LINK_LIBRARIES(pxcam
+PIXHAWK_LIBRARY(mavconn_cam SHARED ${CAMERA_SRC_FILES})
+PIXHAWK_LINK_LIBRARIES(mavconn_cam
   ${DC_LIBRARY_OPTIMIZED}
   ${GLIBMM2_LIBRARY}
   ${OPENCV_CORE_LIBRARY_OPTIMIZED}
@@ -83,12 +83,12 @@ PIXHAWK_LINK_LIBRARIES(pxcam
 )
 
 IF(LINUX_SYSTEM_FOUND)
-PIXHAWK_LINK_LIBRARIES(pxcam
+PIXHAWK_LINK_LIBRARIES(mavconn_cam
   mvDeviceManager
 )
 ENDIF(LINUX_SYSTEM_FOUND)
 
-SET_TARGET_PROPERTIES(pxcam PROPERTIES COMPILE_FLAGS "-D_REENTRANT")
+SET_TARGET_PROPERTIES(mavconn_cam PROPERTIES COMPILE_FLAGS "-D_REENTRANT")
 
 PIXHAWK_EXECUTABLE(mavconn-camera
   mavconn-camera.cc
@@ -99,7 +99,7 @@ PIXHAWK_LINK_LIBRARIES(mavconn-camera
   ${OPENCV_IMGPROC_LIBRARY_OPTIMIZED}
     ${GLIB2_LIBRARY}
   ${GTHREAD2_LIBRARY}
-  pxcam
+  mavconn_cam
 )
 
 PIXHAWK_EXECUTABLE(mavconn-view mavconn-view.cc)
