@@ -415,7 +415,7 @@ int main(int argc, char* argv[])
 	if(trigger && !triggerslave)
 	{
 		// send multiple times as a soft mean of forward error correction
-		for (int i = 0; i < 5; i++)
+		for (int i = 0; i < 2; i++)
 		{
 			mavlink_message_t triggerMsg;
 			mavlink_msg_image_trigger_control_pack(getSystemID(), PX_COMP_ID_CAMERA, &triggerMsg, 0);
@@ -524,13 +524,9 @@ int main(int argc, char* argv[])
 		if(!triggerslave)
 		{
 			// Re-enable trigger, as the camera interface is now ready to capture frames
-			// send multiple times as a soft mean of forward error coONOEOTrrection
-			for (int i = 0; i < 1; i++)
-			{
-				mavlink_message_t triggerMsg;
-				mavlink_msg_image_trigger_control_pack(getSystemID(), PX_COMP_ID_CAMERA, &triggerMsg, 1);
-				sendMAVLinkMessage(lcm, &triggerMsg);
-			}
+			mavlink_message_t triggerMsg;
+			mavlink_msg_image_trigger_control_pack(getSystemID(), PX_COMP_ID_CAMERA, &triggerMsg, 1);
+			sendMAVLinkMessage(lcm, &triggerMsg);
 			if (!verbose)
 			{
 				fprintf(stderr, "# INFO: Trigger re-enabled, using hardware triggering.\n");
@@ -758,7 +754,7 @@ int main(int argc, char* argv[])
 
 			if (wait == false)	//timed out?
 			{
-				fprintf(stderr, "# ERROR: Waiting for frame timed out! Is the Link OK and px_mavlinkserial running?\n");
+				fprintf(stderr, "# ERROR: Waiting for frame timed out! Possible problems:\n-* The data link to the IMU is not OK\n* px_mavlinkserial is not running\n* If in BlueFox stereo mode: cameras desynchronized, camera process restarts to fix the problem.");
 				exit(EXIT_FAILURE);
 			}
 		}
