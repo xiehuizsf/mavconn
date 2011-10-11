@@ -768,9 +768,9 @@ int main(int argc, char* argv[])
 			{
 				if (!pxStereoCam->grabFrame(frame, frameRight, skippedFrames, sequenceNum))
 				{
+					grabFailCount++;
 					if (!verbose)
 					{
-						grabFailCount++;
 						fprintf(stderr, "# INFO: Cannot grab frame.\n");
 					}
 				}
@@ -783,9 +783,9 @@ int main(int argc, char* argv[])
 			{
 				if (!pxCam->grabFrame(frame, skippedFrames, sequenceNum))
 				{
+					grabFailCount++;
 					if (!verbose)
 					{
-						grabFailCount++;
 						fprintf(stderr, "# INFO: Cannot grab frame.\n");
 					}
 				}
