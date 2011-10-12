@@ -158,6 +158,9 @@ if(EXISTS "${OpenCV_DIR}")
     ## Loop over each components
     foreach(__CVLIB ${OPENCV_LIB_COMPONENTS})
       string(TOUPPER "${__CVLIB}" CV_COMPONENT)
+      if(NOT "${CV_COMPONENT}" MATCHES "^OPENCV")
+        SET(CV_COMPONENT "OPENCV_${CV_COMPONENT}")
+      endif(NOT "${CV_COMPONENT}" MATCHES "^OPENCV")
 
       find_library(${CV_COMPONENT}_LIBRARY_DEBUG NAMES "${__CVLIB}${CVLIB_SUFFIX}d" "lib${__CVLIB}${CVLIB_SUFFIX}d" PATHS "${OpenCV_DIR}/lib" NO_DEFAULT_PATH)
       find_library(${CV_COMPONENT}_LIBRARY_RELEASE NAMES "${__CVLIB}${CVLIB_SUFFIX}" "lib${__CVLIB}${CVLIB_SUFFIX}" "opencv_${__CVLIB}${CVLIB_SUFFIX}" "opencv_${__CVLIB}" "${__CVLIB}" PATHS "${OpenCV_DIR}/lib" NO_DEFAULT_PATH)
@@ -169,7 +172,6 @@ if(EXISTS "${OpenCV_DIR}")
 
       #we add: "opencv_${__CVLIB}${CVLIB_SUFFIX}" for MacOSX
       #we add: "${__CVLIB}" for linux (but version is not checked !)
-      
       
       #Remove the cache value
       set(${CV_COMPONENT}_LIBRARY "" CACHE STRING "" FORCE)
