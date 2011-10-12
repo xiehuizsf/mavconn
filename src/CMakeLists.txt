@@ -60,7 +60,7 @@ CONFIGURE_FILE(MAVCONNPathConfig.h.in ${CMAKE_CURRENT_BINARY_DIR}/MAVCONNPathCon
 # Set the search paths for include files
 INCLUDE_DIRECTORIES(
   # External
-  ${OPENCV_CORE_INCLUDE_DIR}
+  ${OpenCV_INCLUDE_DIR}
 
   # All library includes are prefixed with the path to avoid conflicts
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -68,6 +68,8 @@ INCLUDE_DIRECTORIES(
   # MAVCONNConfig.h
   ${CMAKE_CURRENT_BINARY_DIR}
 )
+
+ADD_DEFINITIONS("-D OPENCV_VERSION_MAJOR=${OpenCV_VERSION_MAJOR} -D OPENCV_VERSION_MINOR=${OpenCV_VERSION_MINOR}")
 
 IF (Boost_FOUND)
   INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
