@@ -107,6 +107,12 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
+		// Try to guess if only option is the filename
+		if (argc == 2)
+		{
+			logfile = std::string(argv[1]);
+		}
+
 		camid_left = idleft;
 		camid_right = idright;
 		uint64_t startTimestamp = strtoul(fromTimestampString.c_str(), NULL, 0);
