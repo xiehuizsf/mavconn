@@ -72,7 +72,7 @@ public:
 	static bool getGroundTruth(const mavlink_message_t* msg, float& ground_x, float& ground_y, float& ground_z);
 	
 	int getCameraConfig(void) const;
-	bool readMonoImage(const mavlink_message_t* msg, cv::Mat& img);
+	bool readMonoImage(const mavlink_message_t* msg, cv::Mat& img, bool verbose=false);
 	bool readStereoImage(const mavlink_message_t* msg, cv::Mat& imgLeft, cv::Mat& imgRight);
 	bool readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBayer, cv::Mat& imgDepth);
 	bool readRGBDImage(cv::Mat& img, cv::Mat& imgDepth, uint64_t& timestamp,

@@ -48,6 +48,28 @@ PxSHMImageClient::init(bool subscribeLatest,
 	this->cam1 = cam1;
 	this->cam2 = cam2;
 
+	std::string cameras = "";
+
+	if (cam1 == PxSHM::CAMERA_DOWNWARD_LEFT)
+	{
+		cameras += " #1: DOWN LEFT";
+	}
+	if (cam1 == PxSHM::CAMERA_FORWARD_LEFT)
+	{
+		cameras += " #1: FORWARD LEFT";
+	}
+	if (cam2 == PxSHM::CAMERA_DOWNWARD_RIGHT)
+	{
+		cameras += " #2: DOWN RIGHT";
+	}
+
+	if (cam2 == PxSHM::CAMERA_FORWARD_RIGHT)
+	{
+		cameras += " #2: FORWARD RIGHT";
+	}
+
+	printf("\t # INFO: Shared mem client initialized for cameras:%s\n", cameras.c_str());
+
 	data.reserve(1024 * 1024);
 
 	if (!shm.init(cam1 | cam2, PxSHM::CLIENT_TYPE, 128, 1, 1024 * 1024, 10))
@@ -249,7 +271,7 @@ PxSHMImageClient::getCameraConfig(void) const
 }
 
 bool
-PxSHMImageClient::readMonoImage(const mavlink_message_t* msg, cv::Mat& img)
+PxSHMImageClient::readMonoImage(const mavlink_message_t* msg, cv::Mat& img, bool verbose)
 {
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
 	{
@@ -259,6 +281,7 @@ PxSHMImageClient::readMonoImage(const mavlink_message_t* msg, cv::Mat& img)
 	
 	if (!shm.bytesWaiting())
 	{
+		if (verbose) printf("NO DATA WAITING in MONO IMAGE SHM CLIENT, RETURNING.\n");
 		return false;
 	}
 	
@@ -267,16 +290,19 @@ PxSHMImageClient::readMonoImage(const mavlink_message_t* msg, cv::Mat& img)
 		PxSHM::CameraType cameraType;
 		if (!readCameraType(cameraType))
 		{
+			if (verbose) printf("\t # ERROR SHM CLIENT: CANNOT READ CAMERA TYPEn");
 			return false;
 		}
 
-		if (cameraType != PxSHM::CAMERA_MONO_8 && cameraType != PxSHM::CAMERA_MONO_24)
-		{
-			return false;
-		}
+//		if (cameraType != PxSHM::CAMERA_MONO_8 && cameraType != PxSHM::CAMERA_MONO_24)
+//		{
+//			if (verbose) printf("\t # ERROR SHM CLIENT: WRONG IMAGE CHANNEL DEPTH, EXPECTED %d OR %d BUT GOT %d\n", PxSHM::CAMERA_MONO_8, PxSHM::CAMERA_MONO_24, cameraType);
+//			return false;
+//		}
 
 		if (!readImage(img))
 		{
+			if (verbose) printf("\t # ERROR SHM CLIENT: FAILED TO COPY FRAME FROM MEMORY\n");
 			return false;
 		}
 	}
