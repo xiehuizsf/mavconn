@@ -89,6 +89,7 @@ enum MAVCONN_COMPONENT_IDS
 };
 
 #define MAVLINK_MAIN "MAVLINK"
+#define MAVLINK_EXTENDED "MAVLINK_EXTENDED"
 #define MAVLINK_IMAGES "IMAGES"
 
 static inline uint64_t getSystemTimeUsecs()
@@ -162,10 +163,30 @@ sendMAVLinkMessage(lcm_t * lcm, const mavlink_message_t* msg, MAVCONN_LINK_TYPE 
 	static mavconn_mavlink_msg_container_t container;
 	container.link_component_id = 0;
 	container.link_network_source = link_type;
+	container.extended_payload_length = 0;
+	container.extended_payload = 0;
 	memcpy(&(container.msg), msg, MAVLINK_MAX_PACKET_LEN);
 
 	// Publish the message on the LCM bus
 	mavconn_mavlink_msg_container_t_publish (lcm, MAVLINK_MAIN, &container);
+}
+
+static inline void
+sendMAVLinkExtendedMessage(lcm_t * lcm, const mavlink_extended_message_t* msg, MAVCONN_LINK_TYPE link_type=MAVCONN_LINK_TYPE_LCM);
+
+static inline void
+sendMAVLinkExtendedMessage(lcm_t * lcm, const mavlink_extended_message_t* msg, MAVCONN_LINK_TYPE link_type)
+{
+	// Pack a new container
+	static mavconn_mavlink_msg_container_t container;
+	container.link_component_id = 0;
+	container.link_network_source = link_type;
+	memcpy(&(container.msg), &(msg->base_msg), MAVLINK_MAX_PACKET_LEN);
+	container.extended_payload_length = msg->extended_payload_len;
+	container.extended_payload = (int8_t*)msg->extended_payload;
+
+	// Publish the message on the LCM bus
+	mavconn_mavlink_msg_container_t_publish (lcm, MAVLINK_EXTENDED, &container);
 }
 
 static inline void
