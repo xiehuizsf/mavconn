@@ -89,7 +89,6 @@ enum MAVCONN_COMPONENT_IDS
 };
 
 #define MAVLINK_MAIN "MAVLINK"
-#define MAVLINK_EXTENDED "MAVLINK_EXTENDED"
 #define MAVLINK_IMAGES "IMAGES"
 
 static inline uint64_t getSystemTimeUsecs()
@@ -186,7 +185,7 @@ sendMAVLinkExtendedMessage(lcm_t * lcm, const mavlink_extended_message_t* msg, M
 	container.extended_payload = (int8_t*)msg->extended_payload;
 
 	// Publish the message on the LCM bus
-	mavconn_mavlink_msg_container_t_publish (lcm, MAVLINK_EXTENDED, &container);
+	mavconn_mavlink_msg_container_t_publish (lcm, MAVLINK_MAIN, &container);
 }
 
 static inline void
@@ -208,6 +207,17 @@ static inline const mavlink_message_t*
 getMAVLinkMsgPtr(const mavconn_mavlink_msg_container_t* container)
 {
 	return (const mavlink_message_t*) &container->msg;
+}
+
+static inline mavlink_extended_message_t
+getMAVLinkExtendedMsg(const mavconn_mavlink_msg_container_t* container)
+{
+	mavlink_extended_message_t msg;
+	memcpy(&msg.base_msg, &(container->msg), sizeof(mavlink_message_t));
+	msg.extended_payload_len = container->extended_payload_length;
+	msg.extended_payload = reinterpret_cast<uint8_t*>(container->extended_payload);
+
+	return msg;
 }
 
 //// FIXME: Camera struct is a little large currently
