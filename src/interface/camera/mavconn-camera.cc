@@ -59,6 +59,10 @@ typedef struct _bufferIMU
 	//uint64_t delay;
 } bufferIMU_t;
 
+mavlink_attitude_t last_known_attitude;
+mavlink_local_position_ned_t last_known_control_position;
+//mavlink_ground_distance_t last_known_ground_distance;
+
 const int MAGIC_MAX_BUFFER_AND_RETRY = 100;		// Size of the message buffer for LCM messages and maximum number of skipped/dropped frames before stopping when a mismatch happens
 const int MAGIC_MIN_SEQUENCE_DIFF = 150;		// *has to be > than MAGIC_MAX_BUFFER_AND_RETRY!* Minimum difference between two consecutively processed images to assume a sequence mismatch
 												// In other words: the maximum number of skippable frames
@@ -69,6 +73,7 @@ const int MAGIC_HARD_RETRY_MUTEX = 2;			// Maximum number of times a mutex is tr
 
 Glib::StaticMutex messageMutex;		//mutex controlling the access to the message buffer
 Glib::StaticMutex imageMutex;			//mutex controlling the access to the image data
+Glib::StaticMutex metaDataMutex;			//mutex controlling the access to the meta data
 Glib::StaticMutex imageGrabbedMutex;  //separate mutex for the image grabbed condition because libdc grab blocks
 
 Glib::Cond* imageGrabbedCond = 0;
@@ -147,6 +152,24 @@ mavlinkHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 		messageMutex.unlock();
 		Glib::Thread::yield();
 	}
+	else if (msg->msgid == MAVLINK_MSG_ID_ATTITUDE)
+	{
+		metaDataMutex.lock();
+		mavlink_msg_attitude_decode(msg, &last_known_attitude);
+		metaDataMutex.unlock();
+	}
+	else if (msg->msgid == MAVLINK_MSG_ID_LOCAL_POSITION_NED)
+	{
+		metaDataMutex.lock();
+		mavlink_msg_local_position_ned_decode(msg, &last_known_control_position);
+		metaDataMutex.unlock();
+	}
+//	else if (msg->msgid == MAVLINK_MSG_ID_GROUND_DISTANCE)
+//	{
+//		metaDataMutex.lock();
+//		mavlink_msg_ground_distance_decode(msg, &last_known_ground_distance);
+//		metaDataMutex.unlock();
+//	}
 }
 
 void lcmWait(lcm_t* lcm)
@@ -488,6 +511,18 @@ int main(int argc, char* argv[])
 	uint64_t timestamp = 0;
 	uint64_t lastTimestamp = 0;
 	mavlink_image_triggered_t image_data;
+	if (!trigger)
+	{
+		metaDataMutex.lock();
+		image_data.roll = last_known_attitude.roll;
+		image_data.pitch = last_known_attitude.pitch;
+		image_data.yaw = last_known_attitude.yaw;
+		image_data.lon = last_known_control_position.x;
+		image_data.lat = last_known_control_position.y;
+		image_data.alt = last_known_control_position.z;
+//		image_data.ground_z = last_known_ground_distance.?;
+		metaDataMutex.unlock();
+	}
 	uint32_t lastSequenceNum = 0;		// the embedded sequence number of the image before
 	uint32_t lastMessageSequence = 0;		// the sequence number of the last used message
 	uint32_t messageSequence = 0;			// the sequence number of the current message
