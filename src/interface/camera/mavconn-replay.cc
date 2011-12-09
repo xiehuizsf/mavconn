@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
 
 		camid_left = idleft;
 		camid_right = idright;
-		uint64_t startTimestamp = strtoul(fromTimestampString.c_str(), NULL, 0);
+		uint64_t startTimestamp = strtoull(fromTimestampString.c_str(), NULL, 0);
 
 	mavlinkLog.open(logfile.c_str(), std::ios::binary | std::ios::in);
 	if (!mavlinkLog)
@@ -217,7 +217,7 @@ int main(int argc, char* argv[])
 					if (extension == ".bmp")
 					{
 						filename = bfs::basename(*file);
-						uint64_t timestamp = strtoul(filename.c_str(), NULL, 10);
+						uint64_t timestamp = strtoull(filename.c_str(), NULL, 10);
 						image_type val(timestamp, file->path().string());
 						images_right.insert(val);
 						if (verbose) printf("found %s\n", file->path().string().c_str());
