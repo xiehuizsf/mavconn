@@ -64,6 +64,7 @@ uint8_t mode;
 static GString* host = g_string_new("localhost");	///< host name for UDP server
 static GString* port = g_string_new("14550");		///< port for UDP server to open connection
 
+bool transmitExtended = true; ///< send extended MAVLINK messages
 bool silent; ///< silent run mode
 bool verbose; ///< verbose run mode
 bool emitHeartbeat; ///< tells the program to emit heart beats regularly
@@ -121,7 +122,7 @@ static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel,
 				sizeof(struct sockaddr_in));
 		//	extern int errno;
 	}
-	else
+	else if (transmitExtended)
 	{
 		static uint8_t extended_buf[MAVLINK_MAX_EXTENDED_PACKET_LEN];
 
@@ -146,6 +147,10 @@ static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel,
 		// Send over UDP
 		bytes_sent = sendto(link, extended_buf, extendedMessageLength, 0, (struct sockaddr*) &gcAddr,
 				sizeof(struct sockaddr_in));
+	}
+	else
+	{
+		return;
 	}
 
 	if (bytes_sent < 1)
@@ -219,6 +224,7 @@ int main(int argc, char* argv[])
 			{ "compid", 'c', 0, G_OPTION_ARG_INT, &componentid, "ID of this component", NULL },
 			{ "host", 'r', 0, G_OPTION_ARG_STRING, host, "Remote host", host->str },
 			{ "port", 'p', 0, G_OPTION_ARG_STRING, port, "Remote port", port->str },
+			{ "extended", 'e', 0, G_OPTION_ARG_NONE, &transmitExtended, "Transmit extended MAVLINK messages", "true" },
 			{ "silent", 's', 0, G_OPTION_ARG_NONE, &silent, "Be silent", NULL },
 			{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose, "Be verbose", NULL },
 			{ "debug", 'd', 0, G_OPTION_ARG_NONE, &debug, "Debug mode, changes behaviour", NULL },
