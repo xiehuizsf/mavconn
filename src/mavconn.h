@@ -235,6 +235,7 @@ getMAVLinkMsgPtr(const mavconn_mavlink_msg_container_t* container)
 	return (const mavlink_message_t*) &container->msg;
 }
 
+#ifdef PROTOBUF_FOUND
 static inline mavlink_extended_message_t
 getMAVLinkExtendedMsg(const mavconn_mavlink_msg_container_t* container)
 {
@@ -245,6 +246,7 @@ getMAVLinkExtendedMsg(const mavconn_mavlink_msg_container_t* container)
 
 	return msg;
 }
+#endif
 
 //// FIXME: Camera struct is a little large currently
 //struct Camera_t
