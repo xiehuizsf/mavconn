@@ -171,6 +171,7 @@ sendMAVLinkMessage(lcm_t * lcm, const mavlink_message_t* msg, MAVCONN_LINK_TYPE 
 	mavconn_mavlink_msg_container_t_publish (lcm, MAVLINK_MAIN, &container);
 }
 
+#ifdef PROTOBUF_FOUND
 static inline void
 sendMAVLinkExtendedMessage(lcm_t * lcm, const mavlink_extended_message_t* msg, MAVCONN_LINK_TYPE link_type=MAVCONN_LINK_TYPE_LCM);
 
@@ -211,6 +212,7 @@ sendMAVLinkExtendedMessage(lcm_t * lcm, const std::vector<mavlink_extended_messa
 		mavconn_mavlink_msg_container_t_publish (lcm, MAVLINK_MAIN, &container);
 	}
 }
+#endif
 
 static inline void
 sendMAVLinkImageMessage(lcm_t * lcm, const mavlink_message_t* msg, MAVCONN_LINK_TYPE link_type=MAVCONN_LINK_TYPE_LCM);
@@ -227,12 +229,14 @@ sendMAVLinkImageMessage(lcm_t * lcm, const mavlink_message_t* msg, MAVCONN_LINK_
 	mavconn_mavlink_msg_container_t_publish (lcm, MAVLINK_IMAGES, &container);
 }
 
+
 static inline const mavlink_message_t*
 getMAVLinkMsgPtr(const mavconn_mavlink_msg_container_t* container)
 {
 	return (const mavlink_message_t*) &container->msg;
 }
 
+#ifdef PROTOBUF_FOUND
 static inline mavlink_extended_message_t
 getMAVLinkExtendedMsg(const mavconn_mavlink_msg_container_t* container)
 {
@@ -243,6 +247,7 @@ getMAVLinkExtendedMsg(const mavconn_mavlink_msg_container_t* container)
 
 	return msg;
 }
+#endif
 
 //// FIXME: Camera struct is a little large currently
 //struct Camera_t
