@@ -171,6 +171,7 @@ sendMAVLinkMessage(lcm_t * lcm, const mavlink_message_t* msg, MAVCONN_LINK_TYPE 
 	mavconn_mavlink_msg_container_t_publish (lcm, MAVLINK_MAIN, &container);
 }
 
+#ifdef PROTOBUF_FOUND
 static inline void
 sendMAVLinkExtendedMessage(lcm_t * lcm, const mavlink_extended_message_t* msg, MAVCONN_LINK_TYPE link_type=MAVCONN_LINK_TYPE_LCM);
 
@@ -211,6 +212,7 @@ sendMAVLinkExtendedMessage(lcm_t * lcm, const std::vector<mavlink_extended_messa
 		mavconn_mavlink_msg_container_t_publish (lcm, MAVLINK_MAIN, &container);
 	}
 }
+#endif
 
 static inline void
 sendMAVLinkImageMessage(lcm_t * lcm, const mavlink_message_t* msg, MAVCONN_LINK_TYPE link_type=MAVCONN_LINK_TYPE_LCM);
