@@ -79,7 +79,7 @@ public:
 					   float& roll, float& pitch, float& yaw,
 					   float& lon, float& lat, float& alt,
 					   float& ground_x, float& ground_y, float& ground_z,
-					   cv::Mat& cameraMatrix);
+					   cv::Mat& cameraMatrix, cv::Rect& roi);
 
 private:
 	bool readCameraType(PxSHM::CameraType& cameraType);
@@ -90,7 +90,7 @@ private:
 								 float& roll, float& pitch, float& yaw,
 								 float& lon, float& lat, float& alt,
 								 float& ground_x, float& ground_y, float& ground_z,
-								 cv::Mat& cameraMatrix,
+								 cv::Mat& cameraMatrix, cv::Rect& roi,
 								 cv::Mat& img, cv::Mat& img2);
 
 	PxSHM::Camera cam1;
