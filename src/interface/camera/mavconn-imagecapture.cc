@@ -54,6 +54,11 @@ int sysid = getSystemID();
 int compid = 30;
 bool silent, verbose, stereo_front;
 
+int imuid = 200; ///< Component ID to read attitude from
+float backupRoll;
+float backupPitch;
+float backupYaw;
+
 #define CAPTURE_DIR			"dataset_capture/"
 #define IMAGE_CAPTURE_FILE	"imagedata.txt"
 #define PLAIN_CAPTURE_FILE	"imagedata_extended.txt"
@@ -165,8 +170,19 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 			//cache the meta data
 			timestamp = client->getTimestamp(msg);
 			
-			float camroll, campitch, camyaw, camlat, camlon, camalt, camground_dist, camgx, camgy, camgz;			
-			client->getRollPitchYaw(msg, camroll, campitch, camyaw);
+			float camroll, campitch, camyaw, camlat, camlon, camalt, camground_dist, camgx, camgy, camgz;
+			if (imuid != 200)
+			{
+				camroll = backupRoll;
+				campitch = backupPitch;
+				camyaw = backupYaw;
+				printf("ALT IMU: %f, %f, %f\n", camroll, campitch, camyaw);
+			}
+			else
+			{
+				client->getRollPitchYaw(msg, camroll, campitch, camyaw);
+			}
+			
 			client->getLocalHeight(msg, camground_dist);
 			client->getGPS(msg, camlat, camlon, camalt);
 			client->getGroundTruth(msg, camgx, camgy, camgz);
@@ -381,6 +397,19 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 			}
 		}
 			break;
+			
+		case MAVLINK_MSG_ID_ATTITUDE:
+		{
+			if (msg->compid == imuid)
+			{
+				mavlink_attitude_t att;
+				mavlink_msg_attitude_decode(msg, &att);
+				backupRoll = att.roll;
+				backupPitch = att.pitch;
+				backupYaw = att.yaw;
+			}
+		}
+			break;
 
 	default:
 		break;
@@ -421,6 +450,7 @@ int main(int argc, char* argv[])
 		("help", "produce help message")
 		("sysid,a", config::value<int>(&sysid)->default_value(sysid), "ID of this system, 1-255")
 		("compid,c", config::value<int>(&compid)->default_value(compid), "ID of this component")
+		("imuid,i", config::value<int>(&imuid)->default_value(imuid), "ID of paired IMU")
 		("silent,s", config::bool_switch(&silent)->default_value(false), "suppress outputs")
 		("verbose,v", config::bool_switch(&verbose)->default_value(false), "verbose output")
 		("stereo_front", config::bool_switch(&stereo_front)->default_value(false), "record front stereo")
@@ -497,6 +527,7 @@ int main(int argc, char* argv[])
 	}
 
 	printf("IMAGE client ready, waiting.\n");
+	printf("IMU: %d, SYS: %d, COMP: %d\n", imuid, sysid, compid);
 
 	mavlink_message_t msg;
 	mavlink_statustext_t statustext;
