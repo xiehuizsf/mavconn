@@ -191,9 +191,9 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 			// add a client->isGPSKnown() function call
 			if (camlat != 0.0 || camlon != 0.0 || camalt != 0.0) 
 			{
-				lat = camlat;
-				lon = camlon;
-				alt = camalt;
+//				lat = camlat;
+//				lon = camlon;
+//				alt = camalt;
 				imageMetaContainsGPS = true;
 			}
 			
