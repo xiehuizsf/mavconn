@@ -368,33 +368,33 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 		{
 			mavlink_gps_raw_int_t gps;
 			mavlink_msg_gps_raw_int_decode(msg, &gps);
-			if (!imageMetaContainsGPS)
-			{
+			//if (!imageMetaContainsGPS)
+			//{
 				lat = gps.lat/(double)1E7;
 				lon = gps.lon/(double)1E7;
 				alt = gps.alt/(double)1E3;
 				hdop = gps.eph/(double)1E3;
 				vdop = gps.epv/(double)1E3;
 				satcount = gps.satellites_visible;
-			}
+			//}
 		}
 			break;
 		case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
 		{
 			mavlink_local_position_ned_t pos;
 			mavlink_msg_local_position_ned_decode(msg, &pos);
-			if (!imageMetaContainsLocalPosition)
-			{
+			//if (!imageMetaContainsLocalPosition)
+			//{
 				local_x = pos.x;
 				local_y = pos.y;
 				local_z = pos.z;
-			}
-			if (!imageMetaContainsLocalSpeed)
-			{
+			//}
+			//if (!imageMetaContainsLocalSpeed)
+			//{
 				vx = pos.vx;
 				vy = pos.vy;
 				vz = pos.vz;
-			}
+			//}
 		}
 			break;
 			
