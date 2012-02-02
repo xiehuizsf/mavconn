@@ -197,10 +197,15 @@ int main(int argc, char* argv[])
 	// Start GPSD interface and forward data to MAVLink/LCM
 	// for more details, see: http://gpsd.berlios.de/client-howto.html
 
+#if ( GPSD_API_MAJOR_VERSION < 4 )
 	struct gps_data_t* gpsdata = 0;
 	gpsdata = gps_open(host.c_str(), port.c_str());
-
 	if (!gpsdata)
+#else
+    struct gps_data_t _gpsdata;
+    struct gps_data_t* gpsdata = &_gpsdata;
+    if ( gps_open(host.c_str(), port.c_str(), gpsdata) != 0 )
+#endif
 	{
 		// Exit with error
 		perror("ERROR: CANNOT CONNECT TO GPSD SERVICE");
@@ -232,7 +237,11 @@ int main(int argc, char* argv[])
 		while(1)
 		{
 			// Blocking wait
+#if (GPSD_API_MAJOR_VERSION > 4)
+			gps_read(gpsdata);
+#else
 			gps_poll(gpsdata);
+#endif
 			if (gpsdata != NULL)
 			{
 				if (ignoreCount > maxIgnoreCount)

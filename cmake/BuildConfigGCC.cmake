@@ -125,4 +125,4 @@ ELSE()
 ENDIF()
 
 # General linker flags
-SET_LINKER_FLAGS("--no-undefined" CACHE)
+SET_LINKER_FLAGS("-Wl,--no-undefined -lm" CACHE)
