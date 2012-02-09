@@ -243,6 +243,7 @@ int main(int argc, char* argv[])
 	uint32_t gamma;		///< Camera gamma
 	bool automode;		///< Use auto brightness/gain/exposure/gamma
 	float frameRate;	///< Frame rate in Hz
+	uint32_t pixelClockKHz; ///< Pixel clock in KHz
 
 	bool triggerslave = false;
 
@@ -260,6 +261,7 @@ int main(int argc, char* argv[])
 									("gain,g", config::value<uint32_t>(&gain)->default_value(0), "Gain in FIXME")
 									("gamma", config::value<uint32_t>(&gamma)->default_value(0), "Gamma in FIXME")
 									("fps", config::value<float>(&frameRate)->default_value(60.0f), "Camera fps")
+									("pixelclock", config::value<uint32_t>(&pixelClockKHz)->default_value(12500), "Pixel clock in KHz")
 									("trigger,t", config::bool_switch(&trigger)->default_value(false), "Enable hardware trigger (Firefly MV: INPUT: GPIO0, OUTPUT: GPIO2)")
 									("triggerslave", config::bool_switch(&triggerslave)->default_value(false), "Enable if another px_camera process is already controlling the imu trigger settings")
 									("automode,a", config::bool_switch(&automode)->default_value(false), "Enable auto brightness/gain/exposure/gamma")
@@ -349,6 +351,7 @@ int main(int argc, char* argv[])
     paramClient->setParamValue("MINIMGINTERVAL", 0);
     paramClient->setParamValue("EXPOSURE", exposure);
     paramClient->setParamValue("GAIN", gain);
+    paramClient->setParamValue("PIXELCLOCKKHZ", pixelClockKHz);
     paramClient->readParamsFromFile(configFile);
 
 	//========= Initialize capture devices =========
@@ -460,7 +463,7 @@ int main(int argc, char* argv[])
 	{
 		mode = PxCameraConfig::AUTO_MODE;
 	}
-	PxCameraConfig config(mode, frameRate, trigger, exposure, gain, gamma);
+	PxCameraConfig config(mode, frameRate, trigger, exposure, gain, gamma, pixelClockKHz);
 
 	if (useStereo)
 	{
@@ -741,6 +744,7 @@ int main(int argc, char* argv[])
 		bool changed = false;
 		uint32_t newExposureTime = (uint32_t)paramClient->getParamValue("EXPOSURE");
 		uint32_t newGain = (uint32_t)paramClient->getParamValue("GAIN");
+		uint32_t newPixelClockKHz = (uint32_t)paramClient->getParamValue("PIXELCLOCKKHZ");
 		if (newExposureTime != config.getExposureTime())
 		{
 			config.setExposureTime(newExposureTime);
@@ -749,6 +753,11 @@ int main(int argc, char* argv[])
 		if (newGain != config.getGain())
 		{
 			config.setGain(newGain);
+			changed = true;
+		}
+		if (newPixelClockKHz != config.getPixelClockKHz())
+		{
+			config.setPixelClockKHz(pixelClockKHz);
 			changed = true;
 		}
 		if (changed)
