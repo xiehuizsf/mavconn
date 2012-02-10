@@ -757,7 +757,7 @@ int main(int argc, char* argv[])
 		}
 		if (newPixelClockKHz != config.getPixelClockKHz())
 		{
-			config.setPixelClockKHz(pixelClockKHz);
+			config.setPixelClockKHz(newPixelClockKHz);
 			changed = true;
 		}
 		if (changed)
