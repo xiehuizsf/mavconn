@@ -2,7 +2,7 @@
 
 PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
 
-(c) 2009, 2010 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
+(c) 2009, 2010, 2011, 2012 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
 
 This file is part of the PIXHAWK project
 
@@ -62,6 +62,7 @@ float backupYaw;
 #define CAPTURE_DIR			"dataset_capture/"
 #define IMAGE_CAPTURE_FILE	"imagedata.txt"
 #define PLAIN_CAPTURE_FILE	"imagedata_extended.txt"
+#define MULTI_COMPONENT_CAPTURE_FILE	"imagedata_extended_multi_component.txt"
 
 using namespace std;
 
@@ -88,6 +89,7 @@ bool image_grabbed = false;
 //image information to store
 uint64_t timestamp;
 double roll, pitch, yaw, lat, lon, alt, pres_alt, ground_dist, vdop, hdop, satcount, local_x, local_y, local_z, vx, vy, vz, gx, gy, gz, gvx, gvy, gvz;
+double local_x_gps_raw, local_y_gps_raw, local_z_gps_raw;
 
 bool gotFirstImage = false;
 bool imageMetaContainsGPS = false;
@@ -317,6 +319,8 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 					captureDirRight = captureDir + std::string("right/");
 					prepareCaptureFile(imageDataFile, captureDir, IMAGE_CAPTURE_FILE, "imagenumber, timestamp, roll, pitch, yaw, lat, lon, alt, local_z, ground truth X, ground truth Y, ground truth Z", "IMAGE", timeinfo);
 					prepareCaptureFile(plainLogFile, captureDir, PLAIN_CAPTURE_FILE, "imagenumber, timestamp, roll, pitch, yaw, lat, lon, alt, pressure_alt, ground_distance, vdop, hdop, local_x, local_y, local_z, speedx, speedy, speedz, ground truth X, ground truth Y, ground truth Z, ground truth speed X, ground truth speed Y, ground truth speed Z", "IMAGE", timeinfo);
+					prepareCaptureFile(plainLogFile, captureDir, MULTI_COMPONENT_CAPTURE_FILE, "imagenumber, timestamp, roll, pitch, yaw, lat, lon, alt, pressure_alt, ground_distance, vdop, hdop, local_x_system, local_y_system, local_z_system, local_x_gps_raw, local_y_gps_raw, local_z_gps_raw, local_x_vision, local_y_vision, local_z_vision, speedx_system, speedy_system, speedz_system, ground truth X, ground truth Y, ground truth Z, ground truth speed X, ground truth speed Y, ground truth speed Z", "IMAGE", timeinfo);
+
 
 					char dateBuf[80];
 					strftime( dateBuf, 80, "%Y%m%d_%H%M%S\0", timeinfo );
@@ -385,6 +389,9 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 			mavlink_msg_local_position_ned_decode(msg, &pos);
 			//if (!imageMetaContainsLocalPosition)
 			//{
+			// FIXME HARDCODED: 201 is SYSTEM POSITION ESTIMATE
+			if (msg->compid == 201)
+			{
 				local_x = pos.x;
 				local_y = pos.y;
 				local_z = pos.z;
@@ -394,6 +401,14 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 				vx = pos.vx;
 				vy = pos.vy;
 				vz = pos.vz;
+			}
+			// FIXME HARDCODED: 202 is RAW GPS CONVERTED TO ENU
+			else if (msg->compid == 202)
+			{
+				local_x_gps_raw = pos.x;
+				local_y_gps_raw = pos.y;
+				local_z_gps_raw = pos.z;
+			}
 			//}
 		}
 			break;
