@@ -302,6 +302,7 @@ bool setup_port(int fd, int baud, int data_bits, int stop_bits, bool parity, boo
 	//
 	config.c_cflag &= ~(CSIZE | PARENB);
 	config.c_cflag |= CS8;
+	config.c_cflag |= CLOCAL;
 	//
 	// One input byte is enough to return from read()
 	// Inter-character timer off
