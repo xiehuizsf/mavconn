@@ -197,7 +197,7 @@ int main(int argc, char* argv[])
 	// Start GPSD interface and forward data to MAVLink/LCM
 	// for more details, see: http://gpsd.berlios.de/client-howto.html
 
-#if ( GPSD_API_MAJOR_VERSION >= 4 )
+#if ( GPSD_API_MAJOR_VERSION <= 4 )
 	struct gps_data_t* gpsdata = 0;
 	gpsdata = gps_open(host.c_str(), port.c_str());
 	if (!gpsdata)
