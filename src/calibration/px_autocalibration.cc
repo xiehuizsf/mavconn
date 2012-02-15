@@ -394,8 +394,8 @@ int main(int argc, char** argv)
 					//===== store stereo config file ======
 					std::string str("calib_stereo.scf");
 					FILE* fp = fopen(str.c_str(), "w+"); // Write to file (overwrite if it exists)
-					fprintf(fp, "config/%s\n", std::string(cameraCalibrationFile + "left.cal").c_str());
-					fprintf(fp, "config/%s\n", std::string(cameraCalibrationFile + "right.cal").c_str());
+					fprintf(fp, "%s\n", std::string(cameraCalibrationFile + "left.cal").c_str());
+					fprintf(fp, "%s\n", std::string(cameraCalibrationFile + "right.cal").c_str());
 					fprintf(fp, "%f %f %f\n", rvec.at<double>(0), rvec.at<double>(1), rvec.at<double>(2));
 					fprintf(fp, "%f %f %f", T.at<double>(0), T.at<double>(1), T.at<double>(2));
 					fclose(fp);
