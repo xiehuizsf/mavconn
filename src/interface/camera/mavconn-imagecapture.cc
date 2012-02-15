@@ -71,6 +71,7 @@ string captureDirLeft;
 string captureDirRight;
 ofstream imageDataFile;
 ofstream plainLogFile;
+ofstream plainLogFileMulti;
 ofstream mavlinkFile;
 
 cv::Mat img_left( 480, 640, CV_8UC1 );
@@ -129,7 +130,11 @@ static void image_writer (void)
 		imageDataFile.precision(32);
 		imageDataFile << timestamp << ", " << roll << ", " << pitch << ", " << yaw << ", " << lat << ", " << lon << ", " << alt << ", " << ground_dist << ", " << gx << ", " << gy << ", " << gz << endl;
 		plainLogFile.precision(32);
-		plainLogFile << timestamp << ", " << roll << ", " << pitch << ", " << yaw << ", " << lat << ", " << lon << ", " << alt << ", " << pres_alt << ", " << ground_dist << ", " << vdop << ", " << hdop << ", " << satcount << ", " << local_x << ", " << local_y << ", " << local_z << ", " << vx << ", " << vy << ", " << vz << ", " << gx << ", " << gy << ", " << gz << ", " << gvx << ", " << gvy << ", " << gvz << endl;
+		plainLogFile << timestamp << ", " << roll << ", " << pitch << ", " << yaw << ", " << lat << ", " << lon << ", " << alt << ", " << pres_alt << ", " << ground_dist << ", " << vdop << ", " << hdop << ", " << satcount << ", " << local_x_gps_raw << ", " << local_y_gps_raw << ", " << local_z_gps_raw << ", " << vx << ", " << vy << ", " << vz << ", " << gx << ", " << gy << ", " << gz << ", " << gvx << ", " << gvy << ", " << gvz << endl;
+		plainLogFile.precision(32);
+		             //"timestamp,          roll,              pitch,            yaw,        lat,            lon,          alt,          pressure_alt,        ground_distance,       vdop,          hdop,                                 local_x_gps_raw,           local_y_gps_raw,          local_z_gps_raw,      local_x_system,    local_y_system,     local_z_system,  speedx_system, speedy_system, speedz_system, ground truth X, ground truth Y, ground truth Z, ground truth speed X, ground truth speed Y, ground truth speed Z"
+		plainLogFile << timestamp << ", " << roll << ", " << pitch << ", " << yaw << ", " << lat << ", " << lon << ", " << alt << ", " << pres_alt << ", " << ground_dist << ", " << vdop << ", " << hdop << ", " << satcount << ", " << local_x_gps_raw << ", " << local_y_gps_raw << ", " << local_z_gps_raw << ", " << local_x << ", " << local_y << ", " << local_z << ", " << vx << ", " << vy << ", " << vz << ", " << gx << ", " << gy << ", " << gz << ", " << gvx << ", " << gvy << ", " << gvz << endl;
+
 
 		//fprintf(plainLogFile, "%llu, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f, %15.36f", timestamp, roll, pitch, yaw, lat, lon, alt, pres_alt, ground_dist, vdop, hdop, satcount, local_x, local_y, local_z, vx, vy, vz, gx, gy, gz, gvx, gvy, gvz);
 
@@ -173,15 +178,15 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 			timestamp = client->getTimestamp(msg);
 			
 			float camroll, campitch, camyaw, camlat, camlon, camalt, camground_dist, camgx, camgy, camgz;
-			if (imuid != 200)
-			{
-				camroll = backupRoll;
-				campitch = backupPitch;
-				camyaw = backupYaw;
-				printf("ALT IMU: %f, %f, %f\n", camroll, campitch, camyaw);
-			}
-			else
-			{
+//			if (imuid != 200)
+//			{
+//				camroll = backupRoll;
+//				campitch = backupPitch;
+//				camyaw = backupYaw;
+//				printf("ALT IMU: %f, %f, %f\n", camroll, campitch, camyaw);
+//			}
+//			else
+			{	//always take cam roll&pitch
 				client->getRollPitchYaw(msg, camroll, campitch, camyaw);
 			}
 			
@@ -204,7 +209,7 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 				imageMetaContainsAttitude = true;
 				roll = camroll;
 				pitch = campitch;
-				yaw = camyaw;
+				yaw = backupYaw;//camyaw; //always take backup yaw
 			}
 			
 			if (camgx != 0.0 || camgy != 0.0 || camgz != 0.0)
@@ -317,9 +322,9 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 					captureDir = createCaptureDirectory(CAPTURE_DIR, timeinfo);
 					captureDirLeft = captureDir + std::string("left/");
 					captureDirRight = captureDir + std::string("right/");
-					prepareCaptureFile(imageDataFile, captureDir, IMAGE_CAPTURE_FILE, "imagenumber, timestamp, roll, pitch, yaw, lat, lon, alt, local_z, ground truth X, ground truth Y, ground truth Z", "IMAGE", timeinfo);
-					prepareCaptureFile(plainLogFile, captureDir, PLAIN_CAPTURE_FILE, "imagenumber, timestamp, roll, pitch, yaw, lat, lon, alt, pressure_alt, ground_distance, vdop, hdop, local_x, local_y, local_z, speedx, speedy, speedz, ground truth X, ground truth Y, ground truth Z, ground truth speed X, ground truth speed Y, ground truth speed Z", "IMAGE", timeinfo);
-					prepareCaptureFile(plainLogFile, captureDir, MULTI_COMPONENT_CAPTURE_FILE, "imagenumber, timestamp, roll, pitch, yaw, lat, lon, alt, pressure_alt, ground_distance, vdop, hdop, local_x_system, local_y_system, local_z_system, local_x_gps_raw, local_y_gps_raw, local_z_gps_raw, local_x_vision, local_y_vision, local_z_vision, speedx_system, speedy_system, speedz_system, ground truth X, ground truth Y, ground truth Z, ground truth speed X, ground truth speed Y, ground truth speed Z", "IMAGE", timeinfo);
+					prepareCaptureFile(imageDataFile, captureDir, IMAGE_CAPTURE_FILE,               "imagenumber, timestamp, roll, pitch, yaw, lat, lon, alt, local_z, ground truth X, ground truth Y, ground truth Z", "IMAGE", timeinfo);
+					prepareCaptureFile(plainLogFile, captureDir, PLAIN_CAPTURE_FILE,                "imagenumber, timestamp, roll, pitch, yaw, lat, lon, alt, pressure_alt, ground_distance, vdop, hdop, satcount, local_x, local_y, local_z, speedx, speedy, speedz, ground truth X, ground truth Y, ground truth Z, ground truth speed X, ground truth speed Y, ground truth speed Z", "IMAGE", timeinfo);
+					prepareCaptureFile(plainLogFileMulti, captureDir, MULTI_COMPONENT_CAPTURE_FILE, "imagenumber, timestamp, roll, pitch, yaw, lat, lon, alt, pressure_alt, ground_distance, vdop, hdop, satcount, local_x_gps_raw, local_y_gps_raw, local_z_gps_raw, local_x_system, local_y_system, local_z_system, speedx_system, speedy_system, speedz_system, ground truth X, ground truth Y, ground truth Z, ground truth speed X, ground truth speed Y, ground truth speed Z", "IMAGE", timeinfo);
 
 
 					char dateBuf[80];
@@ -354,6 +359,8 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 					imageDataFile.close();
 					plainLogFile << endl << "### EOF" << endl;
 					plainLogFile.close();
+					plainLogFileMulti << endl << "### EOF" << endl;
+					plainLogFileMulti.close();
 					mavlinkFile.close();
 
 					mavlink_message_t msg;
