@@ -135,7 +135,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
 					|| msg->msgid == MAVLINK_MSG_ID_STATUSTEXT
 					|| msg->msgid == MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT
 					|| msg->msgid == MAVLINK_MSG_ID_SET_GLOBAL_POSITION_SETPOINT_INT
-                                        || msg->msgid == MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET) {
+                    || msg->msgid == MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET) {
 				if (verbose || debug)
 					std::cout << std::dec
 							<< "Received and forwarded LCM message with id "
@@ -350,6 +350,13 @@ bool setup_port(int fd, int baud, int data_bits, int stop_bits, bool parity, boo
 		break;
 	case 115200:
 		if (cfsetispeed(&config, B115200) < 0 || cfsetospeed(&config, B115200) < 0)
+		{
+			fprintf(stderr, "\nERROR: Could not set desired baud rate of %d Baud\n", baud);
+			return false;
+		}
+		break;
+	case 921600:
+		if (cfsetispeed(&config, B921600) < 0 || cfsetospeed(&config, B921600) < 0)
 		{
 			fprintf(stderr, "\nERROR: Could not set desired baud rate of %d Baud\n", baud);
 			return false;
