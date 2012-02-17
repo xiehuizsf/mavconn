@@ -39,6 +39,7 @@ FUNCTION(PIXHAWK_INSTALL)
   )
   SET(MAVCONN_HEADERS
 	${CMAKE_SOURCE_DIR}/src/mavconn.h
+	${CMAKE_SOURCE_DIR}/src/mavconn.hpp
 	${CMAKE_BINARY_DIR}/src/MAVCONNConfig.h
   )
   INSTALL(FILES ${MAVCONN_HEADERS} DESTINATION ${PIXHAWK_INCLUDE_INSTALL_PATH})
@@ -55,6 +56,8 @@ FUNCTION(PIXHAWK_INSTALL)
 	${CMAKE_SOURCE_DIR}/src/comm/lcm/gl_overlay_message_t.h
 	${CMAKE_SOURCE_DIR}/src/comm/lcm/rgbd_camera_image_message_t.h
 	${CMAKE_SOURCE_DIR}/src/comm/lcm/virtual_scan_message_t.h
+	${CMAKE_SOURCE_DIR}/src/comm/lcm/mavlink_message_t.hpp
+	${CMAKE_SOURCE_DIR}/src/comm/lcm/mavlink_msg_container_t.hpp
   )
   INSTALL(FILES ${MAVCONNLCM_HEADERS} DESTINATION ${PIXHAWK_INCLUDE_INSTALL_PATH}/comm/lcm/)
 
