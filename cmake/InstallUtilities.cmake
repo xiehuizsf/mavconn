@@ -44,11 +44,6 @@ FUNCTION(PIXHAWK_INSTALL)
   )
   INSTALL(FILES ${MAVCONN_HEADERS} DESTINATION ${PIXHAWK_INCLUDE_INSTALL_PATH})
 
-  SET(MAVCONNNMEA_HEADERS
-        ${CMAKE_SOURCE_DIR}/src/external/nmea/include/nmea/nmea.h
-  )
-  INSTALL(FILES ${MAVCONNNMEA_HEADERS} DESTINATION ${PIXHAWK_INCLUDE_INSTALL_PATH}/external/nmea/)
-
   SET(MAVCONNLCM_HEADERS
 	${CMAKE_SOURCE_DIR}/src/comm/lcm/mavconn_mavlink_message_t.h
 	${CMAKE_SOURCE_DIR}/src/comm/lcm/mavconn_mavlink_msg_container_t.h
