@@ -31,10 +31,6 @@ SET_SOURCE_FILES(DDS_CORE_SRC_FILES
 )
 
 SET_SOURCE_FILES(DDS_INTERFACE_SRC_FILES
-  interface/graphics/dds_gl_overlay_message_t.cxx
-  interface/graphics/dds_gl_overlay_message_tPlugin.cxx
-  interface/graphics/dds_gl_overlay_message_tSupport.cxx
-  interface/graphics/graphics_interface.cc
   interface/image/dds_image_message_t.cxx
   interface/image/dds_image_message_tPlugin.cxx
   interface/image/dds_image_message_tSupport.cxx
