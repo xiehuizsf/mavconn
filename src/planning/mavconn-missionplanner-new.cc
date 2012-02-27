@@ -1523,7 +1523,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 
 	    case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
 	        {
-	            if(msg->sysid == systemid)
+	            if(msg->sysid == systemid && msg->compid != 203)	//TODO: this is a hack for the sFly demo, remove the compid check and do something better
 	            {
 	                if(cur_dest.frame == 1)
 	                {
