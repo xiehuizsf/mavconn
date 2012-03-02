@@ -66,8 +66,8 @@ mavlink_optical_flow_t last_known_optical_flow;
 const int MAGIC_MAX_BUFFER_AND_RETRY = 100;		// Size of the message buffer for LCM messages and maximum number of skipped/dropped frames before stopping when a mismatch happens
 const int MAGIC_MIN_SEQUENCE_DIFF = 150;		// *has to be > than MAGIC_MAX_BUFFER_AND_RETRY!* Minimum difference between two consecutively processed images to assume a sequence mismatch
 												// In other words: the maximum number of skippable frames
-const int MAGIC_MESSAGE_TIMEOUT_US = 5000000;	// Time the process waits for messages if the buffer is empty
-const int MAGIC_IMAGE_TIMEOUT_US = 5000000;		// Time the process waits for images
+const int MAGIC_MESSAGE_TIMEOUT_US = 3000000;	// Time the process waits for messages if the buffer is empty
+const int MAGIC_IMAGE_TIMEOUT_US = 3000000;		// Time the process waits for images
 const int MAGIC_MAX_IMAGE_DELAY_US = 5000000;	// Maximum delay allowed between shutter time and start of image processing
 const int MAGIC_HARD_RETRY_MUTEX = 2;			// Maximum number of times a mutex is tried to timed lock
 
@@ -457,6 +457,8 @@ int main(int argc, char* argv[])
 			sendMAVLinkMessage(lcm, &triggerMsg);
 		}
 	}
+
+	usleep(500000);
 
 	PxCameraConfig::Mode mode = PxCameraConfig::MANUAL_MODE;
 	if (automode)
