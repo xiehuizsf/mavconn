@@ -227,10 +227,17 @@ int main(int argc, char* argv[])
 		}
 
 		//if we found any right camera images activate stereo mode
-		if (images_right.size() > 0)
+		if (!images_right.empty())
 		{
+			printf("Outputting stereo stream\n");
 			do_stereo = true;
 		}
+		else
+		{
+			printf("Outputting mono stream\n");
+			do_stereo = false;
+		}
+
 	}
 	else
 	{
