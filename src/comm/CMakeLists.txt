@@ -106,17 +106,13 @@ PIXHAWK_LINK_LIBRARIES(mavconn-imagestreamer
 IF(VICON_FOUND)
 IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
   IF(CMAKE_SYSTEM_PROCESSOR MATCHES "i[3-6]|x86_64")
-    IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    
-      PIXHAWK_EXECUTABLE(mavconn-bridge-vicon PxTransform.cc mavconn-bridge-vicon.cc PxVicon.cc)
-      PIXHAWK_LINK_LIBRARIES(mavconn-bridge-vicon
-        mavconn_lcm
-	${CV_LIBRARY}
-	ViconDataStreamSDK_CPP
-	${Boost_PROGRAM_OPTIONS_LIBRARY}
-      )
-        
-    ENDIF(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    PIXHAWK_EXECUTABLE(mavconn-bridge-vicon PxTransform.cc mavconn-bridge-vicon.cc PxVicon.cc)
+    PIXHAWK_LINK_LIBRARIES(mavconn-bridge-vicon
+      mavconn_lcm
+      ${OPENCV_CORE_LIBRARY}
+      ${VICON_LIBRARY_OPTIMIZED}
+      ${Boost_PROGRAM_OPTIONS_LIBRARY}
+    )
   ENDIF(CMAKE_SYSTEM_PROCESSOR MATCHES "i[3-6]|x86_64")
 ENDIF(CMAKE_SYSTEM_NAME MATCHES "Linux")
 ENDIF(VICON_FOUND)
