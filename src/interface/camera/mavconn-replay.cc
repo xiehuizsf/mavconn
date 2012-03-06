@@ -198,8 +198,6 @@ int main(int argc, char* argv[])
 		{
 			printf("mavconn-replay: Found right camera image stream, loading image list...\n");
 
-			do_stereo = true;
-
 			if (imagepath_right.size() > 0 && imagepath_right[imagepath_right.size() - 1] != '/')
 				imagepath_right += '/';
 
@@ -226,6 +224,18 @@ int main(int argc, char* argv[])
 				}
 			}
 			catch (...) {}
+		}
+
+		//if we found any right camera images activate stereo mode
+		if (!images_right.empty())
+		{
+			printf("Outputting stereo stream\n");
+			do_stereo = true;
+		}
+		else
+		{
+			printf("Outputting mono stream\n");
+			do_stereo = false;
 		}
 
 	}
@@ -300,6 +310,8 @@ int main(int argc, char* argv[])
 		//the checksums follow directly after the payload, so copy them to their fields in mavlink_message_t
 		//msg.ck_a = *(sizeof(uint64_t) + buf + msg.len + MAVLINK_CORE_HEADER_LEN + 1);
 		//msg.ck_b = *(sizeof(uint64_t) + buf + msg.len + MAVLINK_CORE_HEADER_LEN + 2);
+
+		//printf("%llu\n", time);
 
 		//check for image triggered message, load the image and put it to the shared memory
 		if (do_images && msg.msgid == MAVLINK_MSG_ID_IMAGE_TRIGGERED)
@@ -379,6 +391,7 @@ int main(int argc, char* argv[])
 			sendMAVLinkMessage(lcmMavlink, &msg);
 			last_time = time;
 			last_current_time = current_time;
+			usleep(3000);
 		}
 	}
 

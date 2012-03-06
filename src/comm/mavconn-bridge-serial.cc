@@ -126,7 +126,6 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
 					|| msg->msgid == MAVLINK_MSG_ID_REQUEST_DATA_STREAM
 					|| msg->msgid == MAVLINK_MSG_ID_PARAM_REQUEST_LIST
 					|| msg->msgid == MAVLINK_MSG_ID_PARAM_SET
-					/*|| msg->msgid == MAVLINK_MSG_ID_SET_CAM_SHUTTER*/
 					|| msg->msgid == MAVLINK_MSG_ID_IMAGE_TRIGGER_CONTROL
 					|| msg->msgid == MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE
                     || msg->msgid == MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE
@@ -135,7 +134,8 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
 					|| msg->msgid == MAVLINK_MSG_ID_STATUSTEXT
 					|| msg->msgid == MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT
 					|| msg->msgid == MAVLINK_MSG_ID_SET_GLOBAL_POSITION_SETPOINT_INT
-                    || msg->msgid == MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET) {
+                    || msg->msgid == MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET
+                    || msg->msgid == MAVLINK_MSG_ID_OPTICAL_FLOW) {
 				if (verbose || debug)
 					std::cout << std::dec
 							<< "Received and forwarded LCM message with id "
@@ -164,8 +164,8 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel,
 			|| msg->msgid == MAVLINK_MSG_ID_MISSION_REQUEST
 			|| msg->msgid == MAVLINK_MSG_ID_MISSION_REQUEST_LIST
 			|| msg->msgid == MAVLINK_MSG_ID_MISSION_SET_CURRENT
-                        || msg->msgid == MAVLINK_MSG_ID_SET_GPS_GLOBAL_ORIGIN
-                       || msg->msgid == MAVLINK_MSG_ID_GPS_GLOBAL_ORIGIN
+			|| msg->msgid == MAVLINK_MSG_ID_SET_GPS_GLOBAL_ORIGIN
+			|| msg->msgid == MAVLINK_MSG_ID_GPS_GLOBAL_ORIGIN
 			|| msg->msgid == MAVLINK_MSG_ID_HEARTBEAT
 			|| msg->msgid == MAVLINK_MSG_ID_PARAM_VALUE
 			|| msg->msgid == MAVLINK_MSG_ID_STATUSTEXT
