@@ -8,8 +8,7 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 // OpenCV includes
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+#include <opencv2/highgui/highgui.hpp>
 
 #include <interface/shared_mem/PxSHMImageServer.h>
 #include "mavconn.h"
@@ -339,7 +338,7 @@ int main(int argc, char* argv[])
 				{
 					// Image found
 					if (verbose) printf("[%llu] loading left image %s\n", (long long unsigned) camid_left, it->second.c_str());
-					image_left = cvLoadImage(it->second.c_str(), false);
+					image_left = cv::imread(it->second.c_str(), -1);
 					il = true;
 				}
 
@@ -355,7 +354,7 @@ int main(int argc, char* argv[])
 					{
 						// Image found
 						if (verbose) printf("[%llu] loading right image %s\n", (long long unsigned) camid_right, it->second.c_str());
-						image_right = cvLoadImage(it->second.c_str(), false);
+						image_right = cv::imread(it->second.c_str(), -1);
 						ir = true;
 					}
 				}
