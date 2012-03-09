@@ -548,6 +548,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 		break;
 		case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
 		{
+			// FIXME HARDCODED: 201 is SYSTEM POSITION ESTIMATE
 			if (msg->compid == imuid)
 			{
 				mavlink_local_position_ned_t pos;
