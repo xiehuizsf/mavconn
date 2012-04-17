@@ -308,7 +308,7 @@ string createCaptureDirectory( string baseDir, struct tm* timeinfo )
 	strftime( dateBuf, 80, "%Y%m%d_%H%M%S\0", timeinfo );
 
 	// create directory where to safe the images and data file
-	string dir = baseDir + string(dateBuf) + "/";
+	std::string dir = baseDir + string(dateBuf) + "/";
 	try
 	{
 		bfs::create_directories( bfs::path(dir) );
@@ -322,7 +322,8 @@ string createCaptureDirectory( string baseDir, struct tm* timeinfo )
 		if (calibStrDirection0.length() > 0)
 		{
 			bfs::create_directories( bfs::path(dir + std::string(DIRECTUION_0_DIR) + std::string("config/")) );
-			ofstream calibInfoFile(dir + std::string(DIRECTUION_0_DIR) + std::string("calibInfo.txt"));
+			std::string calibInfoFilePath = dir + std::string(DIRECTUION_0_DIR) + std::string("calibInfo.txt");
+			ofstream calibInfoFile(calibInfoFilePath.c_str());
 			calibInfoFile << "Original calibration file names:" << endl << calibStrDirection0 << endl << calibStrLeftDirection0 << endl << calibStrRightDirection0;
 			calibInfoFile.close();
 
@@ -365,7 +366,7 @@ string createCaptureDirectory( string baseDir, struct tm* timeinfo )
 		if (calibStrDirection1.length() > 0)
 		{
 			bfs::create_directories( bfs::path(dir + std::string(DIRECTUION_1_DIR) + std::string("config/")) );
-			ofstream calibInfoFile(dir + std::string(DIRECTUION_1_DIR) + std::string("calibInfo.txt"));
+			ofstream calibInfoFile(std::string(dir + std::string(DIRECTUION_1_DIR) + std::string("calibInfo.txt")).c_str());
 			calibInfoFile << "Original calibration file names:" << endl << calibStrDirection1 << endl << calibStrLeftDirection1 << endl << calibStrRightDirection1;
 			calibInfoFile.close();
 
