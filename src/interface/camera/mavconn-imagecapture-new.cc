@@ -310,7 +310,7 @@ string createCaptureDirectory( string baseDir, struct tm* timeinfo )
 	strftime( dateBuf, 80, "%Y%m%d_%H%M%S\0", timeinfo );
 
 	// create directory where to safe the images and data file
-	string dir = baseDir + string(dateBuf) + "/";
+	std::string dir = baseDir + string(dateBuf) + "/";
 	try
 	{
 		bfs::create_directories( bfs::path(dir) );
@@ -324,7 +324,8 @@ string createCaptureDirectory( string baseDir, struct tm* timeinfo )
 		if (calibStrDirection0.length() > 0)
 		{
 			bfs::create_directories( bfs::path(dir + std::string(DIRECTUION_0_DIR) + std::string("config/")) );
-			ofstream calibInfoFile(dir + std::string(DIRECTUION_0_DIR) + std::string("calibInfo.txt"));
+			std::string calibInfoFilePath = dir + std::string(DIRECTUION_0_DIR) + std::string("calibInfo.txt");
+			ofstream calibInfoFile(calibInfoFilePath.c_str());
 			calibInfoFile << "Original calibration file names:" << endl << calibStrDirection0 << endl << calibStrLeftDirection0 << endl << calibStrRightDirection0;
 			calibInfoFile.close();
 
@@ -367,7 +368,7 @@ string createCaptureDirectory( string baseDir, struct tm* timeinfo )
 		if (calibStrDirection1.length() > 0)
 		{
 			bfs::create_directories( bfs::path(dir + std::string(DIRECTUION_1_DIR) + std::string("config/")) );
-			ofstream calibInfoFile(dir + std::string(DIRECTUION_1_DIR) + std::string("calibInfo.txt"));
+			ofstream calibInfoFile(std::string(dir + std::string(DIRECTUION_1_DIR) + std::string("calibInfo.txt")).c_str());
 			calibInfoFile << "Original calibration file names:" << endl << calibStrDirection1 << endl << calibStrLeftDirection1 << endl << calibStrRightDirection1;
 			calibInfoFile.close();
 
@@ -551,8 +552,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 		break;
 		case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
 		{
-			// FIXME HARDCODED: 201 is SYSTEM POSITION ESTIMATE
-			if (msg->compid == 201)
+			if (msg->compid == imuid)
 			{
 				mavlink_local_position_ned_t pos;
 				mavlink_msg_local_position_ned_decode(msg, &pos);
@@ -562,15 +562,6 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 				vx = pos.vx;
 				vy = pos.vy;
 				vz = pos.vz;
-			}
-			// FIXME HARDCODED: 202 is RAW GPS CONVERTED TO ENU
-			else if (msg->compid == 202)
-			{
-				mavlink_local_position_ned_t pos;
-				mavlink_msg_local_position_ned_decode(msg, &pos);
-				local_x_gps_raw = pos.x;
-				local_y_gps_raw = pos.y;
-				local_z_gps_raw = pos.z;
 			}
 		}
 		break;
