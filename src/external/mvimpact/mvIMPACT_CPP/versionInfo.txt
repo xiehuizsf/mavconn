@@ -1,9 +1,445 @@
 ===============================================================================================
                                 version info mvIMPACT Acquire
 ===============================================================================================
-
 Date:       Release:    Changes:                                                                                Affected modules, files or packages:
 --------------------------------------------------------------------------------------------------------------------------------------------
+11.05.2012  1.12.67     DEPRECATED API CODE:
+                        - mvIMPACT::acquire::Property::isConstDefined has been declared deprecated. Use         (mvIMPACT_acquire.h)
+                          mvIMPACT::acquire::Property::hasMaxValue, mvIMPACT::acquire::Property::hasMinValue
+                          and mvIMPACT::acquire::Property::hasStepWidth instead.
+
+                        UPDATES:
+                        - Kernel modules rebuilt. No change in behaviour.                                       (mvBlueFOX2.sys, version 1.0.4.5)
+
+                        NEW FEATURES:
+                        - Support for mvBlueFOX-202d with MT9M024 revision 0x41 added.                          (mvBlueFOX-lib)
+                        - 'basedOn' property added to mvIMPACT::acquire::BasicDeviceSettings.                   (mvIMPACT_acquire.h)
+
+                        BUGS FIXED:
+                        - Selecting 'Calibrate' for the 'Mode' of the 'Dark current filter' or the 'Flat Field  (all shipped packages)
+                          filter' could cause crashes.
+                          (Bug introduced in version 1.12.57)
+                        - Selecting ImageDestination/PixelFormat different from 'Auto' for mvBlueCOUGAR-X       (mvBlueCOUGAR-lib)
+                          devices in device specific interface layout did not always result in the correct
+                          pixel format being returned by the driver.
+                        - Some properties of the mvIMPACT::acquire::GenICam::InterfaceModule class where        (mvPropHandling-lib)
+                          missing the 'cfReadAccess' flag.                                                      (mvBlueCOUGAR-lib)
+
+26.04.2012  1.12.66     NEW FEATURES:
+                        - New features added to 'ColorTwist' filter(EXPERIMENTAL!!! SUBJECT TO CHANGE!)         (all shipped packages)
+
+                        BUGS FIXED:
+                        - The 'Offset_pc' property in device specific interface layout for mvBlueCOUGAR-S       (mvBlueCOUGAR-lib)
+                          devices can be modified again.
+                          (Bug introduced in version 1.12.33)
+                        - Random crashes when a GEV device was unplugged or rebooted while streaming was        (wxPropView)
+                          active.
+                          (Bug introduced in version 1.12.62)
+
+24.04.2012  1.12.65     NEW FEATURES:
+                        - mvIMPACT::acquire::InfoBlueFOX::deviceSensorRevision property added.                  (mvIMPACT_acquire.h)
+                        - 'DeviceSensorRevision' property added.                                                (mvBlueFOX-lib)
+
+                        BUGS FIXED:
+                        - When constantly calling 'mvIMPACT::acquire::FunctionInterface::updateDeviceList' or   (mvBlueCOUGAR-lib)
+                          'DMR_UpdateDeviceList' in parallel to running image acquisitions then closing a       (mvTLIClientGigE-lib)
+                          device, that became disconnected could end up in a deadlock.
+                        - The maximum number of defective pixels internally that can be detected is 1000 while  (all shipped packages)
+                          the 'DefectivePixelsFilter' worked with 1001.
+                        - Depending on the image content at the time of calibration setting                     (all shipped packages)
+                          'DefectivePixelsFilter/Mode' either to 'dpfm3x3Median' or 'dpfm3x1Average' could
+                          result in crashes.
+                        - Multi-byte Bayer formats are correctly supported by the 'DefectivePixelsFilter' now.  (all shipped packages)
+                        - NeuroCheck 6 interface only gets installed if NeuroCheck 6 has been detected on the   (all shipped MSI-based packages)
+                          target system.
+
+23.04.2012  1.12.64     CHANGED BEHAVIOUR:
+                        - Return value of the functions mvIMPACT::acquire::TriggerControl::triggerSoftware and  (mvIMPACT_acquire.h)
+                          mvIMPACT::acquire::StatisticsBase::reset changed from TDMR_ERROR to int.
+
+                        NEW FEATURES:
+                        - mvIMPACT::acquire::UserData::getFreeMemory function added.                            (mvIMPACT_acquire.h)
+
+                        BUGS FIXED:
+                        - A stream channel index different from 0 can be configured now.                        (mvGigECapture.sys, version 2.0.3.37)
+                        - High frame rates with large amounts of data lost could still lead to a hanging        (mvGigECapture.sys, version 2.0.3.37)
+                          process under Windows.
+                        - Unresolved symbols 'DrvGetHardwareFeatureDecodeBufferSize' and                        (mvBlueFOX-lib)
+                          'DrvEncodeHardwareFeature' at runtime on some Linux platforms.
+
+18.04.2012  1.12.63     DEPRECATED API CODE:
+                        - The functions mvIMPACT::acquire::FunctionInterface::isRequestOK has been declared     (all shipped packages)
+                          deprecated. Use mvIMPACT::acquire::Request::isOK instead. Refer to
+                          'Porting existing code' section in the documentation for more information.
+
+                        NEW FEATURES:
+                        - mvIMPACT::acquire::Property::hasMaxValue, mvIMPACT::acquire::Property::hasMinValue,   (mvIMPACT_acquire.h)
+                          mvIMPACT::acquire::Property::hasStepWidth added.
+                        - 'getMaxValue', 'getMinValue' and 'GetStepWidth' functions added to classes            (mvIMPACT_acquire.h)
+                          mvIMPACT::acquire::EnumPropertyF, mvIMPACT::acquire::EnumPropertyI and
+                          mvIMPACT::acquire::EnumPropertyI64.
+                        - mvIMPACT::acquire::Request::isOK added.                                               (mvIMPACT_acquire.h)
+
+                        BUGS FIXED:
+                        - When a device suddenly stopped responding while working in 'SoftwareTrigger' mode     (mvBlueCOUGAR-lib)
+                          closing the driver or calling 'imageRequestReset' could result in a deadlock when
+                          buffers where queued after the device stopped responding.
+                        - The property 'RequestResult' is updated correctly again.                              (all shipped packages)
+                          (Bug introduced in version 1.12.58)
+
+16.04.2012  1.12.62     NEW FEATURES:
+                        - 'DeviceTemperature' property added for mvBlueFOX-202dx devices.                       (mvBlueFOX-lib)
+
+                        BUGS FIXED:
+                        - mvHYPERION devices can capture data again.                                            (mvHYPERIONfg-lib)
+                          (Bug introduced in version 1.12.60)
+                        - Sporadic crashes caused by invalid image data being used to update the pixel data of  (wxPropView)
+                          the status bar.
+                        - In full screen mode the info plot no longer draws on top of the image.                (wxPropView)
+
+11.04.2012  1.12.61     BUGS FIXED:
+                        - Resend requests when NOT using the 'immediate resend' strategy could be send to an    (mvGigECapture.sys, version 2.0.2.36)
+                          invalid destination MAC address(0).
+
+11.04.2012  1.12.60     CHANGED BEHAVIOUR:
+                        - Data type of mvIMPACT::acquire::InfoBlueFOX::sensorCaps changed from                  (mvIMPACT_acquire.h)
+                          mvIMPACT::acquire::PropertyI to
+                          mvIMPACT::acquire::PropertyIBlueFOXInfoSensorCapabilities. This might force you to
+                          change your code during rebuilds but will not break existing binaries.
+                        - Removed unused data type 'TBlueLYNXVideoOutMode'.                                     (mvDriverBaseEnums.h)
+                        - Property 'Camera/Flash' renamed to 'Camera/FlashMode'                                 (mvBlueLYNX-lib)
+                        - The classes mvIMPACT::acquire::TriggerControl and mvIMPACT::acquire::SyncOutput are   (mvIMPACT_acquire.h)
+                          derived from mvIMPACT::acquire::ComponentCollection now.
+
+                        BUGS FIXED:
+                        - High frame rates with large amounts of data lost could lead to a hanging process      (mvTLIClientGigE-lib)
+                          under Windows.                                                                        (mvGigECapture.sys, version 2.0.1.35)
+
+03.04.2012  1.12.59     UPDATES:
+                        - Internally modified thread shutdown order when closing the driver instance.           (mvVirtualDevice-lib)
+
+                        NEW FEATURES:
+                        - Firmware version 1.4.57.0 for mvBlueCOUGAR-X devices added.                           (all shipped packages for GigE Vision devices)
+                          New features:
+                            - New sensors: CMV2000, CMV4000, EV76C560 (color)
+                            - New devices: mvBlueCOUGAR-XD.
+                            - CCDs: Smear reduction property.
+                            - FFC Feature extended: FFC works for sensor sizes > 1.8 MPixel, however the 
+                              FFC data can not be stored in flash. Instead the data is accessible
+                              using the File Control feature (up- and download).
+                            - MT9P031: New pixel clock frequency: 98 MHz.
+                            - EV76C560: LinescanMode (AcquisitionMode 'Continuous' only)
+                            - MT9V034 can also use the FPGA's auto control features now.
+                            - Support for events added ('EventExposureEnd' 'EventLine<n>RisingEdge').
+                            - Application Switchover
+                            - HeartbeatDisable
+                          Changed behaviour:
+                            - Many optimisations concerning the network behaviour (traversing firewalls, 
+                              DHCP/AutoIP, Discovery Process, GigE Vision Protocol, etc...)
+                            - 'ExposureActive' signal is now internally ANDed with the 'AcquisitionActive'
+                              signal, useful for controlling lighting systems. It is now equivalent to the
+                              DEPRECATED 'mvExposureAndAcquisitionActive' signal. The previous behaviour can be
+                              obtained by using the new signal 'mvExposureActive'.
+                            - GevSCBW unit changed (KByte/s -> KBps)
+                            - Only one green LUT instead of LUT_GreenRed and LUT_GreenBlue is used now.
+                            - Luminance LUT for RGB.
+                          Bugs fixed:
+                            - Color Transformation Matrix works with negative values, too
+                            - MT9V034: AGC upper limit did not work correctly.
+                            - Using more than one OR gate caused unexpected results
+                            - 'UserDefinedName' was lost after FW update
+                            - FrameAverager (only -2xx)
+                            - First line for all CCD sensors did contain incorrect data
+
+                        BUGS FIXED:
+                        - 'can not access 'cameralink\serial\' in the network' during the installation.         (all shipped 64-bit MSI-based packages with CameraLink support)
+
+29.03.2012  1.12.58     DEPRECATED API CODE:
+                        - The functions mvIMPACT::acquire::FunctionInterface::saveSystemToDefault and           (all shipped packages)
+                          DMR_SaveSystemToDefault have been declared deprecated. See 'Porting existing code
+                          section in the documentation for more information.
+                          
+                        CHANGED BEHAVIOUR:
+                        - mvIMPACT::acquire::WhiteBalanceSettings::WBresult renamed to                          (mvIMPACT_acquire.h)
+                          mvIMPACT::acquire::WhiteBalanceSettings::WBResult. This might force you to change
+                          your code during rebuilds but will not break exisiting binaries.
+
+                        UPDATES:
+                        - More internal optimisations.                                                          (all shipped packages)
+
+                        NEW FEATURES:
+                        - mvIMPACT::acquire::FunctionInterface::getSetting() added.                             (mvIMPACT_acquire.h)
+                        - mvIMPACT::acquire::Statistics::formatConvertTime_s added.                             (mvIMPACT_acquire.h)
+                        - Class mvIMPACT::acquire::BasicDeviceSettings added. This acts as a base class         (mvIMPACT_acquire.h)
+                          for mvIMPACT::acquire::CameraSettingsBase and contains the features, that are
+                          available for all interface layouts.
+
+                        BUGS FIXED:
+                        - 'mvIMPACT::acquire::ComponentList::size' and 'OBJ_GetElementCount' did return the     (mvDeviceManager-lib)
+                          number of reserved elements instead of the number of elements actually valid and
+                          allocated.
+                        - Sporadic crashes when leaving full screen mode.                                       (wxPropView)
+                        - Serial write function is working again.                                               (clsermv-lib)
+                         (Bug introduced in version 1.12.49)
+                        - Makefiles now also work on Linux distributions with complex linux version string.     (low level mvHYPERION driver, linux)
+
+14.03.2012  1.12.57     CHANGED BEHAVIOUR:
+                        - As the mvIMPACTAcquire_Cognex_Adapter-lib is shipped and build as part of mvIMPACT    (all shipped MSI-based packages)
+                          Acquire it will now use the global mvIMPACT Acquire version number.
+
+                        UPDATES:
+                        - Internal optimisations.                                                               (all shipped packages)
+
+                        NEW FEATURES:
+                        - Support for increment from GenICam XML float nodes added.                             (mvBlueCOUGAR-lib)
+                        - cfShouldBeDisplayedAsEnumeration added to interface.                                  (mvPropHandling-lib)
+
+                        BUGS FIXED:
+                        - A feature selecting others that itself was an enumeration and did not contain any     (wxPropView)
+                          translation dictionary entries could cause crashes.
+                        - Some missing files added to mvHYPERION Linux drivers again.                           (all shipped Linux driver packages for mvHYPERION devices)
+                          (Bug introduced in version 1.12.51)
+
+08.03.2012  1.12.56     NEW FEATURES:
+                        - Initial version of mvIMPACT::acquire::RequestFactory added.                           (mvIMPACT_acquire.h)
+
+                        BUGS FIXED:
+                        - Correctly links against GenApi runtime version 2.3.0 now.                             (mvBlueCOUGAR-lib)
+                        - RGB GEV pixel formats are handled correctly again.                                    (mvBlueCOUGAR-lib)
+                          (Bug introduced in version 1.12.54)
+                        - The last value of a selected pixel histogram range was not drawn.                     (wxPropView)
+                        - Wrong clipping in line profile plots. Connecting lines from points outside of the     (wxPropView)
+                          plot window were drawn not from the virtual intersection point of the line, but from
+                          the lower/upper range of the plot window.
+
+06.03.2012  1.12.55     CHANGED BEHAVIOUR:
+                        - 'DelphiSample' removed(deprecated).                                                   (all shipped packages)
+
+                        NEW FEATURES:
+                        - New sample added to all packages: 'GenICamInterfaceLayout'.                           (all shipped packages)
+                        - 32 bit CameraLink communication libraries will be installed on 64 bit versions of     (all shipped 64-bit MSI-based packages with CameraLink support)
+                          Windows according to the CameraLink Specification 2.0 now.
+
+                        BUGS FIXED:
+                        - The samples 'Callback' and 'Callback_C' have incorrectly been installed into the      (all shipped 32-bit MSI-based packages)
+                          'SingleCaptureMasterSlave' sub-folder.
+                        - The line pitch reported by returned by requests requested in 'Trial' mode was not     (mvBlueCOUGAR-lib)
+                          always correct for mvBlueLYNX-X devices.
+                        - DirectShow device registration via command line is working again.                     (DirectShow_acquire.ax)
+
+01.03.2012  1.12.54     CHANGED BEHAVIOUR:
+                        - Devices operated in interface layout 'dilGenICam' will return                         (mvBlueCOUGAR-lib)
+                          'DMR_EXECUTION_PROHIBITED' when trying to store a setting while streaming is active
+                          now, as the settings stored that way do not contain all the required data.
+                        - In rare cases where the device string identifier reported by the GenTL producer does  (mvBlueCOUGAR-lib)
+                          change at runtime, this is now correctly recognised by the consumer.
+
+                        NEW FEATURES:
+                        - Initial version with GEV 2.0 support. Kernel- and User Mode drivers might NOT be      (mvTLIClientGigE-lib)
+                          mixed, thus either both modules must belong to a package with a version 1.12.53 or    (mvGigECapture.sys, version 2.0.0.34)
+                          older or to a package with a version 1.12.54 or newer.
+                        - Added support for mvBlueCOUGAR-XD devices.                                            (mvTLIClientGigE-lib)
+                                                                                                                (mvDeviceConfigure)
+                        - If there is more data to display than the system can handle, paint events will be     (wxPropView)
+                          skipped under Windows now(see 1.12.26 for a similar change for Linux).
+                        - NIC Setup hints added.                                                                (mvGigEConfigure)
+
+                        BUGS FIXED:
+                        - mvHYPERION-SDI: Mono formats work again.                                              (mvHYPERIONfg-lib)
+                        - In rare cases when sending more then 256 requests to the driver at the same time not  (mvBlueFOX-lib)
+                          all these requests have been processed and returned. This then could result in
+                          unexpected capture errors.
+                        - New FPGA file for mvBlueFOX-MLC added. This introduces a change on the external I2C   (mvBlueFOX-lib)
+                          bus. SCL stretching during and after the I2C_ACK is now possible. (FPGA version: 46).
+
+23.02.2012  1.12.53     CHANGED BEHAVIOUR:
+                        - Some min/max/resize items added to various dialogs.                                   (wxPropView)
+                        - The property grid will consume all screen space available when the analysis tab and   (wxPropView)
+                          the image display are switched off.
+                        - New FPGA file for mvBlueFOX-MLC added. This introduces a different SCL bus stretching (mvBlueFOX-lib)
+                          (FPGA version: 45).
+
+                        UPDATES:
+                        - Migration to version 2.3.0 of the GenApi runtime.                                     (mvBlueCOUGAR installer)
+
+                        BUGS FIXED:
+                        - Setting the dark current filter mode to 'Calibrate' with a Mono8 input format could   (all shipped packages)
+                          result in crashes after all images used for calibration have been captured.
+                          (Bug introduced in version 1.12.8)
+
+15.02.2012  1.12.52     CHANGED BEHAVIOUR:
+                        - New FPGA file for mvBlueFOX-MLC added. This introduces a different external I2C bus   (mvBlueFOX-lib)
+                          timing(FPGA version: 44).
+
+                        NEW FEATURES:
+                        - Initial version with basic GEV 2.0 support. Work in progress.                         (mvTLIClientGigE-lib)
+
+                        BUGS FIXED:
+                        - mvBlueFOX devices do no longer report an error after updating the firmware.           (mvBlueFOX-lib)
+                          (Bug introduced in version 1.12.32)
+                        - Flash update mvHYPERION grabber.                                                      (mvDeviceConfigure)
+
+02.02.2012  1.12.51     BUGS FIXED:
+                        - RotaryDecoder digital input signal list corrected.                                    (mvHYPERIONfg-lib)
+                        - Binning mode for mvBlueFOX-202b is working properly now.                              (mvBlueFOX-lib)
+                        - mvBlueFOX devices with a firmware version smaller than 36 can be initialised again.   (mvBlueFOX-lib)
+                          (Bug introduced in version 1.11.52)
+
+27.01.2012  1.12.50     CHANGED BEHAVIOUR:
+                        - The auto negotiation algorithm for the optimal GEV packet size will only select       (mvTLIClientGigE-lib)
+                          values which are a multiple of 4 now as some cameras did send test packets even if
+                          they were not capable of streaming data with other packet sizes.
+
+                        BUGS FIXED:
+                        - SD signal resolution corrected.                                                       (mvHYPERIONfg-lib)
+                        - Data transfer related issues with mvBlueFOX-1xx devices (CCD) on some operating       (mvBlueFOX-lib)
+                          systems. FPGA version 89(0x59).
+                          (Bug introduced in version 1.12.32(FPGA version 87(0x57))
+                        - New FPGA file for mvBlueFOX-2xx (CCD) devices added. This fixes a footer error at     (mvBlueFOX-lib)
+                          small exposure times(FPGA version: 36).
+
+16.01.2012  1.12.49     CHANGED BEHAVIOUR:
+                        - The interface header file 'DirectShowAcquire.h' is no longer installed to             (all shipped MSI-based packages)
+                          '%TARGET_DIR%\DSImpactAcquire\Include' but to
+                          '%TARGET_DIR%\ThirdPartySWBindings\DirectShow\Include'. This might force you to
+                          modfiy your makefiles during rebuilds.
+
+                        BUGS FIXED:
+                        - CapturePin and assoicated property dialog is working again.                           (DirectShow_acquire.ax)
+                        - Bitmap files stored with 'SingleCaptureStorage' on 64 bit versions of Linux could not (SingleCaptureStorage.cpp)
+                          be loaded with any other application.
+                        - Cameraformat bayer packed: CL-Cameradescription copy and export corrected.            (mvHYPERIONfg-lib)
+
+03.01.2012  1.12.48     BUGS FIXED:
+                        - Internal GP-OUT handler did only update the first GP-OUT.                             (mvTITANfg-lib)
+                        - Wake up from powerstate 3 improved, query for max. request objects corrected          (mvHYPERION2.sys, version 2.1.33.41)
+                        - Devices operated in interface layout 'dilGenICam' or 'dilGeneric' not supporting a    (DirectShow_acquire.ax)
+                          writeable 'OffsetX', 'OffsetY' 'Width' or 'Height' property can be used now when the
+                          AOI is not touched by an application.
+
+21.12.2011  1.12.47     CHANGED BEHAVIOUR:
+                        - Driver is build with DDK 7600 now and requires a newer version of the WDF coinstaller (mvBlueFOX2.sys, version 1.0.3.4)
+                          (1.9). Installations that did NOT use Merge Modules and did integrate the kernel
+                          driver into a private setup routine must change the name of the WdfCoInstaller-DLL
+                          (was: WdfCoInstaller01001.dll for 32-bit and WdfCoInstaller01005.dll for 64-bit, 
+                          became WdfCoInstaller01009.dll for both platforms) and the name of the *.cat-file
+                          (was: 'mvBlueFOX2_<architecture>.cat', became: 'mvBlueFOX2.cat').
+                        - Matrix multiplication order in 'ColorTwist' filter reversed. Only the 'ColorTwist'    (all shipped packages)
+                          matrix provides a 4th column now. When enabled, this will be used as an overall
+                          offset for the resulting matrix.
+
+                        BUGS FIXED:
+                        - The internal format converter did not remove the 'BayerParity' attribute from buffers (all shipped packages)
+                          that (after the conversion) did no longer contain Bayer data.
+                        - mvBlueFOX-x05 devices sometimes used a wrong frame rate after switching on/off        (mvBlueFOX-lib)
+                          binning related features. Also flash signals could be triggered randomly when
+                          changing the binning parameters.
+
+07.12.2011  1.12.46     CHANGED BEHAVIOUR:
+                        - Classes renamed: mvIMPACT::acquire::GenICam::Device became                            (mvIMPACT_acquire_GenICam.h)
+                          mvIMPACT::acquire::GenICam::DeviceModule, mvIMPACT::acquire::GenICam::Interface
+                          became mvIMPACT::acquire::GenICam::InterfaceModule.
+                        - Property 'ColorTemperature' removed from list 'WhiteBalanceSettings-<nr>. This        (all shipped packages)
+                          feature never served any purpose.
+
+                        NEW FEATURES:
+                        - Wrapper code to access features from the 'SystemModule' and the 'InterfaceModule'     (mvIMPACT_acquire_GenICam.h)
+                          module of the GenICam GenTL Producer added.
+                        - The interface list is also updated when calling 'InterfaceUpdateList' from the        (mvBlueCOUGAR-lib)
+                          'System' module now.
+                        - A capture setting can be dropped onto the property grid now. This will load an apply  (wxPropView)
+                          this setting automatically.
+                        - The description strings of all enum entries will be appended to the features doc      (mvBlueCOUGAR-lib)
+                          string now.
+
+                        BUGS FIXED:
+                        - 'full tree' mode is working again.                                                    (wxPropView)
+                          (Bug introduced in version 1.12.33)
+                        - Incorrect log message('BUG detected in interface handling...') removed.               (mvBlueCOUGAR-lib)
+                        - Updating the device list via DMR_UpdateDeviceList or                                  (mvBlueCOUGAR-lib)
+                          mvIMPACT::acquire::DeviceManager::updatedeviceList will also invalidate the limits
+                          of 'mvBlueCOUGAR/GenTL/System/InterfaceSelector'.
+                        - mvBlueFOX-x00w devices did use an incorrect minimal width and height.                 (mvBlueFOX-lib)
+
+29.11.2011  1.12.45     NEW FEATURES:
+                        - Spin control editors in the property grid will contain an additional slider now. This (wxPropView)
+                          behaviour can be switched off under 'Settings -> Property Grid'.
+                        - Command line interface added.                                                         (mvIPConfigure)
+                        - New features added to 'ColorTwist' filter(EXPERIMENTAL!!! SUBJECT TO CHANGE!)         (all shipped packages)
+
+                        BUGS FIXED:
+                        - DirectShow access is also possible for devices using interface layout 'dilGenICam'    (DirectShow_acquire.ax)
+                          and these devices define a category 'TriggerControls'.
+                        - Packages carry a digital signature again.                                             (all shipped MSI-based packages)
+                          (Bug introduced in version 1.12.41)
+                        - 'ColorTwist' filter works correctly with pixel format 'ibpfRGBx888Planar' now.        (all shipped packages)
+
+22.11.2011  1.12.44     CHANGED BEHAVIOUR:
+                        - When leaving a spin editor using the TAB key the new property value will be applied   (wxPropView)
+                          instead of the previous one now.
+                        - Default value of the the property                                                     (all shipped packages)
+                          '<name of the setting>/ImageProcessing/WhiteBalance' changed from 'Daylight' to
+                          'User1'.
+
+                        NEW FEATURES:
+                        - 'Driver Properties' page added to property grid control.                              (wxPropView)
+                        - mvIMPACT::acquire::Device::deviceDriverFeatureList function added as well as          (mvDeviceManager-lib)
+                          TDMR_DeviceInfoType::dmdithDeviceDriver.                                              (mvIMPACT_acquire.h)
+
+                        BUGS FIXED:
+                        - mvBlueFOX-x00w: Fixed Exposure difference overlapped/non overlapped mode when AOI     (mvBlueFOX-lib)
+                          width was smaller than 700 pixels.
+                        - mvBlueFOX-x02d: Fixed update issues with AEC/AGC. Increased minimal exposure time     (mvBlueFOX-lib)
+                          because of a sensor specific bug.
+                        - mvBlueFOX-x02b: Fixed update issues with AEC/AGC.                                     (mvBlueFOX-lib)
+                        - Device discovery information was not fully refreshed for GEV devices after a call to  (mvTLIClientGigE-lib)
+                          'IFUpdateDeviceList' if a device has been detected previously and data in the
+                          discovery acknowledge differed from a previous call.
+
+17.11.2011  1.12.43     NEW FEATURES:
+                        - DirectShow access is also possible to devices using interface layouts different from  (DirectShow_acquire.ax)
+                          'dilDeviceSpecific'.
+                        - 64 bit integer property support added to property interface.                          (DirectShow_acquire.ax)
+
+16.11.2011  1.12.42     DEPRECATED API CODE:
+                        - The function DMR_GetDeviceInfo has been declared deprecated. Use DMR_GetDeviceInfoEx  (mvDeviceManager-lib)
+                          instead.
+
+                        CHANGED BEHAVIOUR:
+                        - mv-icon is used by windows created by library now.                                    (mvDisplay-lib)
+                        - in full screen mode there is no more flickering when moving the mouse pointer         (wxPropView)
+                        - Red and blue component flipped for 'idpfBGR101010Packed_V2' and                       (mvBlueCOUGAR-lib)
+                          'ibpfBGR101010Packed_V2' in order to be compliant with the upcoming PFNC.             (mvDisplay-lib)
+                                                                                                                (wxPropView)
+
+                        NEW FEATURES:
+                        - Function 'DMR_GetDeviceInfoEx' added as well as 'mvIMPACT::acquire::Device::isInUse'. (all shipped packages)
+                          wxPropView will show device usage information in the device driver information
+                          dialog(F8) now.
+
+                        BUGS FIXED:
+                        - Some UNICODE related issues(wrong string conversions).                                (wxPropView)
+                        - Some invalid 64 integer to string conversions.                                        (wxPropView)
+                                                                                                                (mvPropHandling-lib)
+                                                                                                                (mvVirtualDevice-lib)
+                        - The legacy GCGetPortURL function did always return 0 for the size of the URL.         (mvTLIClientGigE-lib)
+                          (Bug introduced in version 1.12.36)
+                        - Data sync. @ 40MHz improved for mvBlueFOX-MLC205x devices.                            (mvBlueFOX-lib)
+
+15.11.2011  1.12.41     UPDATES:
+                        - 'LinearInterpolation' Bayer conversion filter execution speed improved on all         (all shipped packages)
+                          platforms except 32-bit Windows.
+                        - Improved property grid in NeuroCheck 6 interface.                                     (all shipped MSI-based packages)
+
+                        CHANGED BEHAVIOUR:
+                        - Default request count reduced to 6 for mvBlueLYNX-X devices.                          (mvBlueCOUGAR-lib)
+
+                        BUGS FIXED:
+                        - Reset behaviour of trigger_controller() improved.                                     (mvHYPERIONfg-lib)
+                        - LUT wizard did crash in case the 'LUTSelector' feature was read-only.                 (wxPropView)
+                        - Internal IP address to string handling did not correctly handle endianess.            (mvTLIClientGigE-lib)
+                          (Linux only)(Bug introduced in version 1.12.38)
+
 03.11.2011  1.12.40     BUGS FIXED:
                         - 'IOStatesAtExposureStart' is working now.                                             (mvBlueFOX-lib)
 
@@ -806,7 +1242,7 @@ Date:       Release:    Changes:                                                
                         - On-board flash memory can now be selected by the driver (user or default).            (mvHYPERIONfg-lib)
 
                         UPDATES:
-                        - Migrated to version 2.1.1 of the GenApi runtime.                                      (mvBlueCOUGAR installer)
+                        - Migration to version 2.1.1 of the GenApi runtime.                                     (mvBlueCOUGAR installer)
 
                         BUGS FIXED:
                         - For formats 'ibpfRGB101010Packed' - 'ibpfRGB161616Packed' the channel split filter    (all shipped packages)
@@ -1058,6 +1494,8 @@ Date:       Release:    Changes:                                                
 
 14.10.2010  1.11.28     NEW FEATURES:
                         - 12 bit acquisition mode added to mvHYPERION-HD-SDI.                                   (mvHYPERIONfg-lib)
+                        - Firmware version 49 for mvBlueFOX devices added. This will add motor focus control    (mvBlueFOX-lib)
+                          related features.
 
                         UPDATES:
                         - Enhanced chunk processing added. All chunk features will be part of the request info  (mvBlueCOUGAR-lib)
@@ -1695,7 +2133,7 @@ Date:       Release:    Changes:                                                
                           can be selected). In rare cases this might break existing code!
 
                         UPDATES:
-                        - Migrated to version 2.0.1 of the GenApi runtime.                                      (mvBlueCOUGAR installer)
+                        - Migration to version 2.0.1 of the GenApi runtime.                                     (mvBlueCOUGAR installer)
 
                         NEW FEATURES:
                         - New pixel format introduced: ibpfMono12Packed_V2.                                     (all shipped packages)
@@ -1843,7 +2281,7 @@ Date:       Release:    Changes:                                                
 
                         UPDATES: 
                         - Slightly improved automatic doc string creation from GenICam features.                (mvBlueCOUGAR-lib)
-                        - Migrated to version 2.0.0 of the GenApi runtime. This will change the installation    (mvBlueCOUGAR installer)
+                        - Migration to version 2.0.0 of the GenApi runtime. This will change the installation   (mvBlueCOUGAR installer)
                           sequence under Windows as the GenICam runtime installer will be launched
                           independently from within the mvBlueCOUGAR installer.
                         - Driver start behaviour from default flash configuration improved.                     (mvHYPERION2.sys, version 2.1.10.18)
@@ -2365,7 +2803,7 @@ Date:       Release:    Changes:                                                
 
                         UPDATE: More detailed information output added.                                         (mvIPConfigure)
 
-                        UPDATE: Migrated to version 1.1.2 of the GenApi runtime.                                (mvBlueCOUGAR.msi)
+                        UPDATE: Migration to version 1.1.2 of the GenApi runtime.                               (mvBlueCOUGAR.msi)
                                                                                                                 (mvBlueCOUGAR-x64.msi)
 
                         UPDATE: Firmware version 2.2.0 added for mvBlueCOUGAR-P devices added.                  (all shipped packages for GigE Vision devices)
@@ -3015,7 +3453,7 @@ Date:       Release:    Changes:                                                
                         UPDATE: When updating the firmware for mvBlueCOUGAR-S devices only firmware             (mvDeviceConfigure)
                                 files matching the HW revision can be selected now.
 
-                        UPDATE: Migrated to version 1.1.1 of the GenApi runtime.                                (mvBlueCOUGAR.msi)
+                        UPDATE: Migration to version 1.1.1 of the GenApi runtime.                               (mvBlueCOUGAR.msi)
                                 (mvBlueCOUGAR-x64.msi)
 
                         UPDATE: Misleading log message when executing a RW command in generic interface         (mvBlueCOUGAR-lib)
@@ -4301,6 +4739,9 @@ Date:       Release:    Changes:                                                
 
                         NEW FEATURE: Medium camera support added.                                               (mvHYPERIONfg-lib)
 
+                        NEW BEHAVIOUR: PWM Super-Softstart for mvBlueFOX devices added to firmware.             (mvBlueFOX-lib)
+                                (-> Firmware version 41)
+                                
                         CHANGED: The translation string of the enum value 'rrOK' changed from                   (all shipped packages)
                                 'Ready' to 'OK'.
 
@@ -5174,21 +5615,21 @@ Date:       Release:    Changes:                                                
                                 to query the number of available digital inputs and outputs for
                                 a device.
 
-                        INCOMPATIBLE CHANGES: 
+                        INCOMPATIBLE CHANGES:
 
                         typedef for IntDict and FloatDict removed from
                                 interface. Replace each occurence of FloatDict by
                                 std::vector<std::pair<std::string, double> >, each occurrence
                                 of IntDict by std::vector<std::pair<std::string, int> >.
 
-                        class local enum for Property limits made global. 
+                        class local enum for Property limits made global.
                                 Property::minValue became plMinValue
                                 Property::maxValue became plMaxValue
                                 Property::stepWidth became plStepWidth
 
                         RTCtrProgram::programSize became RTCtrProgram::getProgramSize.
 
-                        These changes where necessary for creating the .NET interface 
+                        These changes where necessary for creating the .NET interface
                                 and might force you to change existing code.
 
                         NEW FEATURE: TWhiteBalanceParameter enum published an applied to

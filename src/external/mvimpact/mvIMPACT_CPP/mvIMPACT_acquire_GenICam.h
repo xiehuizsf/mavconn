@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
-#ifndef mvIMPACT_acquire_GenICam_autogen_h
+#ifndef mvIMPACT_acquire_GenICam_CPP_autogen_h
 #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
-#	define mvIMPACT_acquire_GenICam_autogen_h mvIMPACT_acquire_GenICam_autogen_h
+#	define mvIMPACT_acquire_GenICam_CPP_autogen_h mvIMPACT_acquire_GenICam_CPP_autogen_h
 #endif // DOXYGEN_SHOULD_SKIP_THIS && WRAP_ANY
 //-----------------------------------------------------------------------------
 // AUTOMATICALLY GENERATED CODE. DO NOT EDIT!!!
@@ -56,6 +56,14 @@
 namespace mvIMPACT {
 	namespace acquire {
 		namespace GenICam {
+
+/// \defgroup GenICamInterface GenICam interface layout
+/// This group contains classes that will be available if the device is used
+/// with the <b>mvIMPACT::acquire::dilGenICam</b> interface layout.
+///
+/// \ingroup CommonInterface
+///
+/// @{
 
 //-----------------------------------------------------------------------------
 /// \brief Category for Device information and control.
@@ -405,6 +413,9 @@ public:
 			height(),
 			offsetX(),
 			offsetY(),
+			mvSensorLineOffsetSelector(),
+			mvSensorLineOffset(),
+			mvSensorLinePeriod(),
 			linePitch(),
 			binningHorizontal(),
 			binningVertical(),
@@ -433,6 +444,9 @@ public:
 		locator.bindComponent( height, "Height" );
 		locator.bindComponent( offsetX, "OffsetX" );
 		locator.bindComponent( offsetY, "OffsetY" );
+		locator.bindComponent( mvSensorLineOffsetSelector, "mvSensorLineOffsetSelector" );
+		locator.bindComponent( mvSensorLineOffset, "mvSensorLineOffset" );
+		locator.bindComponent( mvSensorLinePeriod, "mvSensorLinePeriod" );
 		locator.bindComponent( linePitch, "LinePitch" );
 		locator.bindComponent( binningHorizontal, "BinningHorizontal" );
 		locator.bindComponent( binningVertical, "BinningVertical" );
@@ -489,6 +503,18 @@ public:
 	///
 	/// Vertical offset from the origin to the region of interest (in pixels).
 	PropertyI64 offsetY;
+	/// \brief Selects the sensor to configure
+	///
+	/// Selects the sensor to configure
+	PropertyI64 mvSensorLineOffsetSelector;
+	/// \brief Sets the offset of the sensor selected by mvSensorLineOffsetSelector.
+	///
+	/// Sets the offset of the sensor selected by mvSensorLineOffsetSelector.
+	PropertyI64 mvSensorLineOffset;
+	/// \brief Time in nanoseconds for one line
+	///
+	/// Time in nanoseconds for one line
+	PropertyI64 mvSensorLinePeriod;
 	/// \brief Total number of bytes between 2 successive lines.
 	///
 	/// Total number of bytes between 2 successive lines. This feature is used to facilitate alignment of image data.
@@ -557,6 +583,9 @@ public:
 	PropertyI64 getHeight( void ) const { return height; }
 	PropertyI64 getOffsetX( void ) const { return offsetX; }
 	PropertyI64 getOffsetY( void ) const { return offsetY; }
+	PropertyI64 getmvSensorLineOffsetSelector( void ) const { return mvSensorLineOffsetSelector; }
+	PropertyI64 getmvSensorLineOffset( void ) const { return mvSensorLineOffset; }
+	PropertyI64 getmvSensorLinePeriod( void ) const { return mvSensorLinePeriod; }
 	PropertyI64 getLinePitch( void ) const { return linePitch; }
 	PropertyI64 getBinningHorizontal( void ) const { return binningHorizontal; }
 	PropertyI64 getBinningVertical( void ) const { return binningVertical; }
@@ -637,6 +666,7 @@ public:
 			mvExposureAutoOffsetY(),
 			mvExposureAutoWidth(),
 			mvExposureAutoHeight(),
+			mvExposureAutoMode(),
 			mvSmearReduction(),
 			mvAcquisitionMemoryMode(),
 			mvPretriggerFrameCount(),
@@ -691,6 +721,7 @@ public:
 		locator.bindComponent( mvExposureAutoOffsetY, "mvExposureAutoOffsetY" );
 		locator.bindComponent( mvExposureAutoWidth, "mvExposureAutoWidth" );
 		locator.bindComponent( mvExposureAutoHeight, "mvExposureAutoHeight" );
+		locator.bindComponent( mvExposureAutoMode, "mvExposureAutoMode" );
 		locator.bindComponent( mvSmearReduction, "mvSmearReduction" );
 		locator.bindComponent( mvAcquisitionMemoryMode, "mvAcquisitionMemoryMode" );
 		locator.bindComponent( mvPretriggerFrameCount, "mvPretriggerFrameCount" );
@@ -878,6 +909,10 @@ public:
 	///
 	/// Common AOI Height used for auto gain control(AGC), Auto Exposure Control(AEC) and Auto White Balance(AWB).
 	PropertyI64 mvExposureAutoHeight;
+	/// \brief Selects the common auto mode for gain and exposure.
+	///
+	/// Selects the common auto mode for gain and exposure.
+	PropertyI64 mvExposureAutoMode;
 	/// \brief Smear reduction in triggered and nonoverlapped mode.
 	///
 	/// Smear reduction in triggered and nonoverlapped mode.
@@ -945,6 +980,7 @@ public:
 	PropertyI64 getmvExposureAutoOffsetY( void ) const { return mvExposureAutoOffsetY; }
 	PropertyI64 getmvExposureAutoWidth( void ) const { return mvExposureAutoWidth; }
 	PropertyI64 getmvExposureAutoHeight( void ) const { return mvExposureAutoHeight; }
+	PropertyI64 getmvExposureAutoMode( void ) const { return mvExposureAutoMode; }
 	PropertyI64 getmvSmearReduction( void ) const { return mvSmearReduction; }
 	PropertyI64 getmvAcquisitionMemoryMode( void ) const { return mvAcquisitionMemoryMode; }
 	PropertyI64 getmvPretriggerFrameCount( void ) const { return mvPretriggerFrameCount; }
@@ -2077,6 +2113,7 @@ public:
 			mvGainAutoOffsetY(),
 			mvGainAutoWidth(),
 			mvGainAutoHeight(),
+			mvGainAutoMode(),
 			mvBalanceWhiteAutoAOIMode(),
 			mvBalanceWhiteAutoOffsetX(),
 			mvBalanceWhiteAutoOffsetY(),
@@ -2085,7 +2122,11 @@ public:
 			mvVCAL(),
 			mvVBLACK(),
 			mvVOFFSET(),
-			mvLowLight()
+			mvLowLight(),
+			mvADCGain(),
+			mvVRamp(),
+			mvDigitalGainOffset(),
+			mvSaveCalibrationData()
 	{
 		mvIMPACT::acquire::DeviceComponentLocator locator(pDev, mvIMPACT::acquire::dltSetting, settingName);
 		locator.bindSearchBase( locator.searchbase_id(), "Camera/GenICam" );
@@ -2122,6 +2163,7 @@ public:
 		locator.bindComponent( mvGainAutoOffsetY, "mvGainAutoOffsetY" );
 		locator.bindComponent( mvGainAutoWidth, "mvGainAutoWidth" );
 		locator.bindComponent( mvGainAutoHeight, "mvGainAutoHeight" );
+		locator.bindComponent( mvGainAutoMode, "mvGainAutoMode" );
 		locator.bindComponent( mvBalanceWhiteAutoAOIMode, "mvBalanceWhiteAutoAOIMode" );
 		locator.bindComponent( mvBalanceWhiteAutoOffsetX, "mvBalanceWhiteAutoOffsetX" );
 		locator.bindComponent( mvBalanceWhiteAutoOffsetY, "mvBalanceWhiteAutoOffsetY" );
@@ -2131,6 +2173,10 @@ public:
 		locator.bindComponent( mvVBLACK, "mvVBLACK" );
 		locator.bindComponent( mvVOFFSET, "mvVOFFSET" );
 		locator.bindComponent( mvLowLight, "mvLowLight" );
+		locator.bindComponent( mvADCGain, "mvADCGain" );
+		locator.bindComponent( mvVRamp, "mvVRamp" );
+		locator.bindComponent( mvDigitalGainOffset, "mvDigitalGainOffset" );
+		locator.bindComponent( mvSaveCalibrationData, "mvSaveCalibrationData@i" );
 	}
 	PYTHON_ONLY(%immutable;)
 	/// \brief Selects which Gain is controlled by the various Gain features.
@@ -2261,6 +2307,10 @@ public:
 	///
 	/// Common AOI Height used for Auto Gain Control(AGC), Auto Exposure Control(AEC) and Auto White Balance(AWB).
 	PropertyI64 mvGainAutoHeight;
+	/// \brief Selects the common auto mode for gain and exposure.
+	///
+	/// Selects the common auto mode for gain and exposure.
+	PropertyI64 mvGainAutoMode;
 	/// \brief Common AutoControl AOI used for Auto Gain Control(AGC), Auto Exposure Control(AEC) and Auto White Balance(AWB).
 	///
 	/// Common AutoControl AOI used for Auto Gain Control(AGC), Auto Exposure Control(AEC) and Auto White Balance(AWB).
@@ -2297,6 +2347,19 @@ public:
 	///
 	/// Makes the image brighter.
 	PropertyI64 mvLowLight;
+	/// \brief Adapt gain. Gain value of the sensor may differ from sensor to sensor.
+	///
+	/// Adapt gain. Gain value of the sensor may differ from sensor to sensor.
+	PropertyI64 mvADCGain;
+	/// \brief Adjusting this value will result in better column CDS (correlated double sampling) which will remove the column FPN from the image.
+	///
+	/// Adjusting this value will result in better column CDS (correlated double sampling) which will remove the column FPN from the image.
+	PropertyI64 mvVRamp;
+	/// \brief Used for fine tuning of the brightness of sensors.
+	///
+	/// Used for fine tuning of the brightness of sensors.
+	PropertyI64 mvDigitalGainOffset;
+	Method mvSaveCalibrationData;
 	PYTHON_ONLY(%mutable;)
 #ifdef DOTNET_ONLY_CODE
 	PropertyI64 getGainSelector( void ) const { return gainSelector; }
@@ -2331,6 +2394,7 @@ public:
 	PropertyI64 getmvGainAutoOffsetY( void ) const { return mvGainAutoOffsetY; }
 	PropertyI64 getmvGainAutoWidth( void ) const { return mvGainAutoWidth; }
 	PropertyI64 getmvGainAutoHeight( void ) const { return mvGainAutoHeight; }
+	PropertyI64 getmvGainAutoMode( void ) const { return mvGainAutoMode; }
 	PropertyI64 getmvBalanceWhiteAutoAOIMode( void ) const { return mvBalanceWhiteAutoAOIMode; }
 	PropertyI64 getmvBalanceWhiteAutoOffsetX( void ) const { return mvBalanceWhiteAutoOffsetX; }
 	PropertyI64 getmvBalanceWhiteAutoOffsetY( void ) const { return mvBalanceWhiteAutoOffsetY; }
@@ -2340,6 +2404,10 @@ public:
 	PropertyI64 getmvVBLACK( void ) const { return mvVBLACK; }
 	PropertyI64 getmvVOFFSET( void ) const { return mvVOFFSET; }
 	PropertyI64 getmvLowLight( void ) const { return mvLowLight; }
+	PropertyI64 getmvADCGain( void ) const { return mvADCGain; }
+	PropertyI64 getmvVRamp( void ) const { return mvVRamp; }
+	PropertyI64 getmvDigitalGainOffset( void ) const { return mvDigitalGainOffset; }
+	Method getmvSaveCalibrationData( void ) const { return mvSaveCalibrationData; }
 #endif // #ifdef DOTNET_ONLY_CODE
 };
 
@@ -3513,6 +3581,9 @@ public:
 };
 
 //-----------------------------------------------------------------------------
+/// \brief Contains features to control the devices Logic Gate Control parameters.
+///
+/// Contains features to control the devices Logic Gate Control parameters.
 class mvLogicGateControl : public mvIMPACT::acquire::ComponentCollection
 //-----------------------------------------------------------------------------
 {
@@ -3529,24 +3600,46 @@ public:
 		const std::string& settingName = "Base" ) : mvIMPACT::acquire::ComponentCollection(pDev),
 			mvLogicGateANDSelector(),
 			mvLogicGateANDSource1(),
+			mvANDSource1Inverter(),
 			mvLogicGateANDSource2(),
+			mvANDSource2Inverter(),
 			mvLogicGateORSelector(),
 			mvLogicGateORSource1(),
 			mvLogicGateORSource2(),
 			mvLogicGateORSource3(),
-			mvLogicGateORSource4()
+			mvLogicGateORSource4(),
+			mvLogicGateSourceSelector(),
+			mvLogicGateSource(),
+			mvLogicGateSourceInverter(),
+			mvLogicGateANDTermSelector(),
+			mvLogicGateANDTermSrc0(),
+			mvLogicGateANDTermSrc1(),
+			mvLogicGateORTermSelector(),
+			mvLogicGateORTermSrc0(),
+			mvLogicGateORTermSrc1()
 	{
 		mvIMPACT::acquire::DeviceComponentLocator locator(pDev, mvIMPACT::acquire::dltSetting, settingName);
 		locator.bindSearchBase( locator.searchbase_id(), "Camera/GenICam" );
 		m_hRoot = locator.searchbase_id();
 		locator.bindComponent( mvLogicGateANDSelector, "mvLogicGateANDSelector" );
 		locator.bindComponent( mvLogicGateANDSource1, "mvLogicGateANDSource1" );
+		locator.bindComponent( mvANDSource1Inverter, "mvANDSource1Inverter" );
 		locator.bindComponent( mvLogicGateANDSource2, "mvLogicGateANDSource2" );
+		locator.bindComponent( mvANDSource2Inverter, "mvANDSource2Inverter" );
 		locator.bindComponent( mvLogicGateORSelector, "mvLogicGateORSelector" );
 		locator.bindComponent( mvLogicGateORSource1, "mvLogicGateORSource1" );
 		locator.bindComponent( mvLogicGateORSource2, "mvLogicGateORSource2" );
 		locator.bindComponent( mvLogicGateORSource3, "mvLogicGateORSource3" );
 		locator.bindComponent( mvLogicGateORSource4, "mvLogicGateORSource4" );
+		locator.bindComponent( mvLogicGateSourceSelector, "mvLogicGateSourceSelector" );
+		locator.bindComponent( mvLogicGateSource, "mvLogicGateSource" );
+		locator.bindComponent( mvLogicGateSourceInverter, "mvLogicGateSourceInverter" );
+		locator.bindComponent( mvLogicGateANDTermSelector, "mvLogicGateANDTermSelector" );
+		locator.bindComponent( mvLogicGateANDTermSrc0, "mvLogicGateANDTermSrc0" );
+		locator.bindComponent( mvLogicGateANDTermSrc1, "mvLogicGateANDTermSrc1" );
+		locator.bindComponent( mvLogicGateORTermSelector, "mvLogicGateORTermSelector" );
+		locator.bindComponent( mvLogicGateORTermSrc0, "mvLogicGateORTermSrc0" );
+		locator.bindComponent( mvLogicGateORTermSrc1, "mvLogicGateORTermSrc1" );
 	}
 	PYTHON_ONLY(%immutable;)
 	/// \brief Selects the AND gate to configure.
@@ -3557,10 +3650,18 @@ public:
 	///
 	/// This enumeration can be used to select the first input signal of the AND gate selected by mvLogicGateANDSelector.
 	PropertyI64 mvLogicGateANDSource1;
+	/// \brief Inverts the first input signal of the AND gate selected by mvLogicGateANDSelector
+	///
+	/// Inverts the first input signal of the AND gate selected by mvLogicGateANDSelector
+	PropertyIBoolean mvANDSource1Inverter;
 	/// \brief Selects the second input signal of the AND gate selected by mvLogicGateANDSelector.
 	///
 	/// This enumeration can be used to select the second input signal of the AND gate selected by mvLogicGateANDSelector.
 	PropertyI64 mvLogicGateANDSource2;
+	/// \brief Inverts the second input signal of the AND gate selected by mvLogicGateANDSelector
+	///
+	/// Inverts the second input signal of the AND gate selected by mvLogicGateANDSelector
+	PropertyIBoolean mvANDSource2Inverter;
 	/// \brief Selects the OR gate to configure.
 	///
 	/// This enumeration selects the OR gate to configure.
@@ -3581,20 +3682,67 @@ public:
 	///
 	/// This enumeration can be used to select the fourth input signal of the OR gate selected by mvLogicGateORSelector.
 	PropertyI64 mvLogicGateORSource4;
+	/// \brief Selects the LogicGateSource of the ANDORMatrix.
+	///
+	/// Selects the LogicGateSource of the ANDORMatrix.
+	PropertyI64 mvLogicGateSourceSelector;
+	/// \brief Selects the input signal of the ANDORMatrix selected by mvLogicGateSourceSelector.
+	///
+	/// Selects the input signal of the ANDORMatrix selected by mvLogicGateSourceSelector.
+	PropertyI64 mvLogicGateSource;
+	PropertyIBoolean mvLogicGateSourceInverter;
+	/// \brief Selects the ANDTerm of the ANDORMatrix.
+	///
+	/// Selects the ANDTerm of the ANDORMatrix.
+	PropertyI64 mvLogicGateANDTermSelector;
+	/// \brief Selects the first input signal of the ANDTerm selected by mvLogicGateANDTermSelector.
+	///
+	/// Selects the first input signal of the ANDTerm selected by mvLogicGateANDTermSelector.
+	PropertyI64 mvLogicGateANDTermSrc0;
+	/// \brief Selects the second input signal of the ANDTerm selected by mvLogicGateANDTermSelector.
+	///
+	/// Selects the second input signal of the ANDTerm selected by mvLogicGateANDTermSelector.
+	PropertyI64 mvLogicGateANDTermSrc1;
+	/// \brief Selects the ORTerm of the ANDORMatrix.
+	///
+	/// Selects the ORTerm of the ANDORMatrix.
+	PropertyI64 mvLogicGateORTermSelector;
+	/// \brief Selects the first input signal of the ORTerm selected by mvLogicGateORTermSelector.
+	///
+	/// Selects the first input signal of the ORTerm selected by mvLogicGateORTermSelector.
+	PropertyI64 mvLogicGateORTermSrc0;
+	/// \brief Selects the second input signal of the ORTerm selected by mvLogicGateORTermSelector.
+	///
+	/// Selects the second input signal of the ORTerm selected by mvLogicGateORTermSelector.
+	PropertyI64 mvLogicGateORTermSrc1;
 	PYTHON_ONLY(%mutable;)
 #ifdef DOTNET_ONLY_CODE
 	PropertyI64 getmvLogicGateANDSelector( void ) const { return mvLogicGateANDSelector; }
 	PropertyI64 getmvLogicGateANDSource1( void ) const { return mvLogicGateANDSource1; }
+	PropertyIBoolean getmvANDSource1Inverter( void ) const { return mvANDSource1Inverter; }
 	PropertyI64 getmvLogicGateANDSource2( void ) const { return mvLogicGateANDSource2; }
+	PropertyIBoolean getmvANDSource2Inverter( void ) const { return mvANDSource2Inverter; }
 	PropertyI64 getmvLogicGateORSelector( void ) const { return mvLogicGateORSelector; }
 	PropertyI64 getmvLogicGateORSource1( void ) const { return mvLogicGateORSource1; }
 	PropertyI64 getmvLogicGateORSource2( void ) const { return mvLogicGateORSource2; }
 	PropertyI64 getmvLogicGateORSource3( void ) const { return mvLogicGateORSource3; }
 	PropertyI64 getmvLogicGateORSource4( void ) const { return mvLogicGateORSource4; }
+	PropertyI64 getmvLogicGateSourceSelector( void ) const { return mvLogicGateSourceSelector; }
+	PropertyI64 getmvLogicGateSource( void ) const { return mvLogicGateSource; }
+	PropertyIBoolean getmvLogicGateSourceInverter( void ) const { return mvLogicGateSourceInverter; }
+	PropertyI64 getmvLogicGateANDTermSelector( void ) const { return mvLogicGateANDTermSelector; }
+	PropertyI64 getmvLogicGateANDTermSrc0( void ) const { return mvLogicGateANDTermSrc0; }
+	PropertyI64 getmvLogicGateANDTermSrc1( void ) const { return mvLogicGateANDTermSrc1; }
+	PropertyI64 getmvLogicGateORTermSelector( void ) const { return mvLogicGateORTermSelector; }
+	PropertyI64 getmvLogicGateORTermSrc0( void ) const { return mvLogicGateORTermSrc0; }
+	PropertyI64 getmvLogicGateORTermSrc1( void ) const { return mvLogicGateORTermSrc1; }
 #endif // #ifdef DOTNET_ONLY_CODE
 };
 
 //-----------------------------------------------------------------------------
+/// \brief Contains features to control the devices Current Control parameters.
+///
+/// Contains features to control the devices Current Control parameters.
 class mvCurrentControl : public mvIMPACT::acquire::ComponentCollection
 //-----------------------------------------------------------------------------
 {
@@ -3800,15 +3948,538 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-/// \brief Provides the default GenICam port of the Device.
+/// \brief Contains features to access the device internal SPI bus.
 ///
-/// Provides the default GenICam port of the Device.
-class Device : public mvIMPACT::acquire::ComponentCollection
+/// Contains features to access the device internal SPI bus.
+class mvSPIControl : public mvIMPACT::acquire::ComponentCollection
 //-----------------------------------------------------------------------------
 {
 public:
-	/// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::Device</b> object.
-	explicit Device(
+	/// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::mvSPIControl</b> object.
+	explicit mvSPIControl(
+		/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+		mvIMPACT::acquire::Device* pDev,
+		/// The name of the driver internal setting to access with this instance.
+		/// A list of valid setting names can be obtained by a call to
+		/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
+		/// settings can be created with the function
+		/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
+		const std::string& settingName = "Base" ) : mvIMPACT::acquire::ComponentCollection(pDev),
+			mvSPIDeviceSelector(),
+			mvSPIOperationSelector(),
+			mvSPIOperationExecute(),
+			mvSPIAccessBuffer(),
+			mvSPIAccessLength()
+	{
+		mvIMPACT::acquire::DeviceComponentLocator locator(pDev, mvIMPACT::acquire::dltSetting, settingName);
+		locator.bindSearchBase( locator.searchbase_id(), "Camera/GenICam" );
+		m_hRoot = locator.searchbase_id();
+		locator.bindComponent( mvSPIDeviceSelector, "mvSPIDeviceSelector" );
+		locator.bindComponent( mvSPIOperationSelector, "mvSPIOperationSelector" );
+		locator.bindComponent( mvSPIOperationExecute, "mvSPIOperationExecute@i" );
+		locator.bindComponent( mvSPIAccessBuffer, "mvSPIAccessBuffer" );
+		locator.bindComponent( mvSPIAccessLength, "mvSPIAccessLength" );
+	}
+	PYTHON_ONLY(%immutable;)
+	/// \brief Selects the SPI device.
+	///
+	/// Selects the SPI device.
+	PropertyI64 mvSPIDeviceSelector;
+	/// \brief Selects the operation. Write: mvSPIAccessLength bytes are written to SPI device. Synchronuously read bytes are stored to internal buffer. Read: Reads mvSPIAccessLength from internal buffer. If mvSPIAccessLength > internal buffer size: Additional 'write zeros' will be done.
+	///
+	/// Selects the operation. Write: mvSPIAccessLength bytes are written to SPI device. Synchronuously read bytes are stored to internal buffer. Read: Reads mvSPIAccessLength from internal buffer. If mvSPIAccessLength > internal buffer size: Additional 'write zeros' will be done.
+	PropertyI64 mvSPIOperationSelector;
+	Method mvSPIOperationExecute;
+	/// \brief Defines the intermediate access buffer that allows the exchange of data.
+	///
+	/// Defines the intermediate access buffer that allows the exchange of data.
+	PropertyS mvSPIAccessBuffer;
+	/// \brief Controls the length of the data.
+	///
+	/// Controls the length of the data.
+	PropertyI64 mvSPIAccessLength;
+	PYTHON_ONLY(%mutable;)
+#ifdef DOTNET_ONLY_CODE
+	PropertyI64 getmvSPIDeviceSelector( void ) const { return mvSPIDeviceSelector; }
+	PropertyI64 getmvSPIOperationSelector( void ) const { return mvSPIOperationSelector; }
+	Method getmvSPIOperationExecute( void ) const { return mvSPIOperationExecute; }
+	PropertyS getmvSPIAccessBuffer( void ) const { return mvSPIAccessBuffer; }
+	PropertyI64 getmvSPIAccessLength( void ) const { return mvSPIAccessLength; }
+#endif // #ifdef DOTNET_ONLY_CODE
+};
+
+//-----------------------------------------------------------------------------
+class mvDACParams : public mvIMPACT::acquire::ComponentCollection
+//-----------------------------------------------------------------------------
+{
+public:
+	/// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::mvDACParams</b> object.
+	explicit mvDACParams(
+		/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+		mvIMPACT::acquire::Device* pDev,
+		/// The name of the driver internal setting to access with this instance.
+		/// A list of valid setting names can be obtained by a call to
+		/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
+		/// settings can be created with the function
+		/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
+		const std::string& settingName = "Base" ) : mvIMPACT::acquire::ComponentCollection(pDev),
+			mvDACOUTA(),
+			mvDACOUTB(),
+			mvDACOUTC(),
+			mvDACOUTD(),
+			DACIndex(),
+			DACValue(),
+			mvErrorDetect0(),
+			mvErrorDetect1()
+	{
+		mvIMPACT::acquire::DeviceComponentLocator locator(pDev, mvIMPACT::acquire::dltSetting, settingName);
+		locator.bindSearchBase( locator.searchbase_id(), "Camera/GenICam" );
+		m_hRoot = locator.searchbase_id();
+		locator.bindComponent( mvDACOUTA, "mvDACOUTA" );
+		locator.bindComponent( mvDACOUTB, "mvDACOUTB" );
+		locator.bindComponent( mvDACOUTC, "mvDACOUTC" );
+		locator.bindComponent( mvDACOUTD, "mvDACOUTD" );
+		locator.bindComponent( DACIndex, "DACIndex" );
+		locator.bindComponent( DACValue, "DACValue" );
+		locator.bindComponent( mvErrorDetect0, "mvErrorDetect0" );
+		locator.bindComponent( mvErrorDetect1, "mvErrorDetect1" );
+	}
+	PYTHON_ONLY(%immutable;)
+	/// \brief Changes the current of the CCDs output signal (Tap1).
+	///
+	/// Changes the current of the CCDs output signal (Tap1).
+	PropertyI64 mvDACOUTA;
+	/// \brief Changes the current of the CCDs output signal (Tap2).
+	///
+	/// Changes the current of the CCDs output signal (Tap2).
+	PropertyI64 mvDACOUTB;
+	/// \brief Not used
+	///
+	/// Not used
+	PropertyI64 mvDACOUTC;
+	/// \brief Sets the sensor's VSUB voltage.
+	///
+	/// Sets the sensor's VSUB voltage.
+	PropertyI64 mvDACOUTD;
+	/// \brief Selects the digital to analog converter(DAC) DACValue will be written to
+	///
+	/// Selects the digital to analog converter(DAC) DACValue will be written to
+	PropertyI64 DACIndex;
+	/// \brief Register value in hex
+	///
+	/// Register value in hex
+	PropertyI64 DACValue;
+	/// \brief Result of the error detection mechanism for lamp0
+	///
+	/// Result of the error detection mechanism for lamp0
+	PropertyI64 mvErrorDetect0;
+	/// \brief Result of the error detection mechanism for lamp1
+	///
+	/// Result of the error detection mechanism for lamp1
+	PropertyI64 mvErrorDetect1;
+	PYTHON_ONLY(%mutable;)
+#ifdef DOTNET_ONLY_CODE
+	PropertyI64 getmvDACOUTA( void ) const { return mvDACOUTA; }
+	PropertyI64 getmvDACOUTB( void ) const { return mvDACOUTB; }
+	PropertyI64 getmvDACOUTC( void ) const { return mvDACOUTC; }
+	PropertyI64 getmvDACOUTD( void ) const { return mvDACOUTD; }
+	PropertyI64 getDACIndex( void ) const { return DACIndex; }
+	PropertyI64 getDACValue( void ) const { return DACValue; }
+	PropertyI64 getmvErrorDetect0( void ) const { return mvErrorDetect0; }
+	PropertyI64 getmvErrorDetect1( void ) const { return mvErrorDetect1; }
+#endif // #ifdef DOTNET_ONLY_CODE
+};
+
+//-----------------------------------------------------------------------------
+/// \brief The System category includes items that belong to the system module of the transport layer.
+///
+/// The System category includes items that belong to the system module of the transport layer.
+class SystemModule : public mvIMPACT::acquire::ComponentCollection
+//-----------------------------------------------------------------------------
+{
+public:
+	/// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::SystemModule</b> object.
+	explicit SystemModule(
+		/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+		mvIMPACT::acquire::Device* pDev ) : mvIMPACT::acquire::ComponentCollection(INVALID_ID),
+			TLVendorName(),
+			TLModelName(),
+			TLID(),
+			TLVersion(),
+			TLPath(),
+			TLType(),
+			interfaceUpdateList(),
+			interfaceSelector(),
+			interfaceID(),
+			interfaceType(),
+			gevInterfaceMACAddress(),
+			gevInterfaceDefaultIPAddress(),
+			gevInterfaceDefaultSubnetMask(),
+			gevInterfaceDefaultGateway(),
+			mvGevInterfaceMTU(),
+			mvGevInterfaceLinkSpeed(),
+			genTLVersionMajor(),
+			genTLVersionMinor(),
+			gevVersionMajor(),
+			gevVersionMinor(),
+			mvGevChannelDummyPacketSendEnable(),
+			mvGevChannelDummyPacketSendInterval()
+	{
+		mvIMPACT::acquire::ComponentLocator locator(pDev->deviceDriverFeatureList());
+		locator.bindSearchBase( locator.searchbase_id(), "GenTL/System" );
+		m_hRoot = locator.searchbase_id();
+		locator.bindComponent( TLVendorName, "TLVendorName" );
+		locator.bindComponent( TLModelName, "TLModelName" );
+		locator.bindComponent( TLID, "TLID" );
+		locator.bindComponent( TLVersion, "TLVersion" );
+		locator.bindComponent( TLPath, "TLPath" );
+		locator.bindComponent( TLType, "TLType" );
+		locator.bindComponent( interfaceUpdateList, "InterfaceUpdateList@i" );
+		locator.bindComponent( interfaceSelector, "InterfaceSelector" );
+		locator.bindComponent( interfaceID, "InterfaceID" );
+		locator.bindComponent( interfaceType, "InterfaceType" );
+		locator.bindComponent( gevInterfaceMACAddress, "GevInterfaceMACAddress" );
+		locator.bindComponent( gevInterfaceDefaultIPAddress, "GevInterfaceDefaultIPAddress" );
+		locator.bindComponent( gevInterfaceDefaultSubnetMask, "GevInterfaceDefaultSubnetMask" );
+		locator.bindComponent( gevInterfaceDefaultGateway, "GevInterfaceDefaultGateway" );
+		locator.bindComponent( mvGevInterfaceMTU, "mvGevInterfaceMTU" );
+		locator.bindComponent( mvGevInterfaceLinkSpeed, "mvGevInterfaceLinkSpeed" );
+		locator.bindComponent( genTLVersionMajor, "GenTLVersionMajor" );
+		locator.bindComponent( genTLVersionMinor, "GenTLVersionMinor" );
+		locator.bindComponent( gevVersionMajor, "GevVersionMajor" );
+		locator.bindComponent( gevVersionMinor, "GevVersionMinor" );
+		locator.bindComponent( mvGevChannelDummyPacketSendEnable, "mvGevChannelDummyPacketSendEnable" );
+		locator.bindComponent( mvGevChannelDummyPacketSendInterval, "mvGevChannelDummyPacketSendInterval" );
+	}
+	PYTHON_ONLY(%immutable;)
+	/// \brief Indicates the name of the transport layer vendor.
+	///
+	/// This is a read only element. It is a string that indicates the name of the transport layer vendor.
+	PropertyS TLVendorName;
+	/// \brief Indicates the name of the transport layer Model.
+	///
+	/// This is a read only element. It is a string that indicates the name of the transport layer Model to distinguish different kinds of GenTL Producer implementations from one vendor.
+	PropertyS TLModelName;
+	/// \brief Indicates the ID of the transport layer.
+	///
+	/// This is a read only element. It is a string that indicates the ID of the transport layer.
+	PropertyS TLID;
+	/// \brief Indicates a vendor specific version string for this transport layer.
+	///
+	/// This is a read only element. It is a string that indicates a vendor specific version string for this transport layer.
+	PropertyS TLVersion;
+	/// \brief Indicates the full path to the GenTL Producer driver including name and extension.
+	///
+	/// This is a read only element. It is a string that indicates the full path to the GenTL Producer driver including name and extension.
+	PropertyS TLPath;
+	/// \brief Identifies the transport layer technology of the GenTL Producer implementation.
+	///
+	/// This is a read only feature. This enumeration provides a value that indicates the transport layer technology of the GenTL Producer implementation.
+	PropertyI64 TLType;
+	/// \brief Updates the internal interface list.
+	///
+	/// This command updates the internal interface list of this transport layer.
+	Method interfaceUpdateList;
+	/// \brief Selector for the different GenTL Producer interfaces.
+	///
+	/// Selector for the different GenTL Producer interfaces. Selector for the different GenTL Producer interfaces. This interface list only changes on execution of InterfaceUpdateList. The selector is 0-based in order to match the index of the C interface.
+	PropertyI64 interfaceSelector;
+	/// \brief GenTL producer wide unique identifier of the selected interface.
+	///
+	/// This is a read only element. It is a string that indicates a GenTL producer wide unique identifier of the selected interface.
+	PropertyS interfaceID;
+	/// \brief Identifies the interfaces technology of the GenTL Producer implementation.
+	///
+	/// This is a read only feature. This enumeration provides a value that indicates interfaces technology of the GenTL Producer implementation.
+	PropertyI64 interfaceType;
+	/// \brief Indicates the 48-bit MAC address of the selected interface.
+	///
+	/// This is a read only element. It indicates the 48-bit MAC address of the selected interface.
+	PropertyI64 gevInterfaceMACAddress;
+	/// \brief Indicates the IP address of the first subnet of the selected interface.
+	///
+	/// This is a read only element. It indicates the IP address of the first subnet of the selected interface.
+	PropertyI64 gevInterfaceDefaultIPAddress;
+	/// \brief Indicates the subnet mask of the first subnet of the selected interface.
+	///
+	/// This is a read only element. It indicates the subnet mask of the first subnet of the selected interface.
+	PropertyI64 gevInterfaceDefaultSubnetMask;
+	/// \brief Indicates the default gateway of the first subnet of the selected interface.
+	///
+	/// This is a read only element. It indicates the default gateway of the first subnet of the selected interface.
+	PropertyI64 gevInterfaceDefaultGateway;
+	/// \brief Indicates the MTU of the selected interface.
+	///
+	/// This is a read only element. It indicates the MTU(Maximum Transmission Unit) of the selected interface.
+	PropertyI64 mvGevInterfaceMTU;
+	/// \brief Indicates the link speed of this interface.
+	///
+	/// This is a read only element. It indicates the link speed(in Mbits per second) of this interface.
+	PropertyI64 mvGevInterfaceLinkSpeed;
+	/// \brief Defines the major version number of the GenTL specification the GenTL Producer implementation complies with.
+	///
+	/// This is a read only element. It defines the major version number of the GenTL specification the GenTL Producer implementation complies with.
+	PropertyI64 genTLVersionMajor;
+	/// \brief Defines the minor version number of the GenTL specification the GenTL Producer implementation complies with.
+	///
+	/// This is a read only element. It defines the minor version number of the GenTL specification the GenTL Producer implementation complies with.
+	PropertyI64 genTLVersionMinor;
+	/// \brief Major version of the specification.
+	///
+	/// Major version of the specification.
+	PropertyI64 gevVersionMajor;
+	/// \brief Minor version of the specification.
+	///
+	/// Minor version of the specification.
+	PropertyI64 gevVersionMinor;
+	/// \brief Enables or disables the periodical sending of dummy packets to a stream or message channel source port of a GigE Vision device.
+	///
+	/// Enables or disables the periodical sending of dummy packets to a stream or message channel source port of a GigE Vision device. This might be useful to overcome firewall related problems when working with network devices.
+	PropertyIBoolean mvGevChannelDummyPacketSendEnable;
+	/// \brief Defines the period(in ms) for sending dummy packets to a stream or message channel source port of a GigE Vision device.
+	///
+	/// Defines the period(in ms) for sending dummy packets to a stream or message channel source port of a GigE Vision device. This might be useful to overcome firewall related problems when working with network devices.
+	PropertyI64 mvGevChannelDummyPacketSendInterval;
+	PYTHON_ONLY(%mutable;)
+#ifdef DOTNET_ONLY_CODE
+	PropertyS getTLVendorName( void ) const { return TLVendorName; }
+	PropertyS getTLModelName( void ) const { return TLModelName; }
+	PropertyS getTLID( void ) const { return TLID; }
+	PropertyS getTLVersion( void ) const { return TLVersion; }
+	PropertyS getTLPath( void ) const { return TLPath; }
+	PropertyI64 getTLType( void ) const { return TLType; }
+	Method getInterfaceUpdateList( void ) const { return interfaceUpdateList; }
+	PropertyI64 getInterfaceSelector( void ) const { return interfaceSelector; }
+	PropertyS getInterfaceID( void ) const { return interfaceID; }
+	PropertyI64 getInterfaceType( void ) const { return interfaceType; }
+	PropertyI64 getGevInterfaceMACAddress( void ) const { return gevInterfaceMACAddress; }
+	PropertyI64 getGevInterfaceDefaultIPAddress( void ) const { return gevInterfaceDefaultIPAddress; }
+	PropertyI64 getGevInterfaceDefaultSubnetMask( void ) const { return gevInterfaceDefaultSubnetMask; }
+	PropertyI64 getGevInterfaceDefaultGateway( void ) const { return gevInterfaceDefaultGateway; }
+	PropertyI64 getmvGevInterfaceMTU( void ) const { return mvGevInterfaceMTU; }
+	PropertyI64 getmvGevInterfaceLinkSpeed( void ) const { return mvGevInterfaceLinkSpeed; }
+	PropertyI64 getGenTLVersionMajor( void ) const { return genTLVersionMajor; }
+	PropertyI64 getGenTLVersionMinor( void ) const { return genTLVersionMinor; }
+	PropertyI64 getGevVersionMajor( void ) const { return gevVersionMajor; }
+	PropertyI64 getGevVersionMinor( void ) const { return gevVersionMinor; }
+	PropertyIBoolean getmvGevChannelDummyPacketSendEnable( void ) const { return mvGevChannelDummyPacketSendEnable; }
+	PropertyI64 getmvGevChannelDummyPacketSendInterval( void ) const { return mvGevChannelDummyPacketSendInterval; }
+#endif // #ifdef DOTNET_ONLY_CODE
+};
+
+//-----------------------------------------------------------------------------
+/// \brief The Interface category includes items that belong to the interface module of the transport layer.
+///
+/// The Interface category includes items that belong to the interface module of the transport layer.
+class InterfaceModule : public mvIMPACT::acquire::ComponentCollection
+//-----------------------------------------------------------------------------
+{
+public:
+	/// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::InterfaceModule</b> object.
+	explicit InterfaceModule(
+		/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+		mvIMPACT::acquire::Device* pDev,
+		/// The \a index of the instance this object shall be created for. Passing an invalid index will raise an exception.
+		int index ) : mvIMPACT::acquire::ComponentCollection(INVALID_ID),
+			interfaceID(),
+			interfaceType(),
+			gevInterfaceGatewaySelector(),
+			gevInterfaceGateway(),
+			gevInterfaceMACAddress(),
+			gevInterfaceSubnetSelector(),
+			gevInterfaceSubnetIPAddress(),
+			gevInterfaceSubnetMask(),
+			mvGevInterfaceMTU(),
+			mvGevInterfaceLinkSpeed(),
+			mvGevAdvancedDeviceDiscoveryEnable(),
+			deviceUpdateList(),
+			deviceSelector(),
+			deviceID(),
+			deviceType(),
+			deviceVendorName(),
+			deviceModelName(),
+			deviceAccessStatus(),
+			mvDevicePrimaryApplicationSwitchoverSupported(),
+			mvDevicePrimaryApplicationSwitchoverEnable(),
+			mvDevicePrimaryApplicationSwitchoverKey(),
+			mvDeviceNetworkInterfaceCount(),
+			gevDeviceIPAddress(),
+			gevDeviceSubnetMask(),
+			gevDeviceMACAddress()
+	{
+		mvIMPACT::acquire::ComponentLocator locator(pDev->deviceDriverFeatureList());
+		locator.bindSearchBase( locator.searchbase_id(), "GenTL/Interfaces" );
+		std::ostringstream oss;
+		oss << "Interface" << index;
+		locator = mvIMPACT::acquire::ComponentLocator(locator.findComponent( oss.str() ));
+		m_hRoot = locator.searchbase_id();
+		locator.bindComponent( interfaceID, "InterfaceID" );
+		locator.bindComponent( interfaceType, "InterfaceType" );
+		locator.bindComponent( gevInterfaceGatewaySelector, "GevInterfaceGatewaySelector" );
+		locator.bindComponent( gevInterfaceGateway, "GevInterfaceGateway" );
+		locator.bindComponent( gevInterfaceMACAddress, "GevInterfaceMACAddress" );
+		locator.bindComponent( gevInterfaceSubnetSelector, "GevInterfaceSubnetSelector" );
+		locator.bindComponent( gevInterfaceSubnetIPAddress, "GevInterfaceSubnetIPAddress" );
+		locator.bindComponent( gevInterfaceSubnetMask, "GevInterfaceSubnetMask" );
+		locator.bindComponent( mvGevInterfaceMTU, "mvGevInterfaceMTU" );
+		locator.bindComponent( mvGevInterfaceLinkSpeed, "mvGevInterfaceLinkSpeed" );
+		locator.bindComponent( mvGevAdvancedDeviceDiscoveryEnable, "mvGevAdvancedDeviceDiscoveryEnable" );
+		locator.bindComponent( deviceUpdateList, "DeviceUpdateList@i" );
+		locator.bindComponent( deviceSelector, "DeviceSelector" );
+		locator.bindComponent( deviceID, "DeviceID" );
+		locator.bindComponent( deviceType, "DeviceType" );
+		locator.bindComponent( deviceVendorName, "DeviceVendorName" );
+		locator.bindComponent( deviceModelName, "DeviceModelName" );
+		locator.bindComponent( deviceAccessStatus, "DeviceAccessStatus" );
+		locator.bindComponent( mvDevicePrimaryApplicationSwitchoverSupported, "mvDevicePrimaryApplicationSwitchoverSupported" );
+		locator.bindComponent( mvDevicePrimaryApplicationSwitchoverEnable, "mvDevicePrimaryApplicationSwitchoverEnable" );
+		locator.bindComponent( mvDevicePrimaryApplicationSwitchoverKey, "mvDevicePrimaryApplicationSwitchoverKey" );
+		locator.bindComponent( mvDeviceNetworkInterfaceCount, "mvDeviceNetworkInterfaceCount" );
+		locator.bindComponent( gevDeviceIPAddress, "GevDeviceIPAddress" );
+		locator.bindComponent( gevDeviceSubnetMask, "GevDeviceSubnetMask" );
+		locator.bindComponent( gevDeviceMACAddress, "GevDeviceMACAddress" );
+	}
+	PYTHON_ONLY(%immutable;)
+	/// \brief GenTL producer wide unique identifier of the selected interface.
+	///
+	/// This is a read only element. It is a string that indicates a GenTL producer wide unique identifier of the selected interface.
+	PropertyS interfaceID;
+	/// \brief Identifies the interfaces technology of the GenTL Producer implementation.
+	///
+	/// This is a read only feature. This enumeration provides a value that indicates interfaces technology of the GenTL Producer implementation.
+	PropertyI64 interfaceType;
+	/// \brief Selector for the different gateway entries for this interface.
+	///
+	/// Selector for the different gateway entries for this interface. The selector is 0-based in order to match the index of the C interface.
+	PropertyI64 gevInterfaceGatewaySelector;
+	/// \brief Indicates the IP address of the selected gateway entry of this interface.
+	///
+	/// This is a read only element. It indicates the IP address of the selected gateway entry of this interface.
+	PropertyI64 gevInterfaceGateway;
+	/// \brief Indicates the 48-bit MAC address of the selected interface.
+	///
+	/// This is a read only element. It indicates the 48-bit MAC address of the selected interface.
+	PropertyI64 gevInterfaceMACAddress;
+	/// \brief Selector for the different subnet entries for this interface.
+	///
+	/// Selector for the different subnet entries for this interface. The selector is 0-based in order to match the index of the C interface.
+	PropertyI64 gevInterfaceSubnetSelector;
+	/// \brief Indicates the IP address of the selected subnet entry of this interface.
+	///
+	/// This is a read only element. It indicates the IP address of the selected subnet entry of this interface.
+	PropertyI64 gevInterfaceSubnetIPAddress;
+	/// \brief Indicates the subnet mask of the selected subnet entry of this interface.
+	///
+	/// This is a read only element. It indicates the subnet mask of the selected subnet entry of this interface.
+	PropertyI64 gevInterfaceSubnetMask;
+	/// \brief Indicates the MTU of this interface.
+	///
+	/// This is a read only element. It indicates the MTU(Maximum Transmission Unit) of this interface.
+	PropertyI64 mvGevInterfaceMTU;
+	/// \brief Indicates the link speed of this interface.
+	///
+	/// This is a read only element. It indicates the link speed(in Mbits per second) of this interface.
+	PropertyI64 mvGevInterfaceLinkSpeed;
+	/// \brief Enables or disables the advanced device discovery.
+	///
+	/// Enables or disables the advanced device discovery. When enabled also devices, which currently use an incorrect IP configuration for the network they are connected to might be detectable. However depending on the operating system this may result in devices showing up on interfaces to which they are not physically connected.
+	PropertyIBoolean mvGevAdvancedDeviceDiscoveryEnable;
+	/// \brief Updates the internal device list of this interface.
+	///
+	/// This command updates the internal device list of this interface.
+	Method deviceUpdateList;
+	/// \brief Selector for the different devices on this interface.
+	///
+	/// Selector for the different devices on this interface. The limits of this feature might change upon execution of DeviceUpdateList.
+	PropertyI64 deviceSelector;
+	/// \brief Device Identifier (serial number).
+	///
+	/// Device Identifier (serial number).
+	PropertyS deviceID;
+	/// \brief Identifies the device technology of the GenTL Producer implementation.
+	///
+	/// This is a read only feature. This enumeration provides a value that indicates device technology of the GenTL Producer implementation.
+	PropertyI64 deviceType;
+	/// \brief Name of the manufacturer of the device.
+	///
+	/// Name of the manufacturer of the device.
+	PropertyS deviceVendorName;
+	/// \brief Model of the device.
+	///
+	/// Model of the device.
+	PropertyS deviceModelName;
+	/// \brief Indicates the current access status for the device.
+	///
+	/// This is a read only feature. This enumeration provides a value that indicates the current access status for the device.
+	PropertyI64 deviceAccessStatus;
+	/// \brief Reports the availability of the primary application switchover feature.
+	///
+	/// Reports the availability of the primary application switchover feature.
+	PropertyIBoolean mvDevicePrimaryApplicationSwitchoverSupported;
+	/// \brief Enables or disables primary application switchover.
+	///
+	/// Enables or disables primary application switchover.
+	PropertyIBoolean mvDevicePrimaryApplicationSwitchoverEnable;
+	/// \brief Controls the key to use to authenticate primary application switchover requests.
+	///
+	/// Controls the key to use to authenticate primary application switchover requests. If the device to take over has 'mvDevicePrimaryApplicationSwitchoverEnable' set to true and this key matches the devices internal key control access will be granted.
+	PropertyI64 mvDevicePrimaryApplicationSwitchoverKey;
+	/// \brief The number of physical network interfaces supported by this device.
+	///
+	/// This is an integer feature. It contains the number of physical network interfaces supported by this device.
+	PropertyI64 mvDeviceNetworkInterfaceCount;
+	/// \brief Indicates the current IP address of the GVCP interface of the selected remote device.
+	///
+	/// This is a read only element. It indicates the current IP address of the GVCP interface of the selected remote device.
+	PropertyI64 gevDeviceIPAddress;
+	/// \brief Indicates the current subnet mask of the GVCP interface of the selected remote device.
+	///
+	/// This is a read only element. It indicates the current subnet mask of the GVCP interface of the selected remote device.
+	PropertyI64 gevDeviceSubnetMask;
+	/// \brief Indicates the 48-bit MAC address of the GVCP interface of the selected remote device.
+	///
+	/// This is a read only element. It indicates the 48-bit MAC address of the GVCP interface of the selected remote device.
+	PropertyI64 gevDeviceMACAddress;
+	PYTHON_ONLY(%mutable;)
+#ifdef DOTNET_ONLY_CODE
+	PropertyS getInterfaceID( void ) const { return interfaceID; }
+	PropertyI64 getInterfaceType( void ) const { return interfaceType; }
+	PropertyI64 getGevInterfaceGatewaySelector( void ) const { return gevInterfaceGatewaySelector; }
+	PropertyI64 getGevInterfaceGateway( void ) const { return gevInterfaceGateway; }
+	PropertyI64 getGevInterfaceMACAddress( void ) const { return gevInterfaceMACAddress; }
+	PropertyI64 getGevInterfaceSubnetSelector( void ) const { return gevInterfaceSubnetSelector; }
+	PropertyI64 getGevInterfaceSubnetIPAddress( void ) const { return gevInterfaceSubnetIPAddress; }
+	PropertyI64 getGevInterfaceSubnetMask( void ) const { return gevInterfaceSubnetMask; }
+	PropertyI64 getmvGevInterfaceMTU( void ) const { return mvGevInterfaceMTU; }
+	PropertyI64 getmvGevInterfaceLinkSpeed( void ) const { return mvGevInterfaceLinkSpeed; }
+	PropertyIBoolean getmvGevAdvancedDeviceDiscoveryEnable( void ) const { return mvGevAdvancedDeviceDiscoveryEnable; }
+	Method getDeviceUpdateList( void ) const { return deviceUpdateList; }
+	PropertyI64 getDeviceSelector( void ) const { return deviceSelector; }
+	PropertyS getDeviceID( void ) const { return deviceID; }
+	PropertyI64 getDeviceType( void ) const { return deviceType; }
+	PropertyS getDeviceVendorName( void ) const { return deviceVendorName; }
+	PropertyS getDeviceModelName( void ) const { return deviceModelName; }
+	PropertyI64 getDeviceAccessStatus( void ) const { return deviceAccessStatus; }
+	PropertyIBoolean getmvDevicePrimaryApplicationSwitchoverSupported( void ) const { return mvDevicePrimaryApplicationSwitchoverSupported; }
+	PropertyIBoolean getmvDevicePrimaryApplicationSwitchoverEnable( void ) const { return mvDevicePrimaryApplicationSwitchoverEnable; }
+	PropertyI64 getmvDevicePrimaryApplicationSwitchoverKey( void ) const { return mvDevicePrimaryApplicationSwitchoverKey; }
+	PropertyI64 getmvDeviceNetworkInterfaceCount( void ) const { return mvDeviceNetworkInterfaceCount; }
+	PropertyI64 getGevDeviceIPAddress( void ) const { return gevDeviceIPAddress; }
+	PropertyI64 getGevDeviceSubnetMask( void ) const { return gevDeviceSubnetMask; }
+	PropertyI64 getGevDeviceMACAddress( void ) const { return gevDeviceMACAddress; }
+#endif // #ifdef DOTNET_ONLY_CODE
+};
+
+//-----------------------------------------------------------------------------
+/// \brief The Device category includes items that belong to the device module of the transport layer.
+///
+/// The Device category includes items that belong to the device module of the transport layer.
+class DeviceModule : public mvIMPACT::acquire::ComponentCollection
+//-----------------------------------------------------------------------------
+{
+public:
+	/// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::DeviceModule</b> object.
+	explicit DeviceModule(
 		/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
 		mvIMPACT::acquire::Device* pDev,
 		/// The name of the driver internal setting to access with this instance.
@@ -3861,17 +4532,17 @@ public:
 	///
 	/// This is a read only feature. This enumeration provides a value that indicates device technology of the GenTL Producer implementation.
 	PropertyI64 deviceType;
-	/// \brief Indicates the current IP address of the GVCP interface of the remote device.
+	/// \brief Indicates the current IP address of the GVCP interface of the selected remote device.
 	///
-	/// This is a read only element. It indicates the current IP address of the GVCP interface of the remote device.
+	/// This is a read only element. It indicates the current IP address of the GVCP interface of the selected remote device.
 	PropertyI64 gevDeviceIPAddress;
-	/// \brief Indicates the current subnet mask of the GVCP interface of the remote device.
+	/// \brief Indicates the current subnet mask of the GVCP interface of the selected remote device.
 	///
-	/// This is a read only element. It indicates the current subnet mask of the GVCP interface of the remote device.
+	/// This is a read only element. It indicates the current subnet mask of the GVCP interface of the selected remote device.
 	PropertyI64 gevDeviceSubnetMask;
-	/// \brief Indicates the 48-bit MAC address of the GVCP interface of the remote device.
+	/// \brief Indicates the 48-bit MAC address of the GVCP interface of the selected remote device.
 	///
-	/// This is a read only element. It indicates the 48-bit MAC address of the GVCP interface of the remote device.
+	/// This is a read only element. It indicates the 48-bit MAC address of the GVCP interface of the selected remote device.
 	PropertyI64 gevDeviceMACAddress;
 	/// \brief Indicates the current gateway of the GVCP interface of the remote device.
 	///
@@ -3909,12 +4580,12 @@ public:
 /// \brief The DataStream category includes items that belong to the data stream module of the transport layer.
 ///
 /// The DataStream category includes items that belong to the data stream module of the transport layer.
-class DataStream : public mvIMPACT::acquire::ComponentCollection
+class DataStreamModule : public mvIMPACT::acquire::ComponentCollection
 //-----------------------------------------------------------------------------
 {
 public:
-	/// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::DataStream</b> object.
-	explicit DataStream(
+	/// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::DataStreamModule</b> object.
+	explicit DataStreamModule(
 		/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
 		mvIMPACT::acquire::Device* pDev,
 		/// The \a index of the instance this object shall be created for. Passing an invalid index will raise an exception.
@@ -4048,8 +4719,10 @@ public:
 #endif // #ifdef DOTNET_ONLY_CODE
 };
 
+/// @}
+
 		} // namespace GenICam
 	} // namespace acquire
 } // namespace mvIMPACT
 
-#endif //mvIMPACT_acquire_GenICam_autogen_h
+#endif //mvIMPACT_acquire_GenICam_CPP_autogen_h
