@@ -43,9 +43,6 @@ This file is part of the MAVCONN project
 #include <stdio.h>   /* Standard input/output definitions */
 #include <string.h>  /* String function definitions */
 
-// MAVLINK includes
-#include <mavlink.h>
-
 #include <vector>
 
 #include "glib.h"

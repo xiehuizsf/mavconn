@@ -55,6 +55,10 @@ PxCameraCalibrationStandard::PxCameraCalibrationStandard(const char *filename)
     string fileHeader;
     getline(calfile,fileHeader);
 
+    m_cc.resize(2);
+    m_focal.resize(2);
+    m_kc.resize(5);
+
     // Process the values
     calfile >> m_size.width; calfile >> m_size.height; // get image size
     calfile >> m_cc[0]; calfile >> m_cc[1]; // get camera center
@@ -74,7 +78,7 @@ PxCameraCalibrationStandard::PxCameraCalibrationStandard(const char *filename)
     m_intrisicMatrixInverse.at<float>(0,0) = 1.0f/m_focal[0]; m_intrisicMatrixInverse.at<float>(0,2) = -m_cc[0]/m_focal[0];
     m_intrisicMatrixInverse.at<float>(1,1) = 1.0f/m_focal[1]; m_intrisicMatrixInverse.at<float>(1,2) = -m_cc[1]/m_focal[1];
 
-    distortion = cv::Mat(cv::Size(5, 1), CV_32FC1, m_kc);
+    m_distortion = cv::Mat(m_kc);
 }
 
 /**
@@ -90,7 +94,7 @@ PxCameraCalibrationStandard::PxCameraCalibrationStandard(const char *filename)
 void PxCameraCalibrationStandard::initUndistortMap(cv::Mat &rMapX, cv::Mat &rMapY) const
 {
 	// Just use the OpenCV InitUndistortMap function
-	cv::initUndistortRectifyMap(m_intrisicMatrix, distortion, cv::Mat(), m_intrisicMatrix, m_size, CV_32FC1, rMapX, rMapY);
+	cv::initUndistortRectifyMap(m_intrisicMatrix, m_distortion, cv::Mat(), m_intrisicMatrix, m_size, CV_32FC1, rMapX, rMapY);
 }
 
 /**
@@ -138,4 +142,24 @@ void PxCameraCalibrationStandard::undistortPoints(const CvPoint2D32f *pSrc, CvPo
 void PxCameraCalibrationStandard::distortPoints(const CvPoint2D32f* pSrc, CvPoint2D32f* pDest, int count) const
 {
 	//there is no opencv function for this
+}
+
+const std::vector<float>& PxCameraCalibrationStandard::focalLength(void) const
+{
+	return m_focal;
+}
+
+const std::vector<float>& PxCameraCalibrationStandard::principalPoint(void) const
+{
+	return m_cc;
+}
+
+const std::vector<float>& PxCameraCalibrationStandard::distortionCoeffs(void) const
+{
+	return m_kc;
+}
+
+const cv::Mat& PxCameraCalibrationStandard::distortion(void) const
+{
+	return m_distortion;
 }

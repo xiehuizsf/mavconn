@@ -15,6 +15,8 @@
 #include <iostream>
 #include <vector>
 
+#include <pixhawk/mavlink.h>
+
 #include "PxVector3.h"
 
 #include "mavconn.h"
