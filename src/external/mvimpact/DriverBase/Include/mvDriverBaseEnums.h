@@ -14,10 +14,6 @@
 #endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
 
 #if defined(BUILD_MVBLUECOUGAR_DOCUMENTATION)
-#	define IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
-#	define IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION
-#	define IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-#	define IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
 #	if defined(BUILD_MVBLUECOUGARP_DOCUMENTATION)
 #		define IGNORE_MVBLUECOUGARS_SPECIFIC_DOCUMENTATION
 #		define IGNORE_MVBLUELYNXM7_SPECIFIC_DOCUMENTATION
@@ -28,35 +24,53 @@
 #		define IGNORE_MVBLUECOUGARP_SPECIFIC_DOCUMENTATION
 #		define IGNORE_MVBLUECOUGARS_SPECIFIC_DOCUMENTATION
 #	endif
+#	define IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+#	define IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION
+#	define IGNORE_MVBLUELYNXX_SPECIFIC_DOCUMENTATION
+#	define IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 #	define IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
+#	define IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
 #elif defined(BUILD_MVBLUEFOX_DOCUMENTATION)
 #	define IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
 #	define IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION
+#	define IGNORE_MVBLUELYNXX_SPECIFIC_DOCUMENTATION
 #	define IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-#	define IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
 #	define IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
+#	define IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
 #elif defined(BUILD_MVBLUELYNX_DOCUMENTATION)
 #	define IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
 #	define IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+#	define IGNORE_MVBLUELYNXX_SPECIFIC_DOCUMENTATION
 #	define IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-#	define IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
 #	define IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
+#	define IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
+#elif defined(BUILD_MVBLUELYNXX_DOCUMENTATION)
+#	define IGNORE_MVDEVICE_SPECIFIC_INTERFACE_DOCUMENTATION
+#	define IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
+#	define IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+#	define IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION
+#	define IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+#	define IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
+#	define IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
 #elif defined(BUILD_MVGRABBER_DOCUMENTATION)
 #	define IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
 #	define IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
 #	define IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION
-#	define IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
+#	define IGNORE_MVBLUELYNXX_SPECIFIC_DOCUMENTATION
 #	define IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
+#	define IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
 #elif defined(BUILD_MVVIRTUALDEVICE_DOCUMENTATION)
 #	define IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
 #	define IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
 #	define IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION
+#	define IGNORE_MVBLUELYNXX_SPECIFIC_DOCUMENTATION
 #	define IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 #	define IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
 #elif defined(BUILD_MVV4L2_DOCUMENTATION)
 #	define IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
 #	define IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
 #	define IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION
+#	define IGNORE_MVBLUELYNXX_SPECIFIC_DOCUMENTATION
 #	define IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 #	define IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
 #endif // device specific documentation macros
@@ -81,7 +95,7 @@
 
 //-----------------------------------------------------------------------------
 /// \brief Defines which field triggers the start of the acquisition.
-enum TAcquisitionField
+enum TAcquisitionField // flags_attribute, uint_type
 //-----------------------------------------------------------------------------
 {
 	/// \brief Controlled by the camera parameter.
@@ -160,7 +174,7 @@ enum TAoiMode
 	/// - Assume a device that can deliver 640 x 480 pixels.
 	/// - The user selects to capture an rectangular AOI starting at 100/100 with a width of 200*200
 	///
-	/// Now in the centered AOI mode a processing function will use a window smaller then the AOI in the middle
+	/// Now in the centered AOI mode a processing function will use a window smaller than the AOI in the middle
 	/// of the user defined AOI. This e.g. could be a rectangle starting at 150/150 with a width of 100*100.
 	///
 	///\code
@@ -211,6 +225,19 @@ enum TAutoControlMode
 	/// \brief The standard auto control mode.
 	acmStandard,
 	/// \brief A device specific auto control mode.
+	///
+	/// \if BUILD_MVBLUEFOX_DOCUMENTATION
+	/// For mvBlueFOX devices of type 202b and 202d the operation in device specific AEC/AGC
+	/// mode is limited in (non continous)triggered-modes. AEC/AGC only works while the trigger
+	/// signal is active. As these sensor types only support the trigger modes
+	/// <b>mvIMPACT::acquire::ctmOnHighLevel</b> and <b>mvIMPACT::acquire::ctmOnLowLevel</b>
+	/// 'active' means that the required signal level for that mode(either \a high or \a low)
+	/// is present.
+	///
+	/// When this signal level is no longer present AEC/AGC will stop working and gain and exposure
+	/// will be set to a static value. This is due to a limitation of the sensor chip. Effectively this
+	/// means that for single frame triggering requiring short active pulses AEC/AGC is not possible.
+	/// \endif
 	acmDeviceSpecific
 };
 
@@ -251,7 +278,7 @@ enum TAutoOffsetCalibration
 
 //-----------------------------------------------------------------------------
 /// \brief Defines the bayer conversion algorithm to use.
-enum TBayerConversionMode
+enum TBayerConversionMode // uint_type
 //-----------------------------------------------------------------------------
 {
 	/// \brief Linear interpolation.
@@ -273,7 +300,6 @@ enum TBayerConversionMode
 	bcmCustom = 0x80000000,
 	MV_ADDITONAL_CUSTOM_BAYER_CONVERSION_MODE
 #endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY) && !defined(WRAP_DOTNET)
-
 };
 
 //-----------------------------------------------------------------------------
@@ -336,11 +362,59 @@ enum TBayerWhiteBalanceResult
 	//-----------------------------------------------------------------------------
 	{
 		/// \brief No footer.
-		bffmOff			= 0,
+		bffmOff  = 0,
 		/// \brief A 64 Byte footer (standard).
-		bffm64B			= 64,
+		bffm64B  = 64,
 		/// \brief A long 512 Byte footer.
-		bffm512B		= 512
+		bffm512B = 512
+	};
+
+	//-----------------------------------------------------------------------------
+	/// \brief Defines valid image sensor capabilities
+	///
+	/// These enums may be 'ored' together.
+	enum TBlueFOXInfoSensorCapabilities // flags_attribute, uint_type
+	//-----------------------------------------------------------------------------
+	{
+		/// \brief A dummy constant to indicate, that this device does not have any capabilities defined by other
+		/// constants belonging to this enumeration.
+		bfiscNone               = 0x00000,
+		/// \brief This sensor allows to control the exposure time.
+		bfiscExposure           = 0x00001,
+		/// \brief This sensor allows to control the exposure time automatically.
+		bfiscExposureAuto       = 0x00002,
+		/// \brief This sensor allows to control the gain.
+		bfiscGain               = 0x00004,
+		/// \brief This sensor allows to control the gain automatically.
+		bfiscGainAuto           = 0x00008,
+		/// \brief This sensor allows to control the offset.
+		bfiscOffset             = 0x00010,
+		/// \brief This sensor allows to control the offset automatically.
+		bfiscOffsetAuto         = 0x00020,
+		/// \brief This sensor supports binning.
+		bfiscBinning            = 0x00040,
+		/// \brief This sensor supports triggered acquisition.
+		bfiscTrigger            = 0x00080,
+		/// \brief This sensor allows to output the 'exposure active' signal(e.g. to control a flash).
+		bfiscFlash              = 0x00100,
+		/// \brief This sensor supports line triggered acquisition.
+		bfiscLineTrigger        = 0x00200,
+		/// \brief This sensor can perform shading correction.
+		bfiscShadingCorrection  = 0x00400,
+		/// \brief This sensor supports overlapped exposure.
+		bfiscOverlappedExposure = 0x00800,
+		/// \brief This sensor supports frame delay.
+		bfiscFrameDelay         = 0x01000,
+		/// \brief This sensor supports line delay.
+		bfiscLineDelay          = 0x02000,
+		/// \brief This sensor supports to define an AOI for the AGC/AEC/AOC(Auto Offset Control) features.
+		bfiscAutoControlAOI     = 0x04000,
+		/// \brief This sensor supports to define the control speed for the AGC/AEC/AOC(Auto Offset Control) features.
+		bfiscAutoControlSpeed   = 0x08000,
+		/// \brief This sensor supports to define a delay for the AGC/AEC/AOC(Auto Offset Control) features.
+		bfiscAutoControlDelay   = 0x10000,
+		/// \brief This sensor supports a temperature sensor within the imager
+		bfiscTemperatureSensor  = 0x20000
 	};
 
 	//-----------------------------------------------------------------------------
@@ -408,21 +482,21 @@ enum TBayerWhiteBalanceResult
 	//-----------------------------------------------------------------------------
 	{
 		/// \brief 16KB blocks.
-		bfts16KB	= 16*1024,
+		bfts16KB   = 16*1024,
 		/// \brief 32KB blocks.
-		bfts32KB	= 32*1024,
+		bfts32KB   = 32*1024,
 		/// \brief 64KB blocks.
-		bfts64KB	= 64*1024,
+		bfts64KB   = 64*1024,
 		/// \brief 128KB blocks.
-		bfts128KB	= 128*1024,
+		bfts128KB  = 128*1024,
 		/// \brief 256KB blocks.
-		bfts256KB	= 256*1024,
+		bfts256KB  = 256*1024,
 		/// \brief 512KB blocks.
-		bfts512KB	= 512*1024,
+		bfts512KB  = 512*1024,
 		/// \brief 1024KB blocks.
-		bfts1024KB	= 1024*1024,
+		bfts1024KB = 1024*1024,
 		/// \brief 2048KB blocks.
-		bfts2048KB	= 2048*1024
+		bfts2048KB = 2048*1024
 	};
 #endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
 
@@ -434,11 +508,11 @@ enum TBayerWhiteBalanceResult
 	{
 		/// \brief Disable the <i>data clip</i> mode.
 		/// All pixel values <b>[0-255]</b> will be returned in the image.
-		blcdcmOff	= 0,
+		blcdcmOff = 0,
 		/// \brief Enable the <i>data clip</i> mode.
 		/// The image pixel values will be clipped to <b>247</b>. The other values
 		/// <b>[248-255]</b> can be used for colour display.
-		blcdcmOn	= 1
+		blcdcmOn = 1
 	};
 
 	//-----------------------------------------------------------------------------
@@ -447,25 +521,11 @@ enum TBayerWhiteBalanceResult
 	//-----------------------------------------------------------------------------
 	{
 		/// \brief Disable the <i>flash</i>.
-		blcfmOff		= 0,
+		blcfmOff = 0,
 		/// \brief Enable the <i>flash</i>.
-		blcfmOn			= 1,
+		blcfmOn = 1,
 		/// \brief Enable the special mode: <i>software flash</i>.
-		blcfmSoftware	= 2
-	};
-
-	//-----------------------------------------------------------------------------
-	/// \todo document me
-	enum TBlueLYNXVideoOutMode
-	//-----------------------------------------------------------------------------
-	{
-		blvomOff = 0,
-		blvom50Hz,
-		blvom60Hz,
-		blvomVGA_640_480_75Hz,
-		blvomVGA_800_600_60Hz,
-		blvomVGA_800_600_72Hz,
-		blvomVGA_1024_768_60Hz
+		blcfmSoftware = 2
 	};
 #endif // IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION
 
@@ -503,7 +563,7 @@ enum TCameraAoiMode
 /// resulting in useful images again). Therefore this feature has deliberately
 /// left available. \n \n
 /// \image html Binning_modes.png
-enum TCameraBinningMode
+enum TCameraBinningMode // flags_attribute, uint_type
 //-----------------------------------------------------------------------------
 {
 	/// \brief No Binning.
@@ -707,6 +767,161 @@ enum TCameraInterlacedType
 	/// image. The first frame contains all the odd lines (0, 2, 4, ... ) of the image, while 
 	/// the second frame contains all even lines of the image.
 	citInvertedInterlaced
+};
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+	//-----------------------------------------------------------------------------
+	/// \brief Defines how the camera transmits the <b>DVAL</b> signal defined in the
+	/// <b>CameraLink&reg; standard</b>.
+	enum TCameraLinkDataValidMode
+	//-----------------------------------------------------------------------------
+	{
+		/// \brief The camera transmits a data valid (<b>DVAL</b>) signal, that should
+		/// be evaluated by the frame grabber.
+		cldvmActive = 0,
+		/// \brief The camera does not transmit a data valid (<b>DVAL</b>) signal, that should
+		/// be evaluated by the frame grabber.
+		cldvmInactive
+	};
+
+	//-----------------------------------------------------------------------------
+	/// \brief Defines valid ways a camera can offer image data to a capture device.
+	enum TCameraOutput
+	//-----------------------------------------------------------------------------
+	{
+		/// \brief Specifies an undefined output.
+		coUndefined = -1,
+		/// \brief Auto mode. Here the capture device tries to guess how the data is transmitted. 
+		coAuto = 0,
+		/// \brief The camera will offer an analogue composite video signal.
+		coComposite = 1,
+		/// \brief The camera will offer <b>CameraLink&reg; Base</b> compliant image data.
+		coBase = 2,
+		/// \brief The camera will offer digital image data.
+		coDigital = 3,
+		/// \brief The camera will offer an analogue SVideo signal.
+		coSVideo = 4,
+		/// \brief The camera will offer <b>CameraLink&reg; Medium</b> compliant image data.
+		coMedium = 5,
+		/// \brief The camera will offer an analogue RGB signal.
+		coRGB = 6,
+		/// \brief Two cameras will offer two synchronous analogue signals.
+		co2xComposite = 7,
+		/// \brief Three cameras will offer three synchronous analogue signals.
+		co3xComposite = 8,
+		/// \brief Four cameras will offer four synchronous analogue signals.
+		co4xComposite = 9,
+		/// \brief The camera will offer <b>CameraLink&reg; Full</b> compliant image data.
+		coFull = 10,
+		/// \brief The camera will offer serial digital interface(SDI) SD signal.
+		coSDSDI = 11,
+		/// \brief The camera will offer serial digital interface(SDI) HD signal.
+		coHDSDI = 12,
+		/// \brief The camera will offer serial digital interface(SDI) 3G signal.
+		co3GSDI = 13
+	};
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+//-----------------------------------------------------------------------------
+/// \brief Defines valid camera pixel frequencies.
+enum TCameraPixelClock
+//-----------------------------------------------------------------------------
+{
+	/// \brief Standard sensor clocking.
+	///
+	/// This is a legacy mode used by some devices only.
+	cpcStandard = 0,
+	/// \brief High speed sensor clocking.
+	///
+	/// This is a legacy mode used by some devices only.
+	cpcHighSpeed = 1,
+	/// \brief 6 MHz pixel clock.
+	cpc6000KHz = 6000,
+	/// \brief 8 MHz pixel clock.
+	cpc8000KHz = 8000,
+	/// \brief 10 MHz pixel clock.
+	cpc10000KHz = 10000,
+	/// \brief 12 MHz pixel clock.
+	cpc12000KHz = 12000,
+	/// \brief 13.5 MHz pixel clock.
+	cpc13500KHz = 13500,
+	/// \brief 20 MHz pixel clock.
+	cpc20000KHz = 20000,
+	/// \brief 24 MHz pixel clock.
+	cpc24000KHz = 24000,
+	/// \brief 24.54 MHz pixel clock.
+	cpc24540KHz = 24540,
+	/// \brief 27 MHz pixel clock.
+	cpc27000KHz = 27000,
+	/// \brief 32 MHz pixel clock.
+	cpc32000KHz = 32000,
+	/// \brief 37.6 MHz pixel clock.
+	cpc37600KHz = 37600,
+	/// \brief 40 MHz pixel clock.
+	cpc40000KHz = 40000,
+	/// \brief 50 MHz pixel clock.
+	cpc50000KHz = 50000,
+	/// \brief 57.6 MHz pixel clock.
+	cpc57600KHz = 57600
+};
+
+//-----------------------------------------------------------------------------
+/// \brief Defines valid scan modes for the a camera.
+enum TCameraScanMode
+//-----------------------------------------------------------------------------
+{
+	/// \brief The connected camera is an area scan camera.
+	csmArea = 0,
+	/// \brief The connected camera is an line scan camera.
+	csmLine
+};
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+	//-----------------------------------------------------------------------------
+	/// \brief Defines valid baud rates for serial port communication between
+	/// frame grabber and camera.
+	enum TCameraSerialPortBaudRate
+	//-----------------------------------------------------------------------------
+	{
+		/// \brief 9600 baud
+		cspbr9600 = 9600,
+		/// \brief 19200 baud
+		cspbr19200 = 19200,
+		/// \brief 38400 baud
+		cspbr38400 = 38400,
+		/// \brief 57600 baud
+		cspbr57600 = 57600,
+		/// \brief 115200 baud
+		cspbr115200 = 115200,
+		/// \brief 230400 baud
+		cspbr230400 = 230400,
+		/// \brief 460800 baud
+		cspbr460800 = 460800,
+		/// \brief 921600 baud
+		cspbr921600 = 921600
+	};
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+//-----------------------------------------------------------------------------
+/// \brief Defines recognized camera sensor shutter modes.
+enum TCameraShutterMode
+//-----------------------------------------------------------------------------
+{
+	/// \brief Standard Frame-Shutter mode.
+	///
+	/// Start and stop of integration occurs at the same time for all pixels
+	csmFrameShutter = 0,
+	/// \brief Electronic rolling shutter mode (ERS)
+	///
+	/// Start and stop of integration occurs on a line by line base. Integration time is the same for all lines bit timing is slightly different
+	csmElectronicRollingShutter,
+	/// \brief Global reset release shutter (GRR)
+	///
+	/// Start of integration occurs at the same time for all pixels. End of integration happens on a line per line base like with ERS. 
+	/// This is only useful with special lighting or an mechanical extra shutter
+	csmGlobalResetRelease,
+	/// Start and stop of integration will happen at the same time for all pixels. Uses optimisation for fast centered Readout.
+	csmFrameShutterWithFastCenterReadout
 };
 
 #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
@@ -921,137 +1136,6 @@ enum TCameraInterlacedType
 		cltyg2YE = 2,
 	};
 
-	//-----------------------------------------------------------------------------
-	/// \brief Defines how the camera transmits the <b>DVAL</b> signal defined in the
-	/// <b>CameraLink&reg; standard</b>.
-	enum TCameraLinkDataValidMode
-	//-----------------------------------------------------------------------------
-	{
-		/// \brief The camera transmits a data valid (<b>DVAL</b>) signal, that should
-		/// be evaluated by the frame grabber.
-		cldvmActive = 0,
-		/// \brief The camera does not transmit a data valid (<b>DVAL</b>) signal, that should
-		/// be evaluated by the frame grabber.
-		cldvmInactive
-	};
-
-	//-----------------------------------------------------------------------------
-	/// \brief Defines valid ways a camera can offer image data to a capture device.
-	enum TCameraOutput
-	//-----------------------------------------------------------------------------
-	{
-		/// \brief Specifies an undefined output.
-		coUndefined = -1,
-		/// \brief Auto mode. Here the capture device tries to guess how the data is transmitted. 
-		coAuto = 0,
-		/// \brief The camera will offer an analogue composite video signal.
-		coComposite = 1,
-		/// \brief The camera will offer <b>CameraLink&reg; Base</b> compliant image data.
-		coBase = 2,
-		/// \brief The camera will offer digital image data.
-		coDigital = 3,
-		/// \brief The camera will offer an analogue SVideo signal.
-		coSVideo = 4,
-		/// \brief The camera will offer <b>CameraLink&reg; Medium</b> compliant image data.
-		coMedium = 5,
-		/// \brief The camera will offer an analogue RGB signal.
-		coRGB = 6,
-		/// \brief Two cameras will offer two synchronous analogue signals.
-		co2xComposite = 7,
-		/// \brief Three cameras will offer three synchronous analogue signals.
-		co3xComposite = 8,
-		/// \brief Four cameras will offer four synchronous analogue signals.
-		co4xComposite = 9,
-		/// \brief The camera will offer <b>CameraLink&reg; Full</b> compliant image data.
-		coFull = 10,
-		/// \brief The camera will offer serial digital interface(SDI) SD signal.
-		coSDSDI = 11,
-		/// \brief The camera will offer serial digital interface(SDI) HD signal.
-		coHDSDI = 12,
-		/// \brief The camera will offer serial digital interface(SDI) 3G signal.
-		co3GSDI = 13
-	};
-
-#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-
-//-----------------------------------------------------------------------------
-/// \brief Defines valid camera pixel frequencies.
-enum TCameraPixelClock
-//-----------------------------------------------------------------------------
-{
-	/// \brief Standard sensor clocking.
-	///
-	/// This is a backward compatible mode used by some devices only.
-	cpcStandard = 0,
-	/// \brief High speed sensor clocking.
-	///
-	/// This is a backward compatible mode used by some devices only.
-	cpcHighSpeed = 1,
-	/// \brief 6 MHz pixel clock.
-	cpc6000KHz = 6000,
-	/// \brief 8 MHz pixel clock.
-	cpc8000KHz = 8000,
-	/// \brief 10 MHz pixel clock.
-	cpc10000KHz = 10000,
-	/// \brief 12 MHz pixel clock.
-	cpc12000KHz = 12000,
-	/// \brief 13.5 MHz pixel clock.
-	cpc13500KHz = 13500,
-	/// \brief 20 MHz pixel clock.
-	cpc20000KHz = 20000,
-	/// \brief 24 MHz pixel clock.
-	cpc24000KHz = 24000,
-	/// \brief 24.54 MHz pixel clock.
-	cpc24540KHz = 24540,
-	/// \brief 27 MHz pixel clock.
-	cpc27000KHz = 27000,
-	/// \brief 32 MHz pixel clock.
-	cpc32000KHz = 32000,
-	/// \brief 37.6 MHz pixel clock.
-	cpc37600KHz = 37600,
-	/// \brief 40 MHz pixel clock.
-	cpc40000KHz = 40000,
-	/// \brief 50 MHz pixel clock.
-	cpc50000KHz = 50000,
-	/// \brief 57.6 MHz pixel clock.
-	cpc57600KHz = 57600
-};
-
-//-----------------------------------------------------------------------------
-/// \brief Defines valid scan modes for the a camera.
-enum TCameraScanMode
-//-----------------------------------------------------------------------------
-{
-	/// \brief The connected camera is an area scan camera.
-	csmArea = 0,
-	/// \brief The connected camera is an line scan camera.
-	csmLine
-};
-
-#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-	//-----------------------------------------------------------------------------
-	/// \brief Defines valid baud rates for serial port communication between
-	/// frame grabber and camera.
-	enum TCameraSerialPortBaudRate
-	//-----------------------------------------------------------------------------
-	{
-		/// \brief 9600 baud
-		cspbr9600 = 9600,
-		/// \brief 19200 baud
-		cspbr19200 = 19200,
-		/// \brief 38400 baud
-		cspbr38400 = 38400,
-		/// \brief 57600 baud
-		cspbr57600 = 57600,
-		/// \brief 115200 baud
-		cspbr115200 = 115200,
-		/// \brief 230400 baud
-		cspbr230400 = 230400,
-		/// \brief 460800 baud
-		cspbr460800 = 460800,
-		/// \brief 921600 baud
-		cspbr921600 = 921600
-	};
 #endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
 //-----------------------------------------------------------------------------
@@ -1133,28 +1217,6 @@ enum TCameraTriggerMode
 	/// \brief Start the exposure of a frame when the trigger input level changes from high to low or from low to high.
 	ctmFramerateControlled
 	/// This mode is behaves like ctmContinuousbut allowes the FPS-Rate to be controlled directly
-};
-
-//-----------------------------------------------------------------------------
-/// \brief Defines recognized camera sensor shutter modes.
-enum TCameraShutterMode
-//-----------------------------------------------------------------------------
-{
-	/// \brief Standard Frame-Shutter mode.
-	///
-	/// Start and stop of integration occurs at the same time for all pixels
-	csmFrameShutter = 0,
-	/// \brief Electronic rolling shutter mode (ERS)
-	///
-	/// Start and stop of integration occurs on a line by line base. Integration time is the same for all lines bit timing is slightly different
-	csmElectronicRollingShutter,
-	/// \brief Global reset release shutter (GRR)
-	///
-	/// Start of integration occurs at the same time for all pixels. End of integration happens on a line per line base like with ERS. 
-	/// This is only useful with special lighting or an mechanical extra shutter
-	csmGlobalResetRelease,
-	/// Start and stop of integration will happen at the same time for all pixels. Uses optimisation for fast centered Readout.
-	csmFrameShutterWithFastCenterReadout
 };
 
 //-----------------------------------------------------------------------------
@@ -1309,10 +1371,10 @@ enum TDeviceAccessMode
 };
 
 //-----------------------------------------------------------------------------
-/// \brief Defines valid Advanced Options
+/// \brief Defines valid advanced options
 ///
 /// These enums may be 'ored' together.
-enum TDeviceAdvancedOptions
+enum TDeviceAdvancedOptions // flags_attribute, uint_type
 //-----------------------------------------------------------------------------
 {
 	/// \brief No advanced option selected.
@@ -1329,7 +1391,7 @@ enum TDeviceAdvancedOptions
 /// \brief Defines valid device capabilities.
 ///
 /// Values of these enum type may be 'OR'ed together.
-enum TDeviceCapability
+enum TDeviceCapability // flags_attribute, uint_type
 //-----------------------------------------------------------------------------
 {
 	/// \brief A dummy constant to indicate, that this device does not have any capabilities defined by other
@@ -1418,7 +1480,7 @@ enum TDeviceEventMode
 ///
 /// \note
 /// Not every device will support every event.
-enum TDeviceEventType
+enum TDeviceEventType // flags_attribute, uint_type
 //-----------------------------------------------------------------------------
 {
 	/// \brief A dummy constant to specify \a no event where an event type must be specified.
@@ -1493,7 +1555,11 @@ enum TDeviceInterfaceLayout
 	/// This interface layout has been declared deprecated. Please use <b>mvIMPACT::acquire::dilGenICam</b>
 	/// instead.
 	///
+	/// \if BUILD_MVBLUECOUGARF_DOCUMENTATION
+	/// &nbsp;
+	/// \elseif BUILD_MVBLUECOUGAR_DOCUMENTATION	
 	/// \sa \ref ImageAcquisition_section_genicam
+	/// \endif
 	///
 	dilGeneric,
 	/// \brief A device specific interface shall be used.
@@ -1515,7 +1581,11 @@ enum TDeviceInterfaceLayout
 	///
 	/// This interface layout will allow to access third party devices as well.
 	///
+	/// \if BUILD_MVBLUECOUGARF_DOCUMENTATION
+	/// &nbsp;
+	/// \elseif BUILD_MVBLUECOUGAR_DOCUMENTATION
 	/// \sa \ref ImageAcquisition_section_genicam
+	/// \endif
 	///
 	dilGenICam
 };
@@ -1714,7 +1784,7 @@ enum TDeviceTriggerInterface
 /// \brief Specifies the type trigger overlap permitted with the previous frame.
 ///
 /// This defines when a valid trigger will be accepted (or latched) for a new frame.
-enum TDeviceTriggerOverlap
+enum TDeviceTriggerOverlap // long_type
 //-----------------------------------------------------------------------------
 {
 	/// \brief No trigger overlap is permitted.
@@ -1794,7 +1864,7 @@ enum TDigIOState
 	/// \a dsTriggerJ8/12 are defined here. However when the translation dictionary for
 	/// a property with this type is queried, the string representation for the
 	/// enumeration value will contain a more descriptive name for the digital signal.
-	enum TDigitalSignal
+	enum TDigitalSignal // flags_attribute, uint_type
 	//-----------------------------------------------------------------------------
 	{
 		/// \brief A dummy value to delete a mask or signal configuration.
@@ -1844,15 +1914,12 @@ enum TDMR_ERROR // no_property_type
 {
 	/// \brief The function call was executed successfully.
 	DMR_NO_ERROR = 0,
-	/// \brief A dummy constant to mark the first valid error code for device and device
-	/// manager related errors.
-	DMR_FIRST_ERROR_CODE = -2100,
 	/// \brief the specified device can't be found.
 	///
 	/// This error occurs either if an invalid device ID has been passed to the
 	/// device manager or if the caller tried to close a device which currently
 	/// isn't initialised.
-	DMR_DEV_NOT_FOUND = DMR_FIRST_ERROR_CODE,
+	DMR_DEV_NOT_FOUND = -2100,
 	/// \brief The device manager couldn't be initialised.
 	///
 	/// This is an internal error.
@@ -1913,7 +1980,7 @@ enum TDMR_ERROR // no_property_type
 	/// - an unassigned pointer has been passed to a function, that requires a valid pointer
 	/// - one or more of the passed parameters are of an incorrect type
 	/// - one or more parameters contain an invalid value (e.g. a filename that points to a file that can't
-	/// be found, a value, that is larger or smaller then the allowed values.
+	/// be found, a value, that is larger or smaller than the allowed values.
 	DEV_INPUT_PARAM_INVALID = -2112,
 	/// \brief A function has been called with an invalid number of input parameters.
 	DEV_WRONG_INPUT_PARAM_COUNT = -2113,
@@ -2082,7 +2149,6 @@ enum TDMR_ERROR // no_property_type
 	DMR_FILE_ACCESS_ERROR = -2143,
 	/// \brief An error returned when the user application attempts to operate on an invalid queue.
 	DMR_INVALID_QUEUE_SELECTION = -2144,
-
 	// If new error codes must be added this happens HERE!
 	// When adding a new value here NEVER forget to update the internal string AND/OR exception table!
 #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY) && !defined(WRAP_DOTNET)
@@ -2541,7 +2607,7 @@ enum TImageBufferPixelFormat
 	/// used for each pixel:
 	///
 	///\code
-	/// byte 0   | byte 1   | byte 3   | byte 4   |
+	/// byte 0   | byte 1   | byte 2   | byte 3   |
 	/// 0      7 | 890....5 | 6..90..3 | 4    9xx |
 	/// RRRRRRRR | RRGGGGGG | GGGGBBBB | BBBBBB   |
 	///\endcode
@@ -2561,9 +2627,9 @@ enum TImageBufferPixelFormat
 	/// //-----------------------------------------------------------------------------
 	/// {
 	///   unsigned int* pSrc = reinterpret_cast<unsigned int*>(static_cast<unsigned char*>(p) + y * pitch) + x;
-	///   blue  = static_cast<unsigned short>( (*pSrc)         & 0x3FF);
+	///   red   = static_cast<unsigned short>( (*pSrc)         & 0x3FF);
 	///   green = static_cast<unsigned short>(((*pSrc) >> 10 ) & 0x3FF);
-	///   red   = static_cast<unsigned short>(((*pSrc) >> 20 ) & 0x3FF);
+	///   blue  = static_cast<unsigned short>(((*pSrc) >> 20 ) & 0x3FF);
 	/// }
 	///
 	/// //-----------------------------------------------------------------------------
@@ -2571,9 +2637,9 @@ enum TImageBufferPixelFormat
 	/// inline void GetBGR101010Packed_V2Pixel( unsigned int pixel, unsigned short& red, unsigned short& green, unsigned short& blue )
 	/// //-----------------------------------------------------------------------------
 	/// {
-	///   blue  = static_cast<unsigned short>(  pixel         & 0x3FF);
+	///   red   = static_cast<unsigned short>(  pixel         & 0x3FF);
 	///   green = static_cast<unsigned short>(( pixel >> 10 ) & 0x3FF);
-	///   red   = static_cast<unsigned short>(( pixel >> 20 ) & 0x3FF);
+	///   blue  = static_cast<unsigned short>(( pixel >> 20 ) & 0x3FF);
 	/// }
 	///\endcode
 	///\htmlinclude code_fragment_end.html
@@ -2657,7 +2723,7 @@ enum TImageBufferPixelFormat
 	MV_CUSTOM_IMAGE_BUFFER_PIXEL_FORMATS
 #endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY) && !defined(WRAP_DOTNET)
 	/// \brief The driver will decide which format will be used.
-	ibpfAuto = 0xFFFFFFFF
+	ibpfAuto = -1
 };
 
 //-----------------------------------------------------------------------------
@@ -2981,7 +3047,7 @@ enum TImageDestinationPixelFormat
 	/// used for each pixel:
 	///
 	///\code
-	/// byte 0   | byte 1   | byte 3   | byte 4   |
+	/// byte 0   | byte 1   | byte 2   | byte 3   |
 	/// 0      7 | 890....5 | 6..90..3 | 4    9xx |
 	/// RRRRRRRR | RRGGGGGG | GGGGBBBB | BBBBBB   |
 	///\endcode
@@ -3001,9 +3067,9 @@ enum TImageDestinationPixelFormat
 	/// //-----------------------------------------------------------------------------
 	/// {
 	///   unsigned int* pSrc = reinterpret_cast<unsigned int*>(static_cast<unsigned char*>(p) + y * pitch) + x;
-	///   blue  = static_cast<unsigned short>( (*pSrc)         & 0x3FF);
+	///   red   = static_cast<unsigned short>( (*pSrc)         & 0x3FF);
 	///   green = static_cast<unsigned short>(((*pSrc) >> 10 ) & 0x3FF);
-	///   red   = static_cast<unsigned short>(((*pSrc) >> 20 ) & 0x3FF);
+	///   blue  = static_cast<unsigned short>(((*pSrc) >> 20 ) & 0x3FF);
 	/// }
 	///
 	/// //-----------------------------------------------------------------------------
@@ -3011,9 +3077,9 @@ enum TImageDestinationPixelFormat
 	/// inline void GetBGR101010Packed_V2Pixel( unsigned int pixel, unsigned short& red, unsigned short& green, unsigned short& blue )
 	/// //-----------------------------------------------------------------------------
 	/// {
-	///   blue  = static_cast<unsigned short>(  pixel         & 0x3FF);
+	///   red   = static_cast<unsigned short>(  pixel         & 0x3FF);
 	///   green = static_cast<unsigned short>(( pixel >> 10 ) & 0x3FF);
-	///   red   = static_cast<unsigned short>(( pixel >> 20 ) & 0x3FF);
+	///   blue  = static_cast<unsigned short>(( pixel >> 20 ) & 0x3FF);
 	/// }
 	///\endcode
 	///\htmlinclude code_fragment_end.html
@@ -3333,7 +3399,7 @@ enum TLUTInterpolationMode
 
 //-----------------------------------------------------------------------------
 /// \brief Defines valid LUT(<b>L</b>ook<b>U</b>p <b>T</b>able) mapping modes.
-enum TLUTMapping
+enum TLUTMapping // uint_type
 //-----------------------------------------------------------------------------
 {
 	/// \brief 8 bit input data will be mapped to 8 bit output data.
@@ -3400,7 +3466,7 @@ enum TMemoryManagerPoolMode
 /// \brief Defines valid mirror modes.
 ///
 /// These enumeration values may be 'ored' together.
-enum TMirrorMode
+enum TMirrorMode // flags_attribute, uint_type
 //-----------------------------------------------------------------------------
 {
 	/// \brief No Mirroring.
@@ -3481,39 +3547,13 @@ enum TRequestImageMemoryMode
 };
 
 //-----------------------------------------------------------------------------
-/// \brief Defines the current state of this <b>mvIMPACT::acquire::Request</b>.
-enum TRequestState
-//-----------------------------------------------------------------------------
-{
-	/// \brief This <b>mvIMPACT::acquire::Request</b> is currently unused.
-	rsIdle,
-	/// \brief This <b>mvIMPACT::acquire::Request</b> has been send into the drivers image request queue and
-	/// currently wait to be processed.
-	rsWaiting,
-	/// \brief This <b>mvIMPACT::acquire::Request</b> is currently being processed.
-	rsCapturing,
-	/// \brief This <b>mvIMPACT::acquire::Request</b> has been processed.
-	///
-	/// The user is now responsible for this request. Before this <b>mvIMPACT::acquire::Request</b> is not unlocked
-	/// again it can't be used by the driver. A <b>mvIMPACT::acquire::Request</b> in this state can safely be processed
-	/// by the user. It's data will remain valid until either the <b>mvIMPACT::acquire::Request</b> is unlocked by
-	/// the user or the device is closed.
-	rsReady,
-	/// \brief This <b>mvIMPACT::acquire::Request</b> is currently in configuration mode.
-	///
-	/// Within this mode certain properties of the request object will become writeable, which
-	/// e.g. will allow the user to pass a capture buffer to the request object.
-	rsBeingConfigured
-};
-
-//-----------------------------------------------------------------------------
 /// \brief Defines valid result of an image request.
 ///
 /// Whenever during the processing of the capture parameters but well before the actual
 /// image capture and error is detected the MSB of this enumeration will be set to 1.
 /// In this case almost every time the current input parameters can't lead to a 
 /// correct image and have to be changed.
-enum TRequestResult
+enum TRequestResult // uint_type
 //-----------------------------------------------------------------------------
 {
 	/// \brief This image request has been processed successfully.
@@ -3600,6 +3640,32 @@ enum TRequestResult
 };
 
 //-----------------------------------------------------------------------------
+/// \brief Defines the current state of this <b>mvIMPACT::acquire::Request</b>.
+enum TRequestState
+//-----------------------------------------------------------------------------
+{
+	/// \brief This <b>mvIMPACT::acquire::Request</b> is currently unused.
+	rsIdle,
+	/// \brief This <b>mvIMPACT::acquire::Request</b> has been send into the drivers image request queue and
+	/// currently wait to be processed.
+	rsWaiting,
+	/// \brief This <b>mvIMPACT::acquire::Request</b> is currently being processed.
+	rsCapturing,
+	/// \brief This <b>mvIMPACT::acquire::Request</b> has been processed.
+	///
+	/// The user is now responsible for this request. Before this <b>mvIMPACT::acquire::Request</b> is not unlocked
+	/// again it can't be used by the driver. A <b>mvIMPACT::acquire::Request</b> in this state can safely be processed
+	/// by the user. It's data will remain valid until either the <b>mvIMPACT::acquire::Request</b> is unlocked by
+	/// the user or the device is closed.
+	rsReady,
+	/// \brief This <b>mvIMPACT::acquire::Request</b> is currently in configuration mode.
+	///
+	/// Within this mode certain properties of the request object will become writeable, which
+	/// e.g. will allow the user to pass a capture buffer to the request object.
+	rsBeingConfigured
+};
+
+//-----------------------------------------------------------------------------
 /// \brief Defines valid RTCtrl Modes.
 enum TRTCtrlModes
 //-----------------------------------------------------------------------------
@@ -3650,17 +3716,6 @@ enum TRTProgOpCodes
 };
 
 //-----------------------------------------------------------------------------
-/// \brief Defines valid scaler modes.
-enum TScalerMode
-//-----------------------------------------------------------------------------
-{
-	/// \brief The scaler is switched off (default).
-	smOff,
-	/// \brief The scaler is switched on.
-	smOn
-};
-
-//-----------------------------------------------------------------------------
 /// \brief Defines valid scaler interpolation modes.
 enum TScalerInterpolationMode
 //-----------------------------------------------------------------------------
@@ -3671,6 +3726,17 @@ enum TScalerInterpolationMode
 	simLinear,
 	/// \brief Cubic interpolation.
 	simCubic
+};
+
+//-----------------------------------------------------------------------------
+/// \brief Defines valid scaler modes.
+enum TScalerMode
+//-----------------------------------------------------------------------------
+{
+	/// \brief The scaler is switched off (default).
+	smOff,
+	/// \brief The scaler is switched on.
+	smOn
 };
 
 #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
@@ -3763,7 +3829,7 @@ enum TTriggerMoment
 //-----------------------------------------------------------------------------
 /// \brief Defines valid flags for controlling the user access rights to the user
 /// data that can be stored in the devices non-volatile memory.
-enum TUserDataAccessRight
+enum TUserDataAccessRight // flags_attribute, uint_type
 //-----------------------------------------------------------------------------
 {
 	/// \brief The user has read rights for this entry.
@@ -3961,13 +4027,13 @@ enum TWhiteBalanceParameter
 	typedef enum TBayerWhiteBalanceResult TBayerWhiteBalanceResult;
 	typedef enum TBlueFOXDigitalInputThreshold TBlueFOXDigitalInputThreshold;
 	typedef enum TBlueFOXFooterMode TBlueFOXFooterMode;
+	typedef enum TBlueFOXInfoSensorCapabilities TBlueFOXInfoSensorCapabilities;
 	typedef enum TBlueFOXKernelDriver TBlueFOXKernelDriver;
 	typedef enum TBlueFOXOffsetAutoBlackSpeed TBlueFOXOffsetAutoBlackSpeed;
 	typedef enum TBlueFOXSensorTiming TBlueFOXSensorTiming;
 	typedef enum TBlueFOXTransferSize TBlueFOXTransferSize;
 	typedef enum TBlueLYNXCameraDataClipMode TBlueLYNXCameraDataClipMode;
 	typedef enum TBlueLYNXCameraFlashMode TBlueLYNXCameraFlashMode;
-	typedef enum TBlueLYNXVideoOutMode TBlueLYNXVideoOutMode;
 	typedef enum TBoolean TBoolean;
 	typedef enum TCameraAoiMode TCameraAoiMode;
 	typedef enum TCameraBinningMode TCameraBinningMode;
@@ -4050,8 +4116,8 @@ enum TWhiteBalanceParameter
 	typedef enum TRequestState TRequestState;
 	typedef enum TRTCtrlModes TRTCtrlModes;
 	typedef enum TRTProgOpCodes TRTProgOpCodes;
-	typedef enum TScalerMode TScalerMode;
 	typedef enum TScalerInterpolationMode TScalerInterpolationMode;
+	typedef enum TScalerMode TScalerMode;
 	typedef enum TScanClock TScanClock;
 	typedef enum TScanStandard TScanStandard;
 	typedef enum TThreadPriority TThreadPriority;
