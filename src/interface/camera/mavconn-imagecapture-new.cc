@@ -173,6 +173,10 @@ static void image_writer (void)
 
 		++imgNum;
 		if (debug) printf("image written. \n");
+
+		data->imgLeft.release();
+		data->imgRight.release();
+		free(data);
 	}
 }
 
@@ -236,6 +240,8 @@ void image_handler(const lcm_recv_buf_t* rbuf, const char* channel, const mavcon
 
 			if (!success)
 			{
+				data->imgLeft.release();
+				data->imgRight.release();
 				delete data;
 				continue;
 			}
