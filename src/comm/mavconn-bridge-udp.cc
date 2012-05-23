@@ -84,6 +84,7 @@ struct timeval tv;
 
 lcm_t* lcm;
 
+
 /**
  * @brief Handle a MAVLINK message over LCM
  *
@@ -103,6 +104,7 @@ static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel,
 
 	static uint8_t buf[MAVLINK_MAX_PACKET_LEN];
 	uint32_t messageLength = mavlink_msg_to_send_buffer(buf, msg);
+	int bytesToSend = 0;
 	
 	if (msg->msgid != MAVLINK_MSG_ID_EXTENDED_MESSAGE)
 	{
@@ -120,6 +122,7 @@ static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel,
 		// Send over UDP
 		bytes_sent = sendto(link, buf, messageLength, 0, (struct sockaddr*) &gcAddr,
 				sizeof(struct sockaddr_in));
+		bytesToSend = messageLength;
 		//	extern int errno;
 	}
 	else if (transmitExtended)
@@ -147,17 +150,35 @@ static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel,
 		// Send over UDP
 		bytes_sent = sendto(link, extended_buf, extendedMessageLength, 0, (struct sockaddr*) &gcAddr,
 				sizeof(struct sockaddr_in));
+		bytesToSend = extendedMessageLength;
 	}
 	else
 	{
 		return;
 	}
 
-	if (bytes_sent < 1)
+	if (bytes_sent != bytesToSend)
 	{
 		// Error handling
 		perror("Could not send over UDP socket");
 		fprintf(stderr, "Target address and host: %s:%s\n", host->str, port->str);
+
+		// Try to increase buffer size
+		if (bytesToSend > MAVLINK_MAX_PACKET_LEN)
+		{
+
+			int tmp = bytesToSend;
+			int ret = setsockopt(link, SOL_SOCKET, SO_SNDBUF, &tmp, sizeof(tmp));
+
+			if(ret < 0) {
+			    printf("Could not change buffer size! Giving up.\n");
+			    return;
+			}
+			else
+			{
+				printf("Increased UDP protocol buffer size to allow next large packet to pass.\n");
+			}
+		}
 	}
 	else
 	{
