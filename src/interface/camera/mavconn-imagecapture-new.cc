@@ -248,7 +248,9 @@ void image_handler(const lcm_recv_buf_t* rbuf, const char* channel, const mavcon
 			//if imuid is not 200 take yaw from there
 			if (imuid != 200)
 			{
-				data->yaw = backupYaw;
+                            data->roll = backupRoll;
+                            data->pitch = backupPitch;
+                            data->yaw = backupYaw;
 			}
 			client.getLocalHeight(msg, data->ground_dist);
 			client.getGroundTruth(msg, data->gx, data->gy, data->gz);
@@ -448,6 +450,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 		{
 			mavlink_command_long_t command;
 			mavlink_msg_command_long_decode(msg, &command);
+			if (command.target_system != sysid && command.target_system != 0) break;
 			if (command.command == MAV_CMD_DO_CONTROL_VIDEO)
 			{
 				if (command.param4 == 1 || command.param4 == 2)
