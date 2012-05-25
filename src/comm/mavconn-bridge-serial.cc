@@ -56,9 +56,6 @@ This file is part of the MAVCONN project
 #include <sys/ioctl.h>
 #endif
 
-// MAVLINK includes
-#include <mavlink.h>
-
 // Latency Benchmarking
 #include <sys/time.h>
 #include <time.h>

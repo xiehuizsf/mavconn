@@ -38,8 +38,9 @@ This file is part of the PIXHAWK project
 #ifndef _PX_CAMERA_CALIBRATION_STANDARD_H_
 #define _PX_CAMERA_CALIBRATION_STANDARD_H_
 
-#include <opencv/cv.h>
-#include <PxCameraCalibration.h>
+#include <opencv2/core/core.hpp>
+
+#include "PxCameraCalibration.h"
 
 class PxCameraStereoCalibration;
 
@@ -65,12 +66,16 @@ public:
 	/** @brief Distorts one or more points. */
 	void distortPoints(const CvPoint2D32f* pSrc, CvPoint2D32f* pDest, int count) const;
 
-friend class PxCameraStereoCalibration;
+	const std::vector<float>& focalLength(void) const;
+	const std::vector<float>& principalPoint(void) const;
+	const std::vector<float>& distortionCoeffs(void) const;
+	const cv::Mat& distortion(void) const;
+
 protected:
-	float m_focal[2];								///< The focal length
-	float m_cc[2]; 									///< The principal point location
-	float m_kc[5];									///< Distortion coefficients
-	cv::Mat distortion;								///< CvMat structure for distortion
+	std::vector<float> m_focal;								///< The focal length
+	std::vector<float> m_cc; 									///< The principal point location
+	std::vector<float> m_kc;									///< Distortion coefficients
+	cv::Mat m_distortion;								///< CvMat structure for distortion
 };
 
 #endif //_PX_CAMERA_CALIBRATION_STANDARD_H_

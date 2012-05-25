@@ -52,9 +52,6 @@ This file is part of the MAVCONN project
 #include <errno.h>   /* Error number definitions */
 #include <termios.h> /* POSIX terminal control definitions */
 
-// MAVLINK includes
-#include <mavlink.h>
-
 // Latency Benchmarking
 #include <sys/time.h>
 #include <time.h>
