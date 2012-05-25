@@ -6,6 +6,7 @@ PxBluefoxStereoCamera::PxBluefoxStereoCamera(mvIMPACT::acquire::Device* _cameraL
 											 mvIMPACT::acquire::Device* _cameraRight)
  : lastSequenceNum(0)
  , externalTrigger(false)
+ , maxRequests(4)
 {
 	cameraLeft = std::tr1::shared_ptr<PxBluefoxCamera>(new PxBluefoxCamera(_cameraLeft));
 	cameraRight = std::tr1::shared_ptr<PxBluefoxCamera>(new PxBluefoxCamera(_cameraRight));
@@ -75,28 +76,19 @@ PxBluefoxStereoCamera::start(void)
 	imageAvailableCond.reset(new Glib::Cond);
 	imageAvailable = 0;
 
+	mvIMPACT::acquire::SystemSettings systemSettingsL(cameraLeft->dev);
+	systemSettingsL.requestCount.write(maxRequests);
+	mvIMPACT::acquire::SystemSettings systemSettingsR(cameraRight->dev);
+	systemSettingsR.requestCount.write(maxRequests);
+
 	try
 	{
-		leftImageThread = Glib::Thread::create(sigc::mem_fun(this, &PxBluefoxStereoCamera::leftImageHandler), true);
-		rightImageThread = Glib::Thread::create(sigc::mem_fun(this, &PxBluefoxStereoCamera::rightImageHandler), true);
+		stereoImageThread = Glib::Thread::create(sigc::mem_fun(this, &PxBluefoxStereoCamera::stereoImageHandler), true);
 	}
 	catch (const Glib::ThreadError& e)
 	{
 		fprintf(stderr, "# ERROR: Cannot create image handling thread.\n");
 		return false;
-	}
-
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	double startTime = tv.tv_sec + static_cast<double>(tv.tv_usec) / 1000000.0;
-	double currentTime = startTime;
-	double timeout = 5.0;
-
-	while (imageAvailable != ALL_IMAGES_AVAILABLE &&
-		   currentTime - startTime < timeout)
-	{
-		gettimeofday(&tv, NULL);
-		currentTime = tv.tv_sec + static_cast<double>(tv.tv_usec) / 1000000.0;
 	}
 
 	return true;
@@ -107,8 +99,7 @@ PxBluefoxStereoCamera::stop(void)
 {
 	exitImageThreads = true;
 
-	leftImageThread->join();
-	rightImageThread->join();
+	stereoImageThread->join();
 
 	return true;
 }
@@ -118,17 +109,16 @@ PxBluefoxStereoCamera::grabFrame(cv::Mat& imageLeft, cv::Mat& imageRight,
 								 uint32_t& skippedFrames, uint32_t& sequenceNum)
 {
 	imageMutex.lock();
-	do
+	if (imageAvailable != ALL_IMAGES_AVAILABLE && !exitImageThreads)
 	{
-		imageAvailableCond->wait(imageMutex);
+		do
+		{
+			imageAvailableCond->wait(imageMutex);
+		}
+		while (imageAvailable != ALL_IMAGES_AVAILABLE && !exitImageThreads);
 	}
-	while (imageAvailable != ALL_IMAGES_AVAILABLE);
 
-	if (cameraLeft->imageSequenceNr != cameraRight->imageSequenceNr)
-	{
-		fprintf(stderr, "# ERROR: Left (%u) and right (%u) image sequence numbers mismatch, grabbing failed.\n", cameraLeft->imageSequenceNr, cameraRight->imageSequenceNr);
-//		return false;
-	}
+	if (exitImageThreads){ imageMutex.unlock(); return false; }
 
 	cameraLeft->image.copyTo(imageLeft);
 	cameraRight->image.copyTo(imageRight);
@@ -152,91 +142,146 @@ PxBluefoxStereoCamera::grabFrame(cv::Mat& imageLeft, cv::Mat& imageRight,
 }
 
 void
-PxBluefoxStereoCamera::leftImageHandler(void)
+PxBluefoxStereoCamera::stereoImageHandler(void)
 {
-	int maxRequests = 2;
-
-	mvIMPACT::acquire::SystemSettings systemSettings(cameraLeft->dev);
-	systemSettings.requestCount.write(maxRequests);
-
 	for (int i = 0; i < maxRequests; ++i)
 	{
 		cameraLeft->functionInterface->imageRequestSingle();
-	}
-
-	while (!exitImageThreads)
-	{
-		int requestNr = cameraLeft->functionInterface->imageRequestWaitFor(timeout_ms);
-
-		if (cameraLeft->functionInterface->isRequestNrValid(requestNr))
-		{
-			const mvIMPACT::acquire::Request* request = cameraLeft->functionInterface->getRequest(requestNr);
-			if (cameraLeft->functionInterface->isRequestOK(request))
-			{
-				imageMutex.lock();
-				cameraLeft->convertToCvMat(request, cameraLeft->image);
-				cameraLeft->imageSequenceNr = request->infoFrameNr.read();
-
-				if (mode == PxCameraConfig::AUTO_MODE)
-				{
-					// set gain & exposure of right camera based on image
-					// from left camera
-					cameraRight->setExposureTime(request->infoExposeTime_us.read());
-					cameraRight->setGainDB(request->infoGain_dB.read());
-				}
-
-				imageAvailable |= LEFT_IMAGE_AVAILABLE;
-				imageAvailableCond->signal();
-				imageMutex.unlock();
-			}
-
-			cameraLeft->functionInterface->imageRequestUnlock(requestNr);
-			cameraLeft->functionInterface->imageRequestSingle();
-		}
-
-		Glib::Thread::yield();
-	}
-
-	cameraLeft->functionInterface->imageRequestReset(0, 0);
-}
-
-void
-PxBluefoxStereoCamera::rightImageHandler(void)
-{
-	int maxRequests = 2;
-
-	mvIMPACT::acquire::SystemSettings systemSettings(cameraRight->dev);
-	systemSettings.requestCount.write(maxRequests);
-
-	for (int i = 0; i < maxRequests; ++i)
-	{
 		cameraRight->functionInterface->imageRequestSingle();
 	}
 
+	int requestNrL = cameraLeft->functionInterface->imageRequestWaitFor(9000);
+	int requestNrR = cameraRight->functionInterface->imageRequestWaitFor(1000);
+
 	while (!exitImageThreads)
 	{
-		int requestNr = cameraRight->functionInterface->imageRequestWaitFor(timeout_ms);
+		ssize_t seqL, seqR;
+		bool requestFailed = false;
 
-		if (cameraRight->functionInterface->isRequestNrValid(requestNr))
+		const mvIMPACT::acquire::Request *requestL, *requestR;
+
+		if (cameraLeft->functionInterface->isRequestNrValid(requestNrL))
 		{
-			const mvIMPACT::acquire::Request* request = cameraRight->functionInterface->getRequest(requestNr);
-			if (cameraRight->functionInterface->isRequestOK(request))
+			requestL = cameraLeft->functionInterface->getRequest(requestNrL);
+			if (requestL->isOK())
 			{
-				imageMutex.lock();
-				cameraRight->convertToCvMat(request, cameraRight->image);
-				cameraRight->imageSequenceNr = request->infoFrameNr.read();
-
-				imageAvailable |= RIGHT_IMAGE_AVAILABLE;
-				imageAvailableCond->signal();
-				imageMutex.unlock();
+				seqL = requestL->infoFrameNr.read();
+				if (cameraRight->functionInterface->isRequestNrValid(requestNrR))
+				{
+					requestR = cameraRight->functionInterface->getRequest(requestNrR);
+					if (requestR->isOK())
+					{
+						seqR = requestR->infoFrameNr.read();
+					}
+					else
+					{
+						requestFailed = true;
+					}
+				}
+				else
+				{
+					requestFailed = true;
+					cameraLeft->functionInterface->imageRequestUnlock(requestNrL);	//we had a correct left request give it back
+					cameraLeft->functionInterface->imageRequestSingle();
+				}
 			}
-
-			cameraRight->functionInterface->imageRequestUnlock(requestNr);
-			cameraRight->functionInterface->imageRequestSingle();
+			else
+			{
+				requestFailed = true;
+			}
+		}
+		else
+		{
+			requestFailed = true;
 		}
 
-		Glib::Thread::yield();
+//		printf("PreSync: L: %llu\t R: %llu\n", seqL, seqR);
+
+		while (!requestFailed && seqL > seqR)
+		{
+			cameraRight->functionInterface->imageRequestUnlock(requestNrR);
+			cameraRight->functionInterface->imageRequestSingle();
+			requestNrR = cameraRight->functionInterface->imageRequestWaitFor(timeout_ms);
+			if (cameraLeft->functionInterface->isRequestNrValid(requestNrR))
+			{
+				requestR = cameraLeft->functionInterface->getRequest(requestNrR);
+				if (requestR->isOK())
+				{
+					seqR = requestR->infoFrameNr.read();
+				}
+			}
+			else
+			{
+				requestFailed = true;
+				cameraLeft->functionInterface->imageRequestUnlock(requestNrL);	//we had a correct left request give it back
+				cameraLeft->functionInterface->imageRequestSingle();
+			}
+		}
+
+		while (!requestFailed && seqL < seqR)
+		{
+			cameraLeft->functionInterface->imageRequestUnlock(requestNrL);
+			cameraLeft->functionInterface->imageRequestSingle();
+			requestNrL = cameraLeft->functionInterface->imageRequestWaitFor(timeout_ms);
+			if (cameraLeft->functionInterface->isRequestNrValid(requestNrL))
+			{
+				requestL = cameraLeft->functionInterface->getRequest(requestNrL);
+				if (requestL->isOK())
+				{
+					seqL = requestL->infoFrameNr.read();
+				}
+			}
+			else
+			{
+				requestFailed = true;
+				cameraRight->functionInterface->imageRequestUnlock(requestNrR);	//we had a correct right request give it back
+				cameraRight->functionInterface->imageRequestSingle();
+			}
+		}
+
+//		printf("         L: %llu\t R: %llu\n", seqL, seqR);
+
+		if (!requestFailed)
+		{
+			//at this point in time we have both frames with equal sequence number, store them
+			imageMutex.lock();
+			cameraLeft->convertToCvMat(requestL, cameraLeft->image);
+			cameraRight->convertToCvMat(requestR, cameraRight->image);
+			cameraLeft->imageSequenceNr = seqL;
+			cameraRight->imageSequenceNr = seqR;
+
+			if (mode == PxCameraConfig::AUTO_MODE)
+			{
+				// set gain & exposure of right camera based on image
+				// from left camera
+				cameraRight->setExposureTime(requestL->infoExposeTime_us.read());
+				cameraRight->setGainDB(requestL->infoGain_dB.read());
+			}
+
+			imageAvailable = ALL_IMAGES_AVAILABLE;
+			imageAvailableCond->signal();
+			imageMutex.unlock();
+
+			//return the request and queue up for the next one
+			cameraLeft->functionInterface->imageRequestUnlock(requestNrL);
+			cameraLeft->functionInterface->imageRequestSingle();
+			cameraRight->functionInterface->imageRequestUnlock(requestNrR);
+			cameraRight->functionInterface->imageRequestSingle();
+
+			Glib::Thread::yield();
+
+			requestNrL = cameraLeft->functionInterface->imageRequestWaitFor(timeout_ms);
+			requestNrR = cameraRight->functionInterface->imageRequestWaitFor(timeout_ms);
+		}
+		else
+		{
+			imageMutex.lock();
+			exitImageThreads = true;		//we want to stop everything now...
+			imageAvailableCond->signal();
+			imageMutex.unlock();
+		}
 	}
 
+	cameraLeft->functionInterface->imageRequestReset(0, 0);
 	cameraRight->functionInterface->imageRequestReset(0, 0);
 }

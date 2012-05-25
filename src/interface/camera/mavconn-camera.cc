@@ -411,12 +411,6 @@ int main(int argc, char* argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	// Disable trigger
-	if (!verbose)
-	{
-		fprintf(stderr, "# INFO: Disabling trigger until camera is initialized..\n");
-	}
-
 	//========= Initialize Shared memory =========
 	PxSHM::Camera cam = PxSHM::CAMERA_NONE;
 	PxSHM::Camera camRight = PxSHM::CAMERA_NONE;
@@ -447,6 +441,12 @@ int main(int argc, char* argv[])
 	PxSHMImageServer server;
 	server.init(getSystemID(), PX_COMP_ID_CAMERA, lcm, cam, camRight);
 
+	// Disable trigger
+	if (!verbose)
+	{
+		fprintf(stderr, "# INFO: Disabling trigger until camera is initialized..\n");
+	}
+
 	if(trigger && !triggerslave)
 	{
 		// send multiple times as a soft mean of forward error correction
@@ -458,7 +458,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	usleep(500000);
+	usleep(100000);
 
 	PxCameraConfig::Mode mode = PxCameraConfig::MANUAL_MODE;
 	if (automode)
