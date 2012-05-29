@@ -102,6 +102,11 @@
 namespace mvIMPACT {
 	namespace acquire {
 
+/// \defgroup CommonInterface Common for all interface layouts
+/// This group contains classes that are available for all interface layouts.
+///
+/// @{
+
 // predeclares
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 	class CameraDescriptionManager;
@@ -326,6 +331,7 @@ namespace mvIMPACT {
 	{
 	public:
 		explicit ENoWriteRights( const std::string& compname, const std::string& errorOrigin ) : EComponent("No write rights for component " + compname, errorOrigin, PROPHANDLING_NO_WRITE_RIGHTS) {}
+		virtual ~ENoWriteRights() throw() {}
 	};
 
 	//-----------------------------------------------------------------------------
@@ -492,7 +498,6 @@ namespace mvIMPACT {
 	//-----------------------------------------------------------------------------
 	{
 	public:
-		explicit EComponentNotFound( const std::string& compname, const std::string& listname, const std::string& errorOrigin ) : EPropertyList("Component " + compname + " is no member of list " + listname, errorOrigin, PROPHANDLING_COMPONENT_NOT_FOUND) {}
 		explicit EComponentNotFound( const std::string& msg, const std::string& errorOrigin ) : EPropertyList(msg, errorOrigin, PROPHANDLING_COMPONENT_NOT_FOUND) {}
 		virtual ~EComponentNotFound() throw() {}
 	};
@@ -515,16 +520,6 @@ namespace mvIMPACT {
 	public:
 		explicit EComponentIDInvalid( const std::string& errorOrigin) : EPropertyList("Invalid component ID", errorOrigin, PROPHANDLING_COMPONENT_ID_INVALID) {}
 		virtual ~EComponentIDInvalid() throw() {}
-	};
-
-	//-----------------------------------------------------------------------------
-	/// \brief An exception thrown in case of a <b>mvIMPACT::acquire::PROPHANDLING_COMPONENT_ALREADY_REGISTERED</b> error.
-	class EComponentAlreadyRegistered : public EPropertyList
-	//-----------------------------------------------------------------------------
-	{
-	public:
-		explicit EComponentAlreadyRegistered( const std::string componentName, const std::string& errorOrigin ) : EPropertyList("A component with name " + componentName + " is already registered in this list", errorOrigin, PROPHANDLING_COMPONENT_ALREADY_REGISTERED) {}
-		virtual ~EComponentAlreadyRegistered() throw() {}
 	};
 
 	//-----------------------------------------------------------------------------
@@ -639,7 +634,7 @@ namespace mvIMPACT {
 	//-----------------------------------------------------------------------------
 	{
 	public:
-		EInvalidInputParameter( const std::string& errorOrigin ) : EPropertyHandling("One or more of the input parameters are invalid ( unassigned pointers? )", errorOrigin, PROPHANDLING_INVALID_INPUT_PARAMETER) {}
+		explicit EInvalidInputParameter( const std::string& errorOrigin ) : EPropertyHandling("One or more of the input parameters are invalid ( unassigned pointers? )", errorOrigin, PROPHANDLING_INVALID_INPUT_PARAMETER) {}
 		virtual ~EInvalidInputParameter() throw() {}
 	};
 
@@ -649,7 +644,7 @@ namespace mvIMPACT {
 	//-----------------------------------------------------------------------------
 	{
 	public:
-		EInputBufferTooSmall( const std::string& errorOrigin ) : EPropertyHandling("The user supplied input buffer was too small for the result", errorOrigin, PROPHANDLING_INPUT_BUFFER_TOO_SMALL) {}
+		explicit EInputBufferTooSmall( const std::string& errorOrigin ) : EPropertyHandling("The user supplied input buffer was too small for the result", errorOrigin, PROPHANDLING_INPUT_BUFFER_TOO_SMALL) {}
 		virtual ~EInputBufferTooSmall() throw() {}
 	};
 
@@ -659,7 +654,7 @@ namespace mvIMPACT {
 	//-----------------------------------------------------------------------------
 	{
 	public:
-		EWrongParamCount( const std::string& errorOrigin ) : EPropertyHandling("Wrong parameter count", errorOrigin, PROPHANDLING_WRONG_PARAM_COUNT) {}
+		explicit EWrongParamCount( const std::string& errorOrigin ) : EPropertyHandling("Wrong parameter count", errorOrigin, PROPHANDLING_WRONG_PARAM_COUNT) {}
 		virtual ~EWrongParamCount() throw() {}
 	};
 
@@ -669,7 +664,7 @@ namespace mvIMPACT {
 	//-----------------------------------------------------------------------------
 	{
 	public:
-		EUnsupportedOperation( const std::string& errorOrigin ) : EPropertyHandling("This component does not support this operation", errorOrigin, PROPHANDLING_UNSUPPORTED_OPERATION) {}
+		explicit EUnsupportedOperation( const std::string& errorOrigin ) : EPropertyHandling("This component does not support this operation", errorOrigin, PROPHANDLING_UNSUPPORTED_OPERATION) {}
 		virtual ~EUnsupportedOperation() throw() {}
 	};
 
@@ -679,7 +674,7 @@ namespace mvIMPACT {
 	//-----------------------------------------------------------------------------
 	{
 	public:
-		ECantSerializeData( const std::string& listname, const std::string& errorOrigin ) : EPropertyHandling("No serialize rights for list " + listname, errorOrigin, PROPHANDLING_CANT_SERIALIZE_DATA) {}
+		explicit ECantSerializeData( const std::string& listname, const std::string& errorOrigin ) : EPropertyHandling("No serialize rights for list " + listname, errorOrigin, PROPHANDLING_CANT_SERIALIZE_DATA) {}
 		virtual ~ECantSerializeData() throw() {}
 	};
 
@@ -689,7 +684,7 @@ namespace mvIMPACT {
 	//-----------------------------------------------------------------------------
 	{
 	public:
-		EInvalidFileContent( const std::string& path, const std::string& errorOrigin ) : EPropertyHandling("The file " + path + " does not contain valid data for this operation", errorOrigin, PROPHANDLING_INVALID_FILE_CONTENT) {}
+		explicit EInvalidFileContent( const std::string& path, const std::string& errorOrigin ) : EPropertyHandling("The file " + path + " does not contain valid data for this operation", errorOrigin, PROPHANDLING_INVALID_FILE_CONTENT) {}
 		virtual ~EInvalidFileContent() throw() {}
 	};
 
@@ -699,7 +694,7 @@ namespace mvIMPACT {
 	//-----------------------------------------------------------------------------
 	{
 	public:
-		ECantAllocateNewList( const std::string& errorOrigin ) : EPropertyHandling("Cannot allocate a new list until an old one has been deleted.", errorOrigin, PROPHANDLING_CANT_ALLOCATE_LIST) {}
+		explicit ECantAllocateNewList( const std::string& errorOrigin ) : EPropertyHandling("Cannot allocate a new list until an old one has been deleted.", errorOrigin, PROPHANDLING_CANT_ALLOCATE_LIST) {}
 		virtual ~ECantAllocateNewList() throw() {}
 	};
 
@@ -958,6 +953,27 @@ private:
 		}
 		return hObj;
 	}
+	//-----------------------------------------------------------------------------
+	template<typename _FnQuery> std::string queryAsString( _FnQuery pFnQuery ) const
+	//-----------------------------------------------------------------------------
+	{
+		size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
+		char* pBuf = new char[bufSize];
+		TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
+		while( ( result = pFnQuery( m_hObj, pBuf, bufSize ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
+		{
+			delete [] pBuf;
+			bufSize *= BUFFER_INCREMENT_FACTOR;
+			pBuf = new char[bufSize];
+		}
+		std::string value(pBuf);
+		delete [] pBuf;
+		if( result != PROPHANDLING_NO_ERROR )
+		{
+			ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
+		}
+		return value;
+	}
 public:
 	/// \brief Constructs a new access object to a driver object.
 	explicit Component( HOBJ hObj ) : ComponentAccess(hObj) {}
@@ -1132,22 +1148,7 @@ public:
 	/// \return The type of the referenced component as a string.
 	std::string typeAsString( void ) const
 	{
-		size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
-		char* pBuf = new char[bufSize];
-		TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
-		while( ( result = OBJ_GetTypeS( m_hObj, pBuf, bufSize ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
-		{
-			delete [] pBuf;
-			bufSize *= BUFFER_INCREMENT_FACTOR;
-			pBuf = new char[bufSize];
-		}
-		std::string value(pBuf);
-		delete [] pBuf;
-		if( result != PROPHANDLING_NO_ERROR )
-		{
-			ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
-		}
-		return value;
+		return queryAsString( OBJ_GetTypeS );
 	}
 	/// \brief Returns the recommended visibility for this component.
 	///
@@ -1168,22 +1169,7 @@ public:
 	/// \return The recommended visibility of the referenced component as a string.
 	std::string visibilityAsString( void ) const
 	{
-		size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
-		char* pBuf = new char[bufSize];
-		TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
-		while( ( result = OBJ_GetVisibilityS( m_hObj, pBuf, bufSize ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
-		{
-			delete [] pBuf;
-			bufSize *= BUFFER_INCREMENT_FACTOR;
-			pBuf = new char[bufSize];
-		}
-		std::string value(pBuf);
-		delete [] pBuf;
-		if( result != PROPHANDLING_NO_ERROR )
-		{
-			ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
-		}
-		return value;
+		return queryAsString( OBJ_GetVisibilityS );
 	}
 	/// \brief Returns the recommended visibility converted to a string.
 	/// \return The recommended visibility converted to a string.
@@ -1209,7 +1195,7 @@ public:
 	/// \brief Returns the number of features selected by the current one.
 	///
 	/// \sa
-	/// <b>mvIMPACT::acquire::Component::selectedFeatures>,<br>
+	/// <b>mvIMPACT::acquire::Component::selectedFeatures,<br>
 	///    mvIMPACT::acquire::Component::selectedFeature</b>
 	/// \return The number of features selected by the current one.
 	unsigned int selectedFeatureCount( void ) const
@@ -1227,44 +1213,44 @@ public:
 		return static_cast<unsigned int>(queryFeatureCount( OBJ_GetSelectingFeatures ));
 	}
 #ifndef WRAP_DOTNET
-	/// \brief Retrieves the list of components that are selected by the current one.
-	///
-	/// This function retrieves the list of components, that are selected by
-	/// the current one. This information is mainly useful for GUI applications that want to arrange
-	/// features in a way that dependencies between features can easily been spotted.
-	///
-	/// When a component 'selects' other components, this indicates, that selected components may change whenever
-	/// the selecting component changes. An example for a selector might be a property defining the index within
-	/// a LUT while the value of a particular LUT entry could be a selected feature. Assuming 2 properties
-	/// \a LUTIndex and \a LUTValue then changing \a LUTIndex will invalidate and possibly change \a LUTValue.
-	///
-	/// \sa
-	/// <b>mvIMPACT::acquire::Component::selectedFeatureCount,<br>
-	///    mvIMPACT::acquire::Component::selectedFeature</b>
-	/// \return The number of features selected by the current one.
-	unsigned int selectedFeatures( std::vector<Component>& v ) const
-	{
-		return static_cast<unsigned int>(queryFeatures( v, OBJ_GetSelectedFeatures ));
-	}
-	/// \brief Retrieves the list of components that are selecting the current one.
-	///
-	/// This function retrieves the list of components, that are selecting
-	/// the current one. This information is mainly useful for GUI applications that want to arrange
-	/// features in a way that dependencies between features can easily been spotted.
-	///
-	/// When a component 'selects' other components, this indicates, that selected components may change whenever
-	/// the selecting component changes. An example for a selector might be a property defining the index within
-	/// a LUT while the value of a particular LUT entry could be a selected feature. Assuming 2 properties
-	/// \a LUTIndex and \a LUTValue then changing \a LUTIndex will invalidate and possibly change \a LUTValue.
-	///
-	/// \sa
-	/// <b>mvIMPACT::acquire::Component::selectingFeatureCount,<br>
-	///    mvIMPACT::acquire::Component::selectingFeature</b>
-	/// \return The number of features selecting the current one.
-	unsigned int selectingFeatures( std::vector<Component>& v ) const
-	{
-		return static_cast<unsigned int>(queryFeatures( v, OBJ_GetSelectingFeatures ));
-	}
+		/// \brief Retrieves the list of components that are selected by the current one.
+		///
+		/// This function retrieves the list of components, that are selected by
+		/// the current one. This information is mainly useful for GUI applications that want to arrange
+		/// features in a way that dependencies between features can easily been spotted.
+		///
+		/// When a component 'selects' other components, this indicates, that selected components may change whenever
+		/// the selecting component changes. An example for a selector might be a property defining the index within
+		/// a LUT while the value of a particular LUT entry could be a selected feature. Assuming 2 properties
+		/// \a LUTIndex and \a LUTValue then changing \a LUTIndex will invalidate and possibly change \a LUTValue.
+		///
+		/// \sa
+		/// <b>mvIMPACT::acquire::Component::selectedFeatureCount,<br>
+		///    mvIMPACT::acquire::Component::selectedFeature</b>
+		/// \return The number of features selected by the current one.
+		unsigned int selectedFeatures( std::vector<Component>& v ) const
+		{
+			return static_cast<unsigned int>(queryFeatures( v, OBJ_GetSelectedFeatures ));
+		}
+		/// \brief Retrieves the list of components that are selecting the current one.
+		///
+		/// This function retrieves the list of components, that are selecting
+		/// the current one. This information is mainly useful for GUI applications that want to arrange
+		/// features in a way that dependencies between features can easily been spotted.
+		///
+		/// When a component 'selects' other components, this indicates, that selected components may change whenever
+		/// the selecting component changes. An example for a selector might be a property defining the index within
+		/// a LUT while the value of a particular LUT entry could be a selected feature. Assuming 2 properties
+		/// \a LUTIndex and \a LUTValue then changing \a LUTIndex will invalidate and possibly change \a LUTValue.
+		///
+		/// \sa
+		/// <b>mvIMPACT::acquire::Component::selectingFeatureCount,<br>
+		///    mvIMPACT::acquire::Component::selectingFeature</b>
+		/// \return The number of features selecting the current one.
+		unsigned int selectingFeatures( std::vector<Component>& v ) const
+		{
+			return static_cast<unsigned int>(queryFeatures( v, OBJ_GetSelectingFeatures ));
+		}
 #endif // #ifndef WRAP_DOTNET
 	/// \brief Retrieves a component that is selected by the current one.
 	///
@@ -1363,26 +1349,26 @@ public:
 class ComponentCallback
 //-----------------------------------------------------------------------------
 {
-	#ifndef DOXYGEN_SHOULD_SKIP_THIS
-	//-----------------------------------------------------------------------------
-	struct CallbackUserData
-	//-----------------------------------------------------------------------------
-	{
-		void* pUserData_;
-		ComponentCallback* pCallback_;
-		explicit CallbackUserData() : pUserData_(0), pCallback_(0) {}
-	};
-	//-----------------------------------------------------------------------------
-	struct ReferenceCountedData
-	//-----------------------------------------------------------------------------
-	{
-		CallbackHandle handle_;
-		CallbackUserData callbackUserData_;
-		std::set<HOBJ> objectsRegistered_;
-		int m_refCnt;
-		ReferenceCountedData() : handle_(0), callbackUserData_(), objectsRegistered_(), m_refCnt(1) {}
-	} *m_pRefData;
-	#endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+		//-----------------------------------------------------------------------------
+		struct CallbackUserData
+		//-----------------------------------------------------------------------------
+		{
+			void* pUserData_;
+			ComponentCallback* pCallback_;
+			explicit CallbackUserData() : pUserData_(0), pCallback_(0) {}
+		};
+		//-----------------------------------------------------------------------------
+		struct ReferenceCountedData
+		//-----------------------------------------------------------------------------
+		{
+			CallbackHandle handle_;
+			CallbackUserData callbackUserData_;
+			std::set<HOBJ> objectsRegistered_;
+			int m_refCnt;
+			ReferenceCountedData() : handle_(0), callbackUserData_(), objectsRegistered_(), m_refCnt(1) {}
+		} *m_pRefData;
+#endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
 
 	//-----------------------------------------------------------------------------
 	static void myCallback( HOBJ hObj, void* pUserData )
@@ -1390,7 +1376,7 @@ class ComponentCallback
 	{
 		Component c(hObj);
 		CallbackUserData* p = reinterpret_cast<CallbackUserData*>(pUserData);
-		reinterpret_cast<ComponentCallback*>(p->pCallback_)->execute( c, p->pUserData_ );
+		p->pCallback_->execute( c, p->pUserData_ );
 	}
 	//-----------------------------------------------------------------------------
 	void dealloc( void )
@@ -1399,6 +1385,7 @@ class ComponentCallback
 		--(m_pRefData->m_refCnt);
 		if( m_pRefData->m_refCnt == 0 )
 		{
+			OBJ_DeleteCallback( m_pRefData->handle_ );
 			delete m_pRefData;
 		}
 	}
@@ -1436,18 +1423,18 @@ public:
 		dealloc();
 	}
 #ifndef WRAP_PYTHON
-	/// \brief Allows assignments of <b>mvIMPACT::acquire::ComponentCallback</b> objects
-	ComponentCallback& operator=( const ComponentCallback& rhs )
-	{
-		if( this != &rhs )
+		/// \brief Allows assignments of <b>mvIMPACT::acquire::ComponentCallback</b> objects
+		ComponentCallback& operator=( const ComponentCallback& rhs )
 		{
-			dealloc();
-			m_pRefData = rhs.m_pRefData;
-			// inc. the NEW reference count
-			++(m_pRefData->m_refCnt);
+			if( this != &rhs )
+			{
+				dealloc();
+				m_pRefData = rhs.m_pRefData;
+				// inc. the NEW reference count
+				++(m_pRefData->m_refCnt);
+			}
+			return *this;
 		}
-		return *this;
-	}
 #endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
 	/// \brief Checks if a component is currently registered for this callback or not.
 	///
@@ -1464,7 +1451,7 @@ public:
 	bool registerComponent(	/// The component to register for this callback
 							Component c )
 	{
-		if( m_pRefData->objectsRegistered_.find( c.hObj() ) != m_pRefData->objectsRegistered_.end() )
+		if( isComponentRegistered( c ) )
 		{
 			return false;
 		}
@@ -1507,9 +1494,17 @@ public:
 	/// correct execution must be implemented by an application(e.g. GUI applications might send an
 	/// event to the main thread instead of directly accessing GUI elements).
 #if defined(WRAP_DOTNET) || defined(DOTNET_ONLY_CODE)
-	virtual void execute( Component& c, void* pUserData ) {}
+	virtual void execute(	/// The component that did cause the callback to be executed
+							Component& c,
+							/// A pointer to user specific data that was bound to this callback instance
+							/// upon construction
+							void* pUserData ) {}
 #else
-	virtual void execute( Component& /*c*/, void* /*pUserData*/ ) {}
+	virtual void execute(	/// The component that did cause the callback to be executed
+							Component& /*c*/,
+							/// A pointer to user specific data that was bound to this callback instance
+							/// upon construction
+							void* /*pUserData*/ ) {}
 #endif // #if defined(WRAP_DOTNET) || defined(DOTNET_ONLY_CODE)
 };
 
@@ -1853,29 +1848,29 @@ public:
 	/// \brief Constructs a new unbound <b>mvIMPACT::acquire::ComponentIterator</b> object.
 	explicit ComponentIterator( void ) {}
 #ifndef WRAP_PYTHON
-	/// \brief Moves to the next sibling.
-	///
-	/// \return A self reference
-	ComponentIterator& operator++( void ) // prefix
-	{
-		TPROPHANDLING_ERROR result;
-		HOBJ nextSibling;
-		if( ( result = OBJ_GetNextSibling( m_hObj, &nextSibling ) ) != PROPHANDLING_NO_ERROR )
+		/// \brief Moves to the next sibling.
+		///
+		/// \return A self reference
+		ComponentIterator& operator++( void ) // prefix
 		{
-			ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
+			TPROPHANDLING_ERROR result;
+			HOBJ nextSibling;
+			if( ( result = OBJ_GetNextSibling( m_hObj, &nextSibling ) ) != PROPHANDLING_NO_ERROR )
+			{
+				ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
+			}
+			m_hObj = nextSibling;
+			return *this;
 		}
-		m_hObj = nextSibling;
-		return *this;
-	}
-	/// \brief Moves to the next sibling.
-	///
-	/// \return A new iterator object
-	ComponentIterator operator++( int ) // postfix
-	{
-		ComponentIterator temp( *this );
-		++*this;
-		return temp;
-	}
+		/// \brief Moves to the next sibling.
+		///
+		/// \return A new iterator object
+		ComponentIterator operator++( int ) // postfix
+		{
+			ComponentIterator temp( *this );
+			++*this;
+			return temp;
+		}
 #endif // #ifndef WRAP_PYTHON (in Pyhton, use nextSibling(); Python has no ++ operator)
 	/// \brief Moves to the first sibling.
 	///
@@ -1953,8 +1948,8 @@ public:
 	}
 	/// \brief Constructs a new unbound <b>mvIMPACT::acquire::ComponentList</b> object.
 	explicit ComponentList() {}
-	/// brief Returns The number of component entries in the referenced list.
-	/// \return The number of component entries in the referenced list.
+	/// \brief Returns The number of valid component entries in the referenced list.
+	/// \return The number of valid component entries in the referenced list.
 	unsigned int size( void ) const
 	{
 		TPROPHANDLING_ERROR result;
@@ -2190,12 +2185,14 @@ enum TPropertyLimits
 /// Float and int properties can also define certain constants like a max. value or
 /// a min. value. If a property does define such values it can't be assigned values
 /// which do not lie within the defined range. To find out if constants are defined
-/// The user can call the function <b>mvIMPACT::acquire::Property::isConstDefined</b>.
-/// To query to actual value of this constant the 'normal' function (e.g. <b>mvIMPACT::acquire::PropertyF::read( int index )</b>)
-/// can be used, where \a index must be set to a constant value defined for this specific
-/// value. These constants are defined by the enumeration <b>mvIMPACT::acquire::TPropertyLimits</b>.
+/// The user can call the functions <b>mvIMPACT::acquire::Property::hasMaxValue</b>,
+/// <b>mvIMPACT::acquire::Property::hasMinValue</b> and <b>mvIMPACT::acquire::Property::hasStepWidth</b>.
+/// To query to actual value of the max, min or step width the functions
+/// <b>getMaxValue</b>, <b>getMinValue</b> and <b>getStepWidth</b> of the classes
+/// <b>mvIMPACT::acquire::EnumPropertyF</b>, <b>mvIMPACT::acquire::EnumPropertyI</b> and
+/// <b>mvIMPACT::acquire::EnumPropertyI64</b> can be called.
 ///
-/// When reading the value of a property as a string the user might define a format string
+/// When reading the value of a property as a string the user can define a format string
 /// telling the property module how to format the returned string. This works pretty much
 /// like when working e.g. with the \e printf function.
 class Property : public Component
@@ -2204,6 +2201,16 @@ class Property : public Component
 	// do not allow assignments! This makes sure the user can't assign e.g. the
 	// gain property to the property for controlling the expose time
 	Property& operator=( const Property& );
+	bool isConstDefinedInternal( TPropertyLimits constant ) const
+	{
+		TPROPHANDLING_ERROR result;
+		unsigned int isDefined;
+		if( ( result = OBJ_IsConstantDefined( m_hObj, constant, &isDefined ) ) != PROPHANDLING_NO_ERROR )
+		{
+			ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
+		}
+		return isDefined != 0;
+	}
 protected:
 	//-----------------------------------------------------------------------------
 	int valuesToRead( int start, int end ) const
@@ -2298,23 +2305,38 @@ public:
 	/// - true if this property defines a translation table
 	/// - false otherwise
 	bool hasDict( void ) const { return ( dictSize() > 0 ); }
-	/// \brief Checks if a certain constant is defined for this property
+	/// \brief Checks if a certain constant is defined for this property(<b>deprecated</b>).
+	///
+	/// \note
+	/// This function has been declared deprecated and will be removed in version 1.13.0 of this interface.
+	/// Use <b>mvIMPACT::acquire::Property::hasMaxValue()</b>, <b>mvIMPACT::acquire::Property::hasMinValue()</b>
+	/// and <b>mvIMPACT::acquire::Property::hasStepWidth()</b> instead and see the corresponding 'Porting existing code'
+	/// section in the documentation.
 	///
 	/// Valid values for \a constant are defined by the enum <b>mvIMPACT::acquire::TPropertyLimits</b>.
 	/// \return
 	/// - true if this property defines this constant
 	/// - false otherwise
-	bool isConstDefined(	/// The constant whose existance is in question
-							int constant ) const
-	{
-		TPROPHANDLING_ERROR result;
-		unsigned int isDefined;
-		if( ( result = OBJ_IsConstantDefined( m_hObj, constant, &isDefined ) ) != PROPHANDLING_NO_ERROR )
-		{
-			ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
-		}
-		return isDefined != 0;
-	}
+	MVIMPACT_DEPRECATED_CPP( bool isConstDefined(	/// The constant whose existance is in question
+							TPropertyLimits constant ) const );
+	/// \brief Checks if a maximum value is defined for this property
+	///
+	/// \return
+	/// - true if this property defines a maximum value
+	/// - false otherwise
+	bool hasMaxValue( void ) const { return isConstDefinedInternal( plMaxValue ); }
+	/// \brief Checks if a minimum value is defined for this property
+	///
+	/// \return
+	/// - true if this property defines a minimum value
+	/// - false otherwise
+	bool hasMinValue( void ) const { return isConstDefinedInternal( plMinValue ); }
+	/// \brief Checks if a step width is defined for this property
+	///
+	/// \return
+	/// - true if this property defines a step width
+	/// - false otherwise
+	bool hasStepWidth( void ) const { return isConstDefinedInternal( plStepWidth ); }
 	/// \brief Reads data from this property as a string.
 	///
 	/// \note If the caller does not have the needed rights this function might throw an
@@ -2426,7 +2448,7 @@ public:
 			ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
 		}
 #ifndef DOTNET_ONLY_CODE
-			return *this;
+		return *this;
 #endif
 	}
 #if defined(WRAP_DOTNET) || defined(DOTNET_ONLY_CODE)
@@ -2632,6 +2654,17 @@ public:
 	}
 };
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#	if !defined(WRAP_PYTHON) // To date, no customer uses Python, so we don't need backward compatibility here.
+		//-----------------------------------------------------------------------------
+		inline bool Property::isConstDefined( TPropertyLimits constant ) const
+		//-----------------------------------------------------------------------------
+		{
+			return isConstDefinedInternal( constant );
+		}
+#	endif // #if !defined(WRAP_PYTHON)
+#endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
+
 //-----------------------------------------------------------------------------
 /// \brief A template class to represent float properties and enumerated float properties
 ///
@@ -2654,68 +2687,69 @@ public:
 		}
 	}
 #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
-	typedef ZYX value_type;
+		typedef ZYX value_type;
 #endif // DOXYGEN_SHOULD_SKIP_THIS && WRAP_ANY
 #ifndef WRAP_DOTNET
-	/// \brief This function queries the properties translation table
-	///
-	/// If this property defines a translation table the strings and there corresponding
-	/// translation values will be written into \a sequence. If the property does <b>NOT</b>
-	/// define a translation table \a sequence will be empty after this function call.
-	///
-	/// \note
-	/// This function is much more efficient than calling
-	/// <b>EnumPropertyF::getTranslationDictString</b> and
-	/// <b>EnumPropertyF::getTranslationDictValue</b> and
-	/// therefore this function should be called whenever all entries are required.
-	/// \return A const reference to the calling property.
-	const EnumPropertyF& getTranslationDict(	/// A reference to a container which will receive the data from the properties translation dictionary.
-												std::vector<std::pair<std::string, ZYX> >& sequence ) const
-	{
-		TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
-		unsigned int size = dictSize();
-
-		double* pVal = new double[size];
-		char** ppBuf = new char*[size];
-		size_t bufSize = DEFAULT_STRING_SIZE_LIMIT, i;
-
-		for( i=0; i<size; i++ )
+		/// \brief This function queries the properties translation table
+		///
+		/// If this property defines a translation table the strings and there corresponding
+		/// translation values will be written into \a sequence. If the property does <b>NOT</b>
+		/// define a translation table \a sequence will be empty after this function call.
+		///
+		/// \note
+		/// This function is much more efficient than calling
+		/// <b>EnumPropertyF::getTranslationDictString</b> and
+		/// <b>EnumPropertyF::getTranslationDictValue</b> and
+		/// therefore this function should be called whenever all entries are required.
+		/// \return A const reference to the calling property.
+		const EnumPropertyF& getTranslationDict(	/// A reference to a container which will receive the data from the properties translation dictionary.
+													std::vector<std::pair<std::string, ZYX> >& sequence ) const
 		{
-			ppBuf[i] = new char[bufSize];
-		}
+			TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
+			unsigned int size = dictSize();
 
-		while( ( result = OBJ_GetFDictEntries( m_hObj, ppBuf, bufSize, pVal, size ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
-		{
-			bufSize *= BUFFER_INCREMENT_FACTOR;
-			for( size_t i=0; i<size; i++ )
+			double* pVal = new double[size];
+			char** ppBuf = new char*[size];
+			size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
+			size_t i = 0;
+
+			for( i=0; i<size; i++ )
 			{
-				delete [] ppBuf[i];
 				ppBuf[i] = new char[bufSize];
 			}
-		}
 
-		if( result == PROPHANDLING_NO_ERROR )
-		{
-			sequence.resize(size);
-			for( unsigned int i=0; i<size; i++ )
+			while( ( result = OBJ_GetFDictEntries( m_hObj, ppBuf, bufSize, pVal, size ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
 			{
-				sequence[i] = std::pair<std::string, ZYX>( ppBuf[i], static_cast<ZYX>(pVal[i]) );
+				bufSize *= BUFFER_INCREMENT_FACTOR;
+				for( size_t i=0; i<size; i++ )
+				{
+					delete [] ppBuf[i];
+					ppBuf[i] = new char[bufSize];
+				}
 			}
-		}
 
-		for( i=0; i<size; i++ )
-		{
-			delete [] ppBuf[i];
-		}
-		delete [] ppBuf;
-		delete [] pVal;
+			if( result == PROPHANDLING_NO_ERROR )
+			{
+				sequence.resize(size);
+				for( unsigned int i=0; i<size; i++ )
+				{
+					sequence[i] = std::pair<std::string, ZYX>( ppBuf[i], static_cast<ZYX>(pVal[i]) );
+				}
+			}
 
-		if( result != PROPHANDLING_NO_ERROR )
-		{
-			ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
+			for( i=0; i<size; i++ )
+			{
+				delete [] ppBuf[i];
+			}
+			delete [] ppBuf;
+			delete [] pVal;
+
+			if( result != PROPHANDLING_NO_ERROR )
+			{
+				ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
+			}
+			return *this;
 		}
-		return *this;
-	}
 #endif // WRAP_DOTNET
 	/// \brief This function reads a single translation table string entry from a property.
 	///
@@ -2766,12 +2800,6 @@ public:
 	///
 	/// This function queries a single value stored under index \a index in the property.
 	/// \return The value stored at \a index within the property.
-	///
-	/// \note
-	/// To query certain limits like e.g. the max. value for this property one of the values
-	/// defined by the enum <b>mvIMPACT::acquire::TPropertyLimits</b> can be passed as \a index.
-	/// Use <b>Property::isConstDefined</b> to find out if the constant you want to
-	/// read is defined at all.
 	ZYX read(	/// The index of the value to read from the property.
 				int index = 0 ) const
 	{
@@ -2783,20 +2811,44 @@ public:
 		}
 		return static_cast<ZYX>(val);
 	}
+	/// \brief Reads the maximum value from a property.
+	///
+	/// \note
+	/// To find out if the property defines a maximum value <b>mvIMPACT::acquire::Property::hasMaxValue</b>
+	/// should be called first.
+	///
+	/// \note
+	/// If the property does not define a maximum value calling this function will raise
+	/// an exception.
+	ZYX getMaxValue( void ) const { return read( plMaxValue ); }
+	/// \brief Reads the minimum value from a property.
+	///
+	/// \note
+	/// To find out if the property defines a minimum value <b>mvIMPACT::acquire::Property::hasMinValue</b>
+	/// should be called first.
+	///
+	/// \note
+	/// If the property does not define a minimum value calling this function will raise
+	/// an exception.
+	ZYX getMinValue( void ) const { return read( plMinValue ); }
+	/// \brief Reads the step width from a property.
+	///
+	/// \note
+	/// To find out if the property defines a step width <b>mvIMPACT::acquire::Property::hasStepWidth</b>
+	/// should be called first.
+	///
+	/// \note
+	/// If the property does not define a step width calling this function will raise
+	/// an exception.
+	ZYX getStepWidth( void ) const { return read( plStepWidth ); }
 	/// \brief Reads a set of values from a property.
 	///
 	/// This function queries a set of values from a property and stores these values
 	/// into \a sequence.
-	///
-	/// \note
-	/// To query certain limits like e.g. the max. value for this property call
-	/// the read function just accepting the index parameter.
-	/// Use <b>Property::isConstDefined</b> to find out if the constant you want to
-	/// read is defined at all.
 	/// \return Nothing.
 	void read(	/// A reference to a container to store the data read from the property into.
 				std::vector<ZYX>& sequence,
-				// The index from where to start reading values from the property.
+				/// The index from where to start reading values from the property.
 				int start = 0,
 				/// The index where to stop reading values from the property.
 				int end = END_OF_LIST ) const
@@ -2813,16 +2865,10 @@ public:
 	/// This function queries a set of values from a property and stores these values
 	/// into \a sequence.
 	/// \return Nothing.
-	///
-	/// \note
-	/// To query certain limits like e.g. the max. value for this property call
-	/// the read function just accepting the index parameter.
-	/// Use <b>mvIMPACT::acquire::Property::isConstDefined</b> to find out if the constant you want to
-	/// read is defined at all.
 	void read(	/// A reference to a container to store the data read from the property into.
 				std::vector<ZYX>& sequence,
 				/// Set this parameter to \a true to get all values at once(recommended). If set to false the function will
-				/// need more time an all values in \a sequence will be read one after the other
+				/// need more time and all values in \a sequence will be read one after the other
 				bool boAtomic,
 				/// The index from where to start reading values from the property.
 				int start = 0,
@@ -2892,10 +2938,10 @@ public:
 	/// \return A const 'self' reference.
 	const EnumPropertyF&
 #endif
-								write(	/// An array containing the values to write to the property.
-										const std::vector<ZYX>& sequence,
-										/// The index where to write the first value to the property.
-										int index = 0 ) const
+							write(	/// An array containing the values to write to the property.
+									const std::vector<ZYX>& sequence,
+									/// The index where to write the first value to the property.
+									int index = 0 ) const
 	{
 		unsigned int vSize = static_cast<unsigned int>(sequence.size());
 		for( unsigned int i=0; i<vSize; i++ )
@@ -2922,7 +2968,7 @@ public:
 							write(	/// An array containing the values to write to the property.
 									const std::vector<ZYX>& sequence,
 									/// Set this parameter to \a true to set all values at once(recommended). If set to false the function will
-									/// need more time an all values in \a sequence will be set one after the other
+									/// need more time and all values in \a sequence will be set one after the other
 									bool boAtomic,
 									/// The index where to write the first value to the property.
 									int index = 0 ) const
@@ -2954,7 +3000,7 @@ public:
 
 /// \brief A type for floating point properties.
 ///
-/// Provided for convenience only. This type represent a standard float property type.
+/// Provided for convenience only. This type represents a standard float property type.
 typedef EnumPropertyF<double> PropertyF;
 PYTHON_ONLY(ENUM_PROPERTY(PropertyF, EnumPropertyF, double))
 
@@ -2981,25 +3027,25 @@ public:
 		}
 	}
 #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
-	typedef ZYX value_type;
+		typedef ZYX value_type;
 #endif // DOXYGEN_SHOULD_SKIP_THIS && WRAP_ANY
 #ifndef WRAP_DOTNET
-	/// \brief This function queries the properties translation table
-	///
-	/// If this property defines a translation table the strings and there corresponding
-	/// translation values will be written into \a sequence. If the property does <b>NOT</b>
-	/// define a translation table \a sequence will be empty after this function call.
-	///
-	/// \note
-	/// This function is much more efficient than calling
-	/// <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictString</b> and
-	/// <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictValue</b> and
-	/// therefore this function should be called whenever all entries are required.
+		/// \brief This function queries the properties translation table
+		///
+		/// If this property defines a translation table the strings and there corresponding
+		/// translation values will be written into \a sequence. If the property does <b>NOT</b>
+		/// define a translation table \a sequence will be empty after this function call.
+		///
+		/// \note
+		/// This function is much more efficient than calling
+		/// <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictString</b> and
+		/// <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictValue</b> and
+		/// therefore this function should be called whenever all entries are required.
 
-	/// \return A const reference to the calling property.
-	const EnumPropertyI& getTranslationDict(	/// A reference to an container which will receive the data from the properties translation dictionary.
-												std::vector<std::pair<std::string, ZYX> >& sequence ) const
-{
+		/// \return A const reference to the calling property.
+		const EnumPropertyI& getTranslationDict(	/// A reference to an container which will receive the data from the properties translation dictionary.
+													std::vector<std::pair<std::string, ZYX> >& sequence ) const
+		{
 			TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
 			unsigned int size = dictSize();
 
@@ -3093,12 +3139,6 @@ public:
 	///
 	/// This function queries a single value stored under index \a index in the property.
 	/// \return The value stored at \a index within the property.
-	///
-	/// \note
-	/// To query certain limits like e.g. the max. value for this property one of the values
-	/// defined by the enum <b>mvIMPACT::acquire::TPropertyLimits</b> can be passed as \a index.
-	/// Use <b>mvIMPACT::acquire::Property::isConstDefined</b> to find out if the constant you want to
-	/// read is defined at all.
 	ZYX read(	/// The index of the value to read from the property.
 				int index = 0 ) const
 	{
@@ -3110,17 +3150,41 @@ public:
 		}
 		return static_cast<ZYX>(val);
 	}
+	/// \brief Reads the maximum value from a property.
+	///
+	/// \note
+	/// To find out if the property defines a maximum value <b>mvIMPACT::acquire::Property::hasMaxValue</b>
+	/// should be called first.
+	///
+	/// \note
+	/// If the property does not define a maximum value calling this function will raise
+	/// an exception.
+	ZYX getMaxValue( void ) const { return read( plMaxValue ); }
+	/// \brief Reads the minimum value from a property.
+	///
+	/// \note
+	/// To find out if the property defines a minimum value <b>mvIMPACT::acquire::Property::hasMinValue</b>
+	/// should be called first.
+	///
+	/// \note
+	/// If the property does not define a minimum value calling this function will raise
+	/// an exception.
+	ZYX getMinValue( void ) const { return read( plMinValue ); }
+	/// \brief Reads the step width from a property.
+	///
+	/// \note
+	/// To find out if the property defines a step width <b>mvIMPACT::acquire::Property::hasStepWidth</b>
+	/// should be called first.
+	///
+	/// \note
+	/// If the property does not define a step width calling this function will raise
+	/// an exception.
+	ZYX getStepWidth( void ) const { return read( plStepWidth ); }
 	/// \brief Reads a set of values from a property.
 	///
 	/// This function queries a set of values from a property and stores these values
 	/// into \a sequence.
 	/// \return Nothing.
-	///
-	/// \note
-	/// To query certain limits like e.g. the max. value for this property call
-	/// the read function just accepting the index parameter.
-	/// Use <b>mvIMPACT::acquire::Property::isConstDefined</b> to find out if the constant you want to
-	/// read is defined at all.
 	void read(	/// A reference to a container to store the data read from the property into.
 				std::vector<ZYX>& sequence,
 				/// The index from where to start reading values from the property.
@@ -3140,16 +3204,10 @@ public:
 	/// This function queries a set of values from a property and stores these values
 	/// into \a sequence.
 	/// \return Nothing.
-	///
-	/// \note
-	/// To query certain limits like e.g. the max. value for this property call
-	/// the read function just accepting the index parameter.
-	/// Use <b>mvIMPACT::acquire::Property::isConstDefined</b> to find out if the constant you want to
-	/// read is defined at all.
 	void read(	/// A reference to a container to store the data read from the property into.
 				std::vector<ZYX>& sequence,
 				/// Set this parameter to \a true to get all values at once(recommended). If set to false the function will
-				/// need more time an all values in \a sequence will be read one after the other
+				/// need more time and all values in \a sequence will be read one after the other
 				bool boAtomic,
 				/// The index from where to start reading values from the property.
 				int start = 0,
@@ -3203,7 +3261,7 @@ public:
 			ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj, oss.str() );
 		}
 #ifndef DOTNET_ONLY_CODE
-			return *this;
+		return *this;
 #endif
 	}
 #if defined(WRAP_DOTNET) || defined(DOTNET_ONLY_CODE)
@@ -3249,7 +3307,7 @@ public:
 							write(	/// An array containing the values to write to the property.
 									const std::vector<ZYX>& sequence,
 									/// Set this parameter to \a true to set all values at once(recommended). If set to false the function will
-									/// need more time an all values in \a sequence will be set one after the other
+									/// need more time and all values in \a sequence will be set one after the other
 									bool boAtomic,
 									/// The index where to write the first value to the property.
 									int index = 0 ) const
@@ -3337,6 +3395,10 @@ PYTHON_ONLY(ENUM_PROPERTY(PropertyIBayerWhiteBalanceResult, EnumPropertyI, mvIMP
 	/// \brief Defines a property for values defined by <b>mvIMPACT::acquire::TBlueFOXFooterMode</b>
 	typedef EnumPropertyI<TBlueFOXFooterMode> PropertyIBlueFOXFooterMode;
 	PYTHON_ONLY(ENUM_PROPERTY(PropertyIBlueFOXFooterMode, EnumPropertyI, mvIMPACT::acquire::TBlueFOXFooterMode))
+
+	/// \brief Defines a property for values defined by <b>mvIMPACT::acquire::TBlueFOXInfoSensorCapabilities</b>
+	typedef EnumPropertyI<TBlueFOXInfoSensorCapabilities> PropertyIBlueFOXInfoSensorCapabilities;
+	PYTHON_ONLY(ENUM_PROPERTY(PropertyIBlueFOXInfoSensorCapabilities, EnumPropertyI, mvIMPACT::acquire::TBlueFOXInfoSensorCapabilities))
 
 	/// \brief Defines a property for values defined by <b>mvIMPACT::acquire::TBlueFOXOffsetAutoBlackSpeed</b>
 	typedef EnumPropertyI<TBlueFOXOffsetAutoBlackSpeed> PropertyIBlueFOXOffsetAutoBlackSpeed;
@@ -3769,7 +3831,7 @@ PYTHON_ONLY(ENUM_PROPERTY(PropertyIWhiteBalanceParameter, EnumPropertyI, mvIMPAC
 
 /// \brief A type for integer properties.
 ///
-/// Provided for convenience only. This type represent a standard integer property type.
+/// Provided for convenience only. This type represents a standard integer property type.
 typedef EnumPropertyI<int> PropertyI;
 PYTHON_ONLY(ENUM_PROPERTY(PropertyI, EnumPropertyI, int))
 
@@ -3795,24 +3857,24 @@ public:
 		}
 	}
 #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
-	typedef ZYX value_type;
+		typedef ZYX value_type;
 #endif // DOXYGEN_SHOULD_SKIP_THIS && WRAP_ANY
 #ifndef WRAP_DOTNET
-	/// \brief This function queries the properties translation table
-	///
-	/// If this property defines a translation table the strings and there corresponding
-	/// translation values will be written into \a sequence. If the property does <b>NOT</b>
-	/// define a translation table \a sequence will be empty after this function call.
-	///
-	/// \note
-	/// This function is much more efficient than calling
-	/// <b>mvIMPACT::acquire::EnumPropertyI64::getTranslationDictString</b> and
-	/// <b>mvIMPACT::acquire::EnumPropertyI64::getTranslationDictValue</b> and
-	/// therefore this function should be called whenever all entries are required.
-	/// \return A const reference to the calling property.
-	const EnumPropertyI64& getTranslationDict(	/// A reference to an container which will receive the data from the properties translation dictionary.
-												std::vector<std::pair<std::string, ZYX> >& sequence ) const
-{
+		/// \brief This function queries the properties translation table
+		///
+		/// If this property defines a translation table the strings and there corresponding
+		/// translation values will be written into \a sequence. If the property does <b>NOT</b>
+		/// define a translation table \a sequence will be empty after this function call.
+		///
+		/// \note
+		/// This function is much more efficient than calling
+		/// <b>mvIMPACT::acquire::EnumPropertyI64::getTranslationDictString</b> and
+		/// <b>mvIMPACT::acquire::EnumPropertyI64::getTranslationDictValue</b> and
+		/// therefore this function should be called whenever all entries are required.
+		/// \return A const reference to the calling property.
+		const EnumPropertyI64& getTranslationDict(	/// A reference to an container which will receive the data from the properties translation dictionary.
+													std::vector<std::pair<std::string, ZYX> >& sequence ) const
+		{
 			TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
 			unsigned int size = dictSize();
 
@@ -3906,14 +3968,8 @@ public:
 	///
 	/// This function queries a single value stored under index \a index in the property.
 	/// \return The value stored at \a index within the property.
-	///
-	/// \note
-	/// To query certain limits like e.g. the max. value for this property one of the values
-	/// defined by the enum <b>mvIMPACT::acquire::TPropertyLimits</b> can be passed as \a index.
-	/// Use <b>mvIMPACT::acquire::Property::isConstDefined</b> to find out if the constant you want to
-	/// read is defined at all.
-	ZYX read( /// The index of the value to read from the property.
-			  int index = 0 ) const
+	ZYX read(	/// The index of the value to read from the property.
+				int index = 0 ) const
 	{
 		int64_type val;
 		TPROPHANDLING_ERROR result;
@@ -3923,17 +3979,41 @@ public:
 		}
 		return static_cast<ZYX>(val);
 	}
+	/// \brief Reads the maximum value from a property.
+	///
+	/// \note
+	/// To find out if the property defines a maximum value <b>mvIMPACT::acquire::Property::hasMaxValue</b>
+	/// should be called first.
+	///
+	/// \note
+	/// If the property does not define a maximum value calling this function will raise
+	/// an exception.
+	ZYX getMaxValue( void ) const { return read( plMaxValue ); }
+	/// \brief Reads the minimum value from a property.
+	///
+	/// \note
+	/// To find out if the property defines a minimum value <b>mvIMPACT::acquire::Property::hasMinValue</b>
+	/// should be called first.
+	///
+	/// \note
+	/// If the property does not define a minimum value calling this function will raise
+	/// an exception.
+	ZYX getMinValue( void ) const { return read( plMinValue ); }
+	/// \brief Reads the step width from a property.
+	///
+	/// \note
+	/// To find out if the property defines a step width <b>mvIMPACT::acquire::Property::hasStepWidth</b>
+	/// should be called first.
+	///
+	/// \note
+	/// If the property does not define a step width calling this function will raise
+	/// an exception.
+	ZYX getStepWidth( void ) const { return read( plStepWidth ); }
 	/// \brief Reads a set of values from a property.
 	///
 	/// This function queries a set of values from a property and stores these values
 	/// into \a sequence.
 	/// \return Nothing.
-	///
-	/// \note
-	/// To query certain limits like e.g. the max. value for this property call
-	/// the read function just accepting the index parameter.
-	/// Use <b>mvIMPACT::acquire::Property::isConstDefined</b> to find out if the constant you want to
-	/// read is defined at all.
 	void read(	/// A reference to a container to store the data read from the property into.
 				std::vector<ZYX>& sequence,
 				/// The index from where to start reading values from the property.
@@ -3953,16 +4033,10 @@ public:
 	/// This function queries a set of values from a property and stores these values
 	/// into \a sequence.
 	/// \return Nothing.
-	///
-	/// \note
-	/// To query certain limits like e.g. the max. value for this property call
-	/// the read function just accepting the index parameter.
-	/// Use <b>mvIMPACT::acquire::Property::isConstDefined</b> to find out if the constant you want to
-	/// read is defined at all.
 	void read(	/// A reference to a container to store the data read from the property into.
 				std::vector<ZYX>& sequence,
 				/// Set this parameter to \a true to get all values at once(recommended). If set to false the function will
-				/// need more time an all values in \a sequence will be read one after the other
+				/// need more time and all values in \a sequence will be read one after the other
 				bool boAtomic,
 				/// The index from where to start reading values from the property.
 				int start = 0,
@@ -4014,7 +4088,7 @@ public:
 			std::ostringstream oss;
 #if defined(_MSC_VER) && ( _MSC_VER < 1300 ) // is 'old' Microsoft VC 6 compiler?
 			oss << static_cast<int>(value); // this compiler has trouble with 64 bit integer data types as it is quite old... truncate the parameter as it's just part of a exception message anyway
-#	else
+#else
 			oss << value;
 #endif // #if defined(_MSC_VER) && ( _MSC_VER < 1300 ) // is 'old' Microsoft VC 6 compiler?
 			ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj, oss.str() );
@@ -4066,7 +4140,7 @@ public:
 							write(	/// An array containing the values to write to the property.
 									const std::vector<ZYX>& sequence,
 									/// Set this parameter to \a true to set all values at once(recommended). If set to false the function will
-									/// need more time an all values in \a sequence will be set one after the other
+									/// need more time and all values in \a sequence will be set one after the other
 									bool boAtomic,
 									/// The index where to write the first value to the property.
 									int index = 0 ) const
@@ -4096,16 +4170,17 @@ public:
 	}
 };
 
-/// Provided for convenience only. This type represent a standard 64 bit integer property type.
+/// Provided for convenience only. This type represents a standard 64 bit integer property type.
 typedef EnumPropertyI64<int64_type> PropertyI64;
 PYTHON_ONLY(ENUM_PROPERTY(PropertyI64, EnumPropertyI64, mvIMPACT::acquire::int64_type))
 
-/// \brief Defines a property for values defined by <b>mvIMPACT::acquire::TDeviceTriggerOverlap</b>
-typedef EnumPropertyI64<TDeviceTriggerOverlap> PropertyIDeviceTriggerOverlap;
-PYTHON_ONLY(ENUM_PROPERTY(PropertyIDeviceTriggerOverlap, EnumPropertyI, mvIMPACT::acquire::TDeviceTriggerOverlap))
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+	/// \brief Defines a property for values defined by <b>mvIMPACT::acquire::TDeviceTriggerOverlap</b>
+	typedef EnumPropertyI64<TDeviceTriggerOverlap> PropertyI64DeviceTriggerOverlap;
+	PYTHON_ONLY(ENUM_PROPERTY(PropertyI64DeviceTriggerOverlap, EnumPropertyI64, mvIMPACT::acquire::TDeviceTriggerOverlap))
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
 #ifndef WRAP_DOTNET // pointer properties currently not supported under .NET
-
 	//-----------------------------------------------------------------------------
 	/// \brief A class to represent pointer properties.
 	class PropertyPtr : public Property
@@ -4123,17 +4198,11 @@ PYTHON_ONLY(ENUM_PROPERTY(PropertyIDeviceTriggerOverlap, EnumPropertyI, mvIMPACT
 			}
 		}
 #	if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
-		typedef void* value_type;
+			typedef void* value_type;
 #	endif // DOXYGEN_SHOULD_SKIP_THIS && WRAP_ANY
 		/// \brief Reads a value from a property.
 		///
 		/// This function queries a single value stored under index \a index in the property.
-		///
-		/// \note
-		/// To query certain limits like e.g. the max. value for this property one of the values
-		/// defined by the enum <b>mvIMPACT::acquire::TPropertyLimits</b> can be passed as \a index.
-		/// Use <b>mvIMPACT::acquire::Property::isConstDefined</b> to find out if the constant you want to
-		/// read is defined at all.
 		/// \return The value stored at \a index within the property.
 		void* read(	/// The index of the value to read from the property.
 					int index = 0 ) const
@@ -4150,12 +4219,6 @@ PYTHON_ONLY(ENUM_PROPERTY(PropertyIDeviceTriggerOverlap, EnumPropertyI, mvIMPACT
 		///
 		/// This function queries a set of values from a property and stores these values
 		/// into \a sequence.
-		///
-		/// \note
-		/// To query certain limits like e.g. the max. value for this property call
-		/// the read function just accepting the index parameter.
-		/// Use <b>mvIMPACT::acquire::Property::isConstDefined</b> to find out if the constant you want to
-		/// read is defined at all.
 		/// \return Nothing.
 		void read(	/// A reference to a container to store the data read from the property into.
 					std::vector<void*>& sequence,
@@ -4209,7 +4272,6 @@ PYTHON_ONLY(ENUM_PROPERTY(PropertyIDeviceTriggerOverlap, EnumPropertyI, mvIMPACT
 			return *this;
 		}
 	};
-
 #endif // #ifndef WRAP_DOTNET
 
 //-----------------------------------------------------------------------------
@@ -4229,7 +4291,7 @@ public:
 		}
 	}
 #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
-	typedef std::string value_type;
+		typedef std::string value_type;
 #endif // DOXYGEN_SHOULD_SKIP_THIS && WRAP_ANY
 	/// \brief Returns the size(in bytes) needed for the binary representation of the string buffer.
 	///
@@ -4278,12 +4340,6 @@ public:
 	/// \brief Reads a value from a property.
 	///
 	/// This function queries a single value stored under index \a index in the property.
-	///
-	/// \note
-	/// To query certain limits like e.g. the max. value for this property one of the values
-	/// defined by the enum <b>mvIMPACT::acquire::TPropertyLimits</b> can be passed as \a index.
-	/// Use <b>mvIMPACT::acquire::Property::isConstDefined</b> to find out if the constant you want to
-	/// read is defined at all.
 	/// \return The value stored at \a index within the property.
 	std::string read(	/// The index of the value to read from the property.
 						int index = 0 ) const { return compGetStringParam( sqPropVal, 0, index ); }
@@ -4291,12 +4347,6 @@ public:
 	///
 	/// This function queries a set of values from a property and stores these values
 	/// into \a sequence.
-	///
-	/// \note
-	/// To query certain limits like e.g. the max. value for this property call
-	/// the read function just accepting the index parameter.
-	/// Use <b>mvIMPACT::acquire::Property::isConstDefined</b> to find out if the constant you want to
-	/// read is defined at all.
 	/// \return Nothing.
 	void read(	/// A reference to a container to store the data read from the property into.
 				std::vector<std::string>& sequence,
@@ -4333,7 +4383,7 @@ public:
 							int index = 0 ) const
 	{
 		TPROPHANDLING_ERROR result;
-		unsigned int bufSize = binaryDataBufferSize(index);
+		unsigned int bufSize = binaryDataBufferSize( index );
 		if( bufSize > 0 )
 		{
 			char* pBuf = new char[bufSize];
@@ -4521,7 +4571,7 @@ public:
 
 //-----------------------------------------------------------------------------
 /// \brief A helper class that represents one entry in the devices non-volatile memory
-/// (if available)
+/// (if available).
 ///
 /// Each entry of user and device specific data consists of a name, data a property
 /// defining the access rights for this entry and an optional password.
@@ -4652,7 +4702,7 @@ public:
 	/// - true if this object references an existing entry
 	/// - false otherwise
 	bool isValid( void ) const { return ( ( m_hList != INVALID_ID ) && ( OBJ_CheckHandle( m_hList, hcmFull ) == PROPHANDLING_NO_ERROR ) ); }
-	PYTHON_ONLY(%immutable;)
+PYTHON_ONLY(%immutable;)
 	/// \brief The name of the entry.
 	///
 	/// The maximum length for the name currently is 255 characters.
@@ -4681,7 +4731,7 @@ public:
 	/// property must have been assigned the correct password (case sensitive) before
 	/// the \a name and \a data properties can be modified.
 	PropertyS password;
-	PYTHON_ONLY(%mutable;)
+PYTHON_ONLY(%mutable;)
 #ifdef DOTNET_ONLY_CODE
 	PropertyS getName( void ) const { return name; }
 	PropertyS getData( void ) const { return data; }
@@ -4827,6 +4877,8 @@ public:
 			ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result );
 		}
 	}
+	/// \brief Returns the number of bytes of user accessible, non-volatile memory that is still available.
+	int getFreeMemory( void ) const { return memoryAvailable_bytes.read() - memoryConsumed_bytes.read(); }
 	/// \brief Returns An object to work with an existing entry of user specific data.
 	///
 	/// \note
@@ -4890,7 +4942,7 @@ public:
 			ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result );
 		}
 	}
-	PYTHON_ONLY(%immutable;)
+PYTHON_ONLY(%immutable;)
 	/// \brief An enumerated integer property that can be used to configure how the user data should be treated
 	/// in case of a device that has been unplugged is plugged back in again.
 	///
@@ -4898,9 +4950,9 @@ public:
 	///
 	/// If a device does not support hot-plugging, this property will be invisible (<b>mvIMPACT::acquire::Component::isVisible()</b>),
 	PropertyIUserDataReconnectBehaviour reconnectBehaviour;
-	/// \brief An integer property containing the number of bytes of user accessible, non-volatile memory this device has available.
+	/// \brief An integer property <b>(read-only)</b> containing the number of bytes of user accessible, non-volatile memory this device has available.
 	PropertyI memoryAvailable_bytes;
-	/// \brief An integer property containing the number of bytes of user accessible, non-volatile memory currently consumed by user data.
+	/// \brief An integer property <b>(read-only)</b> containing the number of bytes of user accessible, non-volatile memory currently consumed by user data.
 	///
 	/// This doesn't indicate, that all the data has already been stored in the non-volatile memory,
 	/// but is the number of bytes needed to store the current user data permanently. No check for
@@ -4911,7 +4963,7 @@ public:
 	/// But even after calling this function data that exceeds the available memory will be lost when the
 	/// device looses supply voltage and/or the process terminates.
 	PropertyI memoryConsumed_bytes;
-	PYTHON_ONLY(%mutable;)
+PYTHON_ONLY(%mutable;)
 #ifdef DOTNET_ONLY_CODE
 	PropertyIUserDataReconnectBehaviour getReconnectBehaviour( void ) const { return reconnectBehaviour; }
 	PropertyI getMemoryAvailable_bytes( void ) const { return memoryAvailable_bytes; }
@@ -4920,7 +4972,7 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-/// \brief This class and its functions represent an actual device detected 
+/// \brief This class and its functions represent an actual device detected
 /// by this interface in the current system.
 ///
 /// Instances of it can only be created by instances of the <b>mvIMPACT::acquire::DeviceManager</b> class
@@ -4941,35 +4993,37 @@ public:
 ///
 /// \note
 /// <b>IMPORTANT:</b> Whenever a device is closed via a call to <b>mvIMPACT::acquire::Device::close</b>
-/// all other objects constructed with a pointer to that device before will become
-/// invalid an need to be reconstructed afterwards, so don't close a device needlessly.
+/// all other objects constructed with a pointer to that device(e.g. <b>mvIMPACT::acquire::CameraSettingsBase</b>
+/// before will become invalid and need to be reconstructed afterwards, so don't close a device needlessly.
 ///
 /// \note
 /// <b>IMPORTANT:</b> Whenever the last instance to a <b>DeviceManager</b> object get's
-/// destroyed within the program every remaining device will be closed automatically!
+/// destroyed within the current process every remaining device that was opened in this process before will
+/// be closed automatically!
 /// Thus every instance to <b>mvIMPACT::acquire::Device</b> objects or objects created with a pointer to a
 /// <b>mvIMPACT::acquire::Device</b> object will become invalid automatically.
 /// Therefore the user has to make sure there is always at least one instance to a
-/// <b>mvIMPACT::acquire::DeviceManager</b> object within the current process!
+/// <b>mvIMPACT::acquire::DeviceManager</b> object within the current process unless no more
+/// device access functions shall be called!
 class Device
 //-----------------------------------------------------------------------------
 {
-	#ifndef DOXYGEN_SHOULD_SKIP_THIS
-	// only the DeviceManager is allowed to create Device objects, as it doesn't make
-	// any sense for someone else anyway.
-	friend class DeviceManager;
-	//-----------------------------------------------------------------------------
-	struct ReferenceCountedData
-	//-----------------------------------------------------------------------------
-	{
-		HDEV m_hDev;
-		HDRV m_hDrv;
-		int m_refCnt;
-		ReferenceCountedData( HDEV hDev ) : m_hDev(hDev), m_hDrv(INVALID_ID), m_refCnt(1) {}
-	} *m_pRefData;
-	UserData m_userData;
-	#endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
-	
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+		// only the DeviceManager is allowed to create Device objects, as it doesn't make
+		// any sense for someone else anyway.
+		friend class DeviceManager;
+		//-----------------------------------------------------------------------------
+		struct ReferenceCountedData
+		//-----------------------------------------------------------------------------
+		{
+			HDEV m_hDev;
+			HDRV m_hDrv;
+			int m_refCnt;
+			ReferenceCountedData( HDEV hDev ) : m_hDev(hDev), m_hDrv(INVALID_ID), m_refCnt(1) {}
+		} *m_pRefData;
+		UserData m_userData;
+#endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
+
 	//-----------------------------------------------------------------------------
 	void dealloc( void )
 	//-----------------------------------------------------------------------------
@@ -5042,24 +5096,29 @@ public:
 	/// the user on unmanaged heaps. Under most circumstances this means NEVER.
 	~Device( void ) { dealloc(); }
 #ifndef WRAP_PYTHON
-	/// \brief Allows assignments of <b>mvIMPACT::acquire::Device</b> objects
-	Device& operator=( const Device& rhs )
-	{
-		if( this != &rhs )
+		/// \brief Allows assignments of <b>mvIMPACT::acquire::Device</b> objects
+		Device& operator=( const Device& rhs )
 		{
-			dealloc();
-			m_pRefData = rhs.m_pRefData;
-			// inc. the NEW reference count
-			++(m_pRefData->m_refCnt);
-			bindPublicProperties( m_pRefData->m_hDev );
-			m_userData = UserData(rhs.m_pRefData->m_hDev);
+			if( this != &rhs )
+			{
+				dealloc();
+				m_pRefData = rhs.m_pRefData;
+				// inc. the NEW reference count
+				++(m_pRefData->m_refCnt);
+				bindPublicProperties( m_pRefData->m_hDev );
+				m_userData = UserData(rhs.m_pRefData->m_hDev);
+			}
+			return *this;
 		}
-		return *this;
-	}
 #endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
 	/// \brief Closes an opened device.
 	///
 	/// This function closes a device previously opened again.
+	///
+	/// \note
+	/// <b>IMPORTANT:</b> Whenever a device is closed via a call to <b>mvIMPACT::acquire::Device::close</b>
+	/// all other objects constructed with a pointer to that device(e.g. <b>mvIMPACT::acquire::CameraSettingsBase</b>
+	/// before will become invalid and need to be reconstructed afterwards, so don't close a device needlessly.
 	///
 	/// \sa
 	/// <b>Device::open, <br>Device::isOpen</b>
@@ -5098,6 +5157,21 @@ public:
 		}
 		return m_pRefData->m_hDrv;
 	}
+	/// \brief Returns a list providing access to driver library specific features.
+	///
+	/// This list does exist only once per device driver library. Changes in this list will affect all
+	/// devices that are operated using this device driver library.
+	ComponentList deviceDriverFeatureList( void ) const
+	{
+		HOBJ hObj = INVALID_ID;
+		size_t bufSize = sizeof(hObj);
+		TDMR_ERROR result = DMR_GetDeviceInfoEx( m_pRefData->m_hDev, dmdithDeviceDriver, &hObj, &bufSize );
+		if( result != DMR_NO_ERROR )
+		{
+			ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, INVALID_ID, "Failed to query handle of device driver feature list" );
+		}
+		return ComponentList(hObj);
+	}
 	/// \brief Returns the current initialisation status in this process.
 	///
 	/// If this function returns \a true, this only states, that the current
@@ -5111,6 +5185,33 @@ public:
 	/// - true if the device is initialised(opened) in the current process.
 	/// - false otherwise.
 	bool isOpen( void ) const { return hDrv() != INVALID_ID; }
+	/// \brief Returns the current usage status of this device.
+	///
+	/// If this function returns \a true, this states, that this device was not in use at the time of calling this function.
+	/// A call to <b>mvIMPACT::acquire::Device::open()</b> can still fail afterwards when some other process of system did
+	/// claim the device in the time between this call and the call to <b>mvIMPACT::acquire::Device::open()</b>.
+	///
+	/// \sa
+	/// <b>Device::open,<br>
+	/// Device::close</b>
+	/// \return
+	/// - true if the device is in use by at least one process(this includes the calling process).
+	/// - false otherwise.
+	bool isInUse( void ) const
+	{
+		if( isOpen() )
+		{
+			return true;
+		}
+		unsigned int inUse = 0;
+		size_t bufSize = sizeof(inUse);
+		TDMR_ERROR result = DMR_GetDeviceInfoEx( m_pRefData->m_hDev, dmditDeviceIsInUse, &inUse, &bufSize );
+		if( result != DMR_NO_ERROR )
+		{
+			ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, INVALID_ID, "Failed to check for device usage" );
+		}
+		return inUse != 0;
+	}
 	/// \brief Opens a device.
 	///
 	/// This function will try to open the device represented by this instance of
@@ -5132,12 +5233,12 @@ public:
 	/// <div align="center"><img src="../Device_Setting_Start_Procedure.png" alt="Device_Setting_Start_Procedure.png"></div>
 	/// <center>Device setting start procedure</center>
 	///
-	/// Please have a look here (\ref GUI_page_mvPropView) for more information about automatical loading of
+	/// Please have a look <a class="el" href="../GUI_page_mvPropView.html">here</a> for more information about automatical loading of
 	/// settings when a device is opened.
 	void open( void )
 	{
-		TDMR_ERROR result;
-		if( ( result = DMR_OpenDevice( m_pRefData->m_hDev, &(m_pRefData->m_hDrv) ) ) != DMR_NO_ERROR )
+		TDMR_ERROR result = DMR_OpenDevice( m_pRefData->m_hDev, &(m_pRefData->m_hDrv) );
+		if( result != DMR_NO_ERROR )
 		{
 			ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, INVALID_ID, "Open device failed" );
 		}
@@ -5198,7 +5299,7 @@ public:
 	/// \return A reference to a helper class to handle user specific data stored in the devices
 	/// non-volatile memory(if available).
 	UserData& getUserData( void ) { return m_userData; }
-	PYTHON_ONLY(%immutable;)
+PYTHON_ONLY(%immutable;)
 	/// \brief An enumerated integer property <b>(read-only)</b> defining the device class this device belongs to.
 	///
 	/// \note
@@ -5354,24 +5455,24 @@ public:
 	/// This property will become read-only while the device is open.
 	PropertyI resultQueueCount;
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-	/// \brief An enumerated integer property which can be used to unlock certain features,
-	/// that are available but not recommended by the device manufacturer.
-	///
-	/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
-	///
-	/// This property will be invisible by default. As the name indicates its use requires special
-	/// knowledge that can be provided by the device manufacturer on request.
-	///
-	/// \note
-	/// Once the device is in use (has been initialized) this property will become <b>(read-only)</b>.
-	///
-	/// \note
-	/// <b>IMPORTANT:</b>
-	/// Unlocking certain unrecommended features might result in the appearance of new translation 
-	/// dictionary entries for certain properties. Some of these translation strings might contain 
-	/// an exclamation mark ('!') in it's name. <b>NEVER</b> rely on that! These exclamation marks
-	/// or even the complete entry might disappear with a new driver release without further notice!
-	PropertyIBoolean allowUnrecommendedFeatures;
+		/// \brief An enumerated integer property which can be used to unlock certain features,
+		/// that are available but not recommended by the device manufacturer.
+		///
+		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
+		///
+		/// This property will be invisible by default. As the name indicates its use requires special
+		/// knowledge that can be provided by the device manufacturer on request.
+		///
+		/// \note
+		/// Once the device is in use (has been initialized) this property will become <b>(read-only)</b>.
+		///
+		/// \note
+		/// <b>IMPORTANT:</b>
+		/// Unlocking certain unrecommended features might result in the appearance of new translation 
+		/// dictionary entries for certain properties. Some of these translation strings might contain 
+		/// an exclamation mark ('!') in it's name. <b>NEVER</b> rely on that! These exclamation marks
+		/// or even the complete entry might disappear with a new driver release without further notice!
+		PropertyIBoolean allowUnrecommendedFeatures;
 #endif // #ifndef DOXYGEN_SHOULD_SKIP_THIS
 	/// \brief An enumerated integer property defining the start/stop behaviour during acquisition of this driver
 	/// instance.
@@ -5408,7 +5509,7 @@ public:
 	/// \note This property is not supported by every device.
 	/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
 	PropertyIDeviceAccessMode grantedAccess;
-	PYTHON_ONLY(%mutable;)
+PYTHON_ONLY(%mutable;)
 #ifdef DOTNET_ONLY_CODE
 	PropertyIDeviceClass getDeviceClass( void ) const { return deviceClass; }
 	PropertyS getFamily( void ) const { return family; }
@@ -5583,7 +5684,6 @@ public:
 ///\xmlonly
 /// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
 ///\endxmlonly
-
 class DeviceManager
 //-----------------------------------------------------------------------------
 {
@@ -5693,22 +5793,22 @@ public:
 		++(*m_pRefCnt);
 	}
 #ifndef WRAP_PYTHON
-	/// \brief Allows assignments of <b>mvIMPACT::acquire::DeviceManager</b> objects
-	DeviceManager& operator=( const DeviceManager& rhs )
-	{
-		if( this != &rhs )
+		/// \brief Allows assignments of <b>mvIMPACT::acquire::DeviceManager</b> objects
+		DeviceManager& operator=( const DeviceManager& rhs )
 		{
-			dealloc();
-			m_pRefCnt = rhs.m_pRefCnt;
-			// inc. the NEW reference count
-			++(*m_pRefCnt);
-			// this will fill the device vector with up to date data the next time someone asks
-			// for a device.
-			m_lastChangedCounter = 0;
-			m_devVector.clear();
+			if( this != &rhs )
+			{
+				dealloc();
+				m_pRefCnt = rhs.m_pRefCnt;
+				// inc. the NEW reference count
+				++(*m_pRefCnt);
+				// this will fill the device vector with up to date data the next time someone asks
+				// for a device.
+				m_lastChangedCounter = 0;
+				m_devVector.clear();
+			}
+			return *this;
 		}
-		return *this;
-	}
 #endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
 	/// \brief Class destructor.
 	///
@@ -5722,35 +5822,35 @@ public:
 		DMR_Close();
 	}
 #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
-	// Returns the internal handle to the device manager created via <b>DMR_Init()</b>.
-	HDMR getInternalHandle( void ) const { return m_deviceBaseList; }
+		// Returns the internal handle to the device manager created via <b>DMR_Init()</b>.
+		HDMR getInternalHandle( void ) const { return m_deviceBaseList; }
 #endif // !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
 #ifndef WRAP_PYTHON
-	/// \brief Returns a pointer to a <b>mvIMPACT::acquire::Device</b> object.
-	///
-	/// Returns a pointer to a <b>mvIMPACT::acquire::Device</b> object specifying the device found at the given
-	/// index in the device managers internal list.
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	/// If the index is either equal or higher than the number of devices detected<br>
-	/// a STL out_of_range exception is thrown.
-	///\htmlinclude code_fragment_end.html
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///
-	/// \sa
-	/// <b>mvIMPACT::acquire::DeviceManager::deviceCount,<br>
-	/// mvIMPACT::acquire::DeviceManager::getDeviceBySerial,<br>
-	/// mvIMPACT::acquire::DeviceManager::getDeviceByFamily,<br>
-	/// mvIMPACT::acquire::DeviceManager::getDeviceByProduct</b>
-	/// \return 
-	/// - A pointer to the device if found.
-	/// - an invalid pointer or reference otherwise.
-	Device* operator[]( /// the index of the device to be returned
-						unsigned int index ) const { return getDevice(index); }
+		/// \brief Returns a pointer to a <b>mvIMPACT::acquire::Device</b> object.
+		///
+		/// Returns a pointer to a <b>mvIMPACT::acquire::Device</b> object specifying the device found at the given
+		/// index in the device managers internal list.
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		/// If the index is either equal or higher than the number of devices detected<br>
+		/// a STL out_of_range exception is thrown.
+		///\htmlinclude code_fragment_end.html
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///
+		/// \sa
+		/// <b>mvIMPACT::acquire::DeviceManager::deviceCount,<br>
+		/// mvIMPACT::acquire::DeviceManager::getDeviceBySerial,<br>
+		/// mvIMPACT::acquire::DeviceManager::getDeviceByFamily,<br>
+		/// mvIMPACT::acquire::DeviceManager::getDeviceByProduct</b>
+		/// \return 
+		/// - A pointer to the device if found.
+		/// - an invalid pointer or reference otherwise.
+		Device* operator[]( /// the index of the device to be returned
+							unsigned int index ) const { return getDevice(index); }
 #endif // #ifndef WRAP_PYTHON (In Python, use public method getDevice)
 	/// \brief Returns the current changed counter for the device list.
 	///
@@ -5822,13 +5922,13 @@ public:
 	/// DeviceManager::getDeviceByFamily,<br>
 	/// DeviceManager::getDeviceByProduct</b>
 	/// \return<br>
-	/// - A pointer to the device if found.<br>
-	/// - an invalid pointer or reference otherwise.
+	/// - A pointer to the device if \a index specifies a valid value.<br>
+	/// - an exception will be raised otherwise.
 	Device* getDevice(	/// the index of the device to be returned
 						unsigned int index ) const
 	{
 		updateInfoVector();
-		return m_devVector.at(index);
+		return m_devVector.at( index );
 	}
 	/// \brief Tries to locate a device via the serial number.
 	///
@@ -6091,10 +6191,10 @@ enum TDeviceListType
 	/// here.
 	///
 	/// \note
-	/// Properties in this list sholud only be modified by advanced users.
+	/// Properties in this list should only be modified by advanced users.
 	dltImageMemoryManager = dmltImageMemoryManager,
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-	dltPseudoLast,
+		dltPseudoLast,
 #endif // #ifndef DOXYGEN_SHOULD_SKIP_THIS
 	/// \brief Defines the last entry in this enumeration.
 	///
@@ -6228,7 +6328,7 @@ public:
 		if( ( result = DMR_FindList( pDev->hDrv(), ( sublistName.length() == 0 ) ? 0 : sublistName.c_str(), static_cast<TDMR_ListType>(deviceListType), 0, &hList ) ) != DMR_NO_ERROR )
 		{
 			std::ostringstream oss;
-			oss << "Couldn't find list " << sublistName << "(type: " << deviceListType << ")";
+			oss << "Couldn't find list '" << sublistName << "'(type: " << deviceListType << ")";
 			ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, INVALID_ID, oss.str() );
 		}
 		bindSearchBase( hList );
@@ -6249,61 +6349,60 @@ public:
 class ImageBufferDesc
 //-----------------------------------------------------------------------------
 {
-	#ifndef DOXYGEN_SHOULD_SKIP_THIS
-	friend class Request;
-	friend class ImageProcessing;
-	//-----------------------------------------------------------------------------
-	struct ReferenceCountedData
-	//-----------------------------------------------------------------------------
-	{
-		int				m_refCnt;
-		bool			m_boBufferAllocated;
-		ImageBuffer*	m_pBuffer;
-		ReferenceCountedData( bool boAllocated = false, ImageBuffer* pBuffer = 0 )
-			: m_refCnt(1), m_boBufferAllocated(boAllocated), m_pBuffer(pBuffer) {} 
-		~ReferenceCountedData()
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+		friend class Request;
+		//-----------------------------------------------------------------------------
+		struct ReferenceCountedData
+		//-----------------------------------------------------------------------------
 		{
-			if( m_pBuffer )
+			int				m_refCnt;
+			bool			m_boBufferAllocated;
+			ImageBuffer*	m_pBuffer;
+			ReferenceCountedData( bool boAllocated = false, ImageBuffer* pBuffer = 0 )
+				: m_refCnt(1), m_boBufferAllocated(boAllocated), m_pBuffer(pBuffer) {} 
+			~ReferenceCountedData()
 			{
-				if( m_boBufferAllocated )
+				if( m_pBuffer )
 				{
-					DMR_ReleaseImageBuffer( &m_pBuffer );
-				}
-				else
-				{
-					DMR_ReleaseImageRequestBufferDesc( &m_pBuffer );
+					if( m_boBufferAllocated )
+					{
+						DMR_ReleaseImageBuffer( &m_pBuffer );
+					}
+					else
+					{
+						DMR_ReleaseImageRequestBufferDesc( &m_pBuffer );
+					}
 				}
 			}
-		}
-		// make sure there are NO assignments or copy constructions by accident!
-		ReferenceCountedData& operator=( const ReferenceCountedData& rhs );
-		ReferenceCountedData( const ReferenceCountedData& src );
-	} *m_pRefData;
-	//-----------------------------------------------------------------------------
-	void dealloc( void )
-	//-----------------------------------------------------------------------------
-	{
-		--(m_pRefData->m_refCnt);
-		if( m_pRefData->m_refCnt == 0 )
+			// make sure there are NO assignments or copy constructions by accident!
+			ReferenceCountedData& operator=( const ReferenceCountedData& rhs );
+			ReferenceCountedData( const ReferenceCountedData& src );
+		} *m_pRefData;
+		//-----------------------------------------------------------------------------
+		void dealloc( void )
+		//-----------------------------------------------------------------------------
 		{
-			delete m_pRefData;
+			--(m_pRefData->m_refCnt);
+			if( m_pRefData->m_refCnt == 0 )
+			{
+				delete m_pRefData;
+			}
 		}
-	}
-	explicit ImageBufferDesc( bool boAllocated, ImageBuffer* pBuf ) : m_pRefData(new ImageBufferDesc::ReferenceCountedData(boAllocated, pBuf)) {}
-	#endif // DOXYGEN_SHOULD_SKIP_THIS
+		explicit ImageBufferDesc( bool boAllocated, ImageBuffer* pBuf ) : m_pRefData(new ImageBufferDesc::ReferenceCountedData(boAllocated, pBuf)) {}
+#endif // DOXYGEN_SHOULD_SKIP_THIS
 public:
 #ifndef WRAP_DOTNET
-	/// \brief Constructs a new <b>mvIMPACT::acquire::ImageBufferDesc</b> from an existing one.
-	///
-	/// The image buffer associated with this descriptor will not be copied! The internal
-	/// data will be reference counted and changing this new object will also affect the
-	/// original one. The internal data is freed when the last descriptor referencing the
-	/// image is destroyed.
-	ImageBufferDesc(	/// The source buffer descriptor.
-						const ImageBufferDesc& source ) : m_pRefData(source.m_pRefData)
-	{
-		++(m_pRefData->m_refCnt);
-	}
+		/// \brief Constructs a new <b>mvIMPACT::acquire::ImageBufferDesc</b> from an existing one.
+		///
+		/// The image buffer associated with this descriptor will not be copied! The internal
+		/// data will be reference counted and changing this new object will also affect the
+		/// original one. The internal data is freed when the last descriptor referencing the
+		/// image is destroyed.
+		ImageBufferDesc(	/// The source buffer descriptor.
+							const ImageBufferDesc& source ) : m_pRefData(source.m_pRefData)
+		{
+			++(m_pRefData->m_refCnt);
+		}
 #endif // #ifndef WRAP_DOTNET
 	/// \brief Constructs a new <b>mvIMPACT::acquire::ImageBufferDesc</b> object with \a channelCount channel specific
 	/// data elements.
@@ -6340,22 +6439,22 @@ public:
 	/// image.
 	~ImageBufferDesc() { dealloc(); }
 #ifndef WRAP_PYTHON
-	/// \brief Allows assignments of two different <b>mvIMPACT::acquire::ImageBufferDesc</b>
-	///
-	/// The image buffer associated with this descriptor will not be copied! The internal
-	/// data will be reference counted and changing this new object will also affect the
-	/// original one. The internal data is freed when the last descriptor referencing the
-	/// image is destroyed.
-	ImageBufferDesc& operator=( const ImageBufferDesc& rhs )
-	{
-		if( this != &rhs )
+		/// \brief Allows assignments of two different <b>mvIMPACT::acquire::ImageBufferDesc</b>
+		///
+		/// The image buffer associated with this descriptor will not be copied! The internal
+		/// data will be reference counted and changing this new object will also affect the
+		/// original one. The internal data is freed when the last descriptor referencing the
+		/// image is destroyed.
+		ImageBufferDesc& operator=( const ImageBufferDesc& rhs )
 		{
-			dealloc();
-			m_pRefData = rhs.m_pRefData;
-			++(m_pRefData->m_refCnt);
+			if( this != &rhs )
+			{
+				dealloc();
+				m_pRefData = rhs.m_pRefData;
+				++(m_pRefData->m_refCnt);
+			}
+			return *this;
 		}
-		return *this;
-	}
 #endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
 	/// \brief Returns a deep copy of the <b>mvIMPACT::acquire::ImageBuffer</b> object referenced by this descriptor.
 	///
@@ -6401,76 +6500,77 @@ class Request
 	// only the function interface object is allowed to create new requests as
 	// it maintains an internal reference to each request created.
 	friend class FunctionInterface;
-	#ifndef DOXYGEN_SHOULD_SKIP_THIS
-	//-----------------------------------------------------------------------------
-	struct ReferenceCountedData
-	//-----------------------------------------------------------------------------
-	{
-		int                       m_requestNr;
-		mutable ImageBufferDesc   m_imageBufferDesc;
-		Device*                   m_pDev;
-		ComponentIterator         m_infoIterator;
-		std::vector<PropertyI64*> m_chunkCounterValues;
-		std::vector<PropertyF*>   m_chunkTimerValues;
-		unsigned int              m_refCnt;
-		ReferenceCountedData( Device* pDev, int requestNr ) : m_requestNr(requestNr), m_imageBufferDesc(1), m_pDev(pDev), m_infoIterator(), m_refCnt(1) {}
-		~ReferenceCountedData()
+protected:
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+		//-----------------------------------------------------------------------------
+		struct ReferenceCountedData
+		//-----------------------------------------------------------------------------
 		{
-			const std::vector<PropertyI64*>::size_type cntcc = m_chunkCounterValues.size();
-			for( std::vector<PropertyI64*>::size_type i=0; i<cntcc; i++ )
+			int                       m_requestNr;
+			mutable ImageBufferDesc   m_imageBufferDesc;
+			Device*                   m_pDev;
+			ComponentIterator         m_infoIterator;
+			std::vector<PropertyI64*> m_chunkCounterValues;
+			std::vector<PropertyF*>   m_chunkTimerValues;
+			unsigned int              m_refCnt;
+			ReferenceCountedData( Device* pDev, int requestNr ) : m_requestNr(requestNr), m_imageBufferDesc(1), m_pDev(pDev), m_infoIterator(), m_refCnt(1) {}
+			~ReferenceCountedData()
 			{
-				delete m_chunkCounterValues[i];
-			}
-			const std::vector<PropertyF*>::size_type cntct = m_chunkTimerValues.size();
-			for( std::vector<PropertyF*>::size_type j=0; j<cntct; j++ )
-			{
-				delete m_chunkTimerValues[j];
-			}
-		}
-		// make sure there are NO assignments or copy constructions by accident!
-		ReferenceCountedData( const ReferenceCountedData& src );
-		ReferenceCountedData& operator=( const ReferenceCountedData& rhs );
-		void collectChunkFeatures( ComponentIterator it )
-		{
-			while( it.isValid() )
-			{
-				switch( it.type() )
+				const std::vector<PropertyI64*>::size_type cntcc = m_chunkCounterValues.size();
+				for( std::vector<PropertyI64*>::size_type i=0; i<cntcc; i++ )
 				{
-				case ctList:
-					collectChunkFeatures( it.firstChild() );
-					break;
-				case ctPropInt64:
-					if( ( it.name() == "ChunkCounterValue" ) || ( it.name() == "ChunkCounter" ) ) // the latter name is the one that became deprecated with GenICam SFNC 1.5
-					{
-						m_chunkCounterValues.push_back( new PropertyI64(it.hObj()) );
-					}
-					break;
-				case ctPropFloat:
-					if( ( it.name() == "ChunkTimerValue" ) || ( it.name() == "ChunkTimer" ) )  // the latter name is the one that became deprecated with GenICam SFNC 1.5
-					{
-						m_chunkTimerValues.push_back( new PropertyF(it.hObj()) );
-					}
-					break;
-				default:
-					break;
+					delete m_chunkCounterValues[i];
 				}
-				++it;
+				const std::vector<PropertyF*>::size_type cntct = m_chunkTimerValues.size();
+				for( std::vector<PropertyF*>::size_type j=0; j<cntct; j++ )
+				{
+					delete m_chunkTimerValues[j];
+				}
 			}
-		}
-		void collectSelectedChunkFeatures( ComponentIterator it )
-		{
-			if( m_chunkCounterValues.empty() && m_chunkTimerValues.empty() )
+			// make sure there are NO assignments or copy constructions by accident!
+			ReferenceCountedData( const ReferenceCountedData& src );
+			ReferenceCountedData& operator=( const ReferenceCountedData& rhs );
+			void collectChunkFeatures( ComponentIterator it )
 			{
-				collectChunkFeatures( it );
+				while( it.isValid() )
+				{
+					switch( it.type() )
+					{
+					case ctList:
+						collectChunkFeatures( it.firstChild() );
+						break;
+					case ctPropInt64:
+						if( ( it.name() == "ChunkCounterValue" ) || ( it.name() == "ChunkCounter" ) ) // the latter name is the one that became deprecated with GenICam SFNC 1.5
+						{
+							m_chunkCounterValues.push_back( new PropertyI64(it.hObj()) );
+						}
+						break;
+					case ctPropFloat:
+						if( ( it.name() == "ChunkTimerValue" ) || ( it.name() == "ChunkTimer" ) )  // the latter name is the one that became deprecated with GenICam SFNC 1.5
+						{
+							m_chunkTimerValues.push_back( new PropertyF(it.hObj()) );
+						}
+						break;
+					default:
+						break;
+					}
+					++it;
+				}
 			}
-		}
-	} *m_pRefData;
+			void collectSelectedChunkFeatures( ComponentIterator it )
+			{
+				if( m_chunkCounterValues.empty() && m_chunkTimerValues.empty() )
+				{
+					collectChunkFeatures( it );
+				}
+			}
+		} *m_pRefData;
 #endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
+private:
 	//-----------------------------------------------------------------------------
 	void bindPublicProperties( void )
 	//-----------------------------------------------------------------------------
 	{
-
 		DeviceComponentLocator locator(m_pRefData->m_pDev, dltRequest);
 		std::ostringstream oss;
 		oss << "Entry " << m_pRefData->m_requestNr;
@@ -6542,6 +6642,7 @@ class Request
 			delete m_pRefData;
 		}
 	}
+protected:
 	explicit Request( Device* pDev, int requestNr ) : m_pRefData(new ReferenceCountedData(pDev, requestNr)),
 							requestResult(), requestState(),
 							infoFrameID(), infoFrameNr(), infoExposeStart_us(),
@@ -6587,19 +6688,19 @@ public:
 		dealloc();
 	}
 #ifndef WRAP_PYTHON
-	/// \brief Allows assignments of <b>mvIMPACT::acquire::Request</b> objects
-	Request& operator=( const Request& rhs )
-	{
-		if( this != &rhs )
+		/// \brief Allows assignments of <b>mvIMPACT::acquire::Request</b> objects
+		Request& operator=( const Request& rhs )
 		{
-			dealloc();
-			m_pRefData = rhs.m_pRefData;
-			// inc. the NEW reference count
-			++m_pRefData->m_refCnt;
-			bindPublicProperties();
+			if( this != &rhs )
+			{
+				dealloc();
+				m_pRefData = rhs.m_pRefData;
+				// inc. the NEW reference count
+				++m_pRefData->m_refCnt;
+				bindPublicProperties();
+			}
+			return *this;
 		}
-		return *this;
-	}
 #endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
 	/// \brief Returns the number associated with this request.
 	int getNumber( void ) const { return m_pRefData->m_requestNr; }
@@ -6618,78 +6719,78 @@ public:
 		return m_pRefData->m_imageBufferDesc;
 	}
 #if defined(MVIMPACT_H_) || defined(DOTNET_ONLY_CODE)
-	/// \brief Returns an mvIMPACT image buffer representation of the image associated
-	/// with this request.
-	///
-	/// \note
-	/// This function is slow, as it performs a copy of the
-	/// image data. So using this function will not affect the actual image data from the
-	/// device when modifying the image object.
-	///
-	/// \note 
-	/// This function is provided for downward compatibility only. New applications should use
-	/// the overloaded function accepting a parameter of type <b>mvIMPACT::acquire::TImpactBufferFlag</b>.
-	/// This function might be faster and provides the user with more control over the way the image
-	/// is constructed. However if the \a new function is used also a new driver has to be deployed
-	/// on every target system running software compiled with this interface. At least version
-	/// 1.3.5 of the mvDeviceManager-lib.
-	///
-	/// <br><br>
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	/// This function will only be available if \a mvIMPACT.h has been included before including
-	/// this interface!
-	///\htmlinclude code_fragment_end.html
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-	///\endxmlonly
-#ifndef WRAP_DOTNET
-	mvIMPACT::
-#endif
-	Image getIMPACTImage( void ) const
-	{
-		mvIMPACT_C::IPL_BUFHANDLE hBuf = IPL_DONT_CARE;
-		DMR_GetImpactRequestBufferEx( m_pRefData->m_pDev->hDrv(), m_pRefData->m_requestNr, &hBuf, TImpactBufferFlag(0), 0 );
-		return
-#ifndef WRAP_DOTNET
+		/// \brief Returns an mvIMPACT image buffer representation of the image associated
+		/// with this request.
+		///
+		/// \note
+		/// This function is slow, as it performs a copy of the
+		/// image data. So using this function will not affect the actual image data from the
+		/// device when modifying the image object.
+		///
+		/// \note 
+		/// This function is provided for downward compatibility only. New applications should use
+		/// the overloaded function accepting a parameter of type <b>mvIMPACT::acquire::TImpactBufferFlag</b>.
+		/// This function might be faster and provides the user with more control over the way the image
+		/// is constructed. However if the \a new function is used also a new driver has to be deployed
+		/// on every target system running software compiled with this interface. At least version
+		/// 1.3.5 of the mvDeviceManager-lib.
+		///
+		/// <br><br>
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		/// This function will only be available if \a mvIMPACT.h has been included before including
+		/// this interface!
+		///\htmlinclude code_fragment_end.html
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+		///\endxmlonly
+#	ifndef WRAP_DOTNET
 		mvIMPACT::
-#endif
-		Image::imageFactory( hBuf );
-	}
-	/// \brief Returns an mvIMPACT image buffer representation of the image associated
-	/// with this request.
-	///
-	/// \note
-	/// This function might be fast depending on the \a flags parameter or might behave like
-	/// <b>mvIMPACT::acquire::Request::getIMPACTImage</b>.
-	///
-	/// <br><br>
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	/// This function will only be available if \a mvIMPACT.h has been included before including
-	/// this interface!
-	///\htmlinclude code_fragment_end.html
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-	///\endxmlonly
-#ifndef WRAP_DOTNET
-	mvIMPACT::
-#endif
-	Image getIMPACTImage(	/// Flags defining how the buffer is created and behaves.
-							TImpactBufferFlag flags ) const
-	{
-		mvIMPACT_C::IPL_BUFHANDLE hBuf = IPL_DONT_CARE;
-		DMR_GetImpactRequestBufferEx( m_pRefData->m_pDev->hDrv(), m_pRefData->m_requestNr, &hBuf, flags, 0 );
-		return
-#ifndef WRAP_DOTNET
+#	endif // #	ifndef WRAP_DOTNET
+		Image getIMPACTImage( void ) const
+		{
+			mvIMPACT_C::IPL_BUFHANDLE hBuf = IPL_DONT_CARE;
+			DMR_GetImpactRequestBufferEx( m_pRefData->m_pDev->hDrv(), m_pRefData->m_requestNr, &hBuf, TImpactBufferFlag(0), 0 );
+			return
+#	ifndef WRAP_DOTNET
+			mvIMPACT::
+#	endif // #	ifndef WRAP_DOTNET
+			Image::imageFactory( hBuf );
+		}
+		/// \brief Returns an mvIMPACT image buffer representation of the image associated
+		/// with this request.
+		///
+		/// \note
+		/// This function might be fast depending on the \a flags parameter or might behave like
+		/// <b>mvIMPACT::acquire::Request::getIMPACTImage</b>.
+		///
+		/// <br><br>
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		/// This function will only be available if \a mvIMPACT.h has been included before including
+		/// this interface!
+		///\htmlinclude code_fragment_end.html
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+		///\endxmlonly
+#	ifndef WRAP_DOTNET
 		mvIMPACT::
-#endif
-		Image::imageFactory( hBuf );
-	}
+#	endif // #	ifndef WRAP_DOTNET
+		Image getIMPACTImage(	/// Flags defining how the buffer is created and behaves.
+								TImpactBufferFlag flags ) const
+		{
+			mvIMPACT_C::IPL_BUFHANDLE hBuf = IPL_DONT_CARE;
+			DMR_GetImpactRequestBufferEx( m_pRefData->m_pDev->hDrv(), m_pRefData->m_requestNr, &hBuf, flags, 0 );
+			return
+#	ifndef WRAP_DOTNET
+			mvIMPACT::
+#	endif
+			Image::imageFactory( hBuf );
+		}
 #endif // #if defined(MVIMPACT_H_) || defined(DOTNET_ONLY_CODE)
 	/// \brief Returns an interator to for iterating inside the info list of the request.
 	///
@@ -6740,24 +6841,24 @@ public:
 	/// For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
 	unsigned int getChunkCounterCount( void ) const { return static_cast<unsigned int>(m_pRefData->m_chunkCounterValues.size()); }
 #ifndef WRAP_PYTHON // this is currently not available under Python as it would require some work on the SWIG typemaps which will only be done if someone desperately asks for it
-	/// \brief Returns a 64 bit integer property <b>(read-only)</b> defining the selected couter value at the time
-	/// of the internal frame start event for this request.
-	///
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	/// If \a nr is invalid(too large) a STL out_of_range exception
-	/// will be thrown.
-	///\htmlinclude code_fragment_end.html
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///
-	/// \note
-	/// For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
-	PropertyI64 getChunkCounterValue(	/// The number of the counter to return
-										unsigned int nr ) const { return PropertyI64(m_pRefData->m_chunkCounterValues.at( nr )->hObj()); }
+		/// \brief Returns a 64 bit integer property <b>(read-only)</b> defining the selected couter value at the time
+		/// of the internal frame start event for this request.
+		///
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		/// If \a nr is invalid(too large) a STL out_of_range exception
+		/// will be thrown.
+		///\htmlinclude code_fragment_end.html
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///
+		/// \note
+		/// For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+		PropertyI64 getChunkCounterValue(	/// The number of the counter to return
+											unsigned int nr ) const { return PropertyI64(m_pRefData->m_chunkCounterValues.at( nr )->hObj()); }
 #endif // #ifndef WRAP_PYTHON
 	/// \brief Returns the number of timer values that can be returned as part additional data of the buffer containing the request data.
 	///
@@ -6787,7 +6888,48 @@ public:
 	/// For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
 	PropertyF getChunkTimerValue(	/// The number of the timer to return
 									unsigned int nr ) const { return PropertyF(m_pRefData->m_chunkTimerValues.at( nr )->hObj()); }
-	PYTHON_ONLY(%immutable;)
+	/// \brief Convenience function to check if a request has been processed successfully.
+	///
+	/// This is just a nicer way of checking the value of the \a requestResult property:
+	///
+	///\xmlonly
+	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+	///\endxmlonly
+	///\htmlinclude code_fragment_start_cpp.html
+	/// It allows to write code like this:
+	///
+	///\code
+	/// // 'fi' is assumed to be a valid instance of mvIMPACT::acquire::FunctionInterface,
+	/// // 'requestNr' is assumed to be a valid request number returned from a previous call to 
+	/// // mvIMPACT::acquire::FunctionInterface::imageRequestWaitFor()
+	/// const Request* pRequest = fi.getRequest( requestNr );
+	/// if( pRequest->isOK() )
+	/// {
+	///   // do something
+	/// }
+	///\endcode
+	///
+	/// Instead if this:
+	///
+	///\code
+	/// // 'fi' is assumed to be a valid instance of mvIMPACT::acquire::FunctionInterface,
+	/// // 'requestNr' is assumed to be a valid request number returned from a previous call to 
+	/// // mvIMPACT::acquire::FunctionInterface::imageRequestWaitFor()
+	/// const Request* pRequest = fi.getRequest( requestNr );
+	/// if( pRequest->requestResult.read() == rrOK )
+	/// {
+	///   // do something
+	/// }
+	///\endcode
+	///\htmlinclude code_fragment_end.html
+	///\xmlonly
+	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+	///\endxmlonly
+	/// \return <br>
+	/// - true if the request has been processed successfully.
+	/// - false otherwise.
+	bool isOK( void ) const { return ( requestResult.read() == rrOK ); }
+PYTHON_ONLY(%immutable;)
 	/// \brief An enumerated integer property <b>(read-only)</b> defining the result of this request.
 	/// 
 	/// This parameter indicates whether a previous image acquisition has been 
@@ -6857,7 +6999,7 @@ public:
 	/// The counter of the timestamp starts, when the camera gets initialized. It is measured in us.
 	/// \endif
 	PropertyI64 infoTimeStamp_us;
-	/// \brief A enumerated integer property <b>(read-only)</b> containing the setting, that was used for processing this request.
+	/// \brief A enumerated integer property <b>(read-only)</b> containing the setting that was used for processing this request.
 	///
 	/// The string representation will be a valid setting name, the integer representation can be casted into a <b>mvIMPACT::acquire::HOBJ</b> type.
 	PropertyI infoSettingUsed;
@@ -6938,6 +7080,47 @@ public:
 	/// </table>
 	/// \endif
 	///
+	///\xmlonly
+	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+	///\endxmlonly
+	///\htmlinclude code_fragment_start_cpp.html
+	/// <b>EXAMPLE:</b>
+	///
+	///\code
+	/// #include <sstream>
+	/// #include <mvIMPACT/mvIMPACT_acquire.h>
+	///
+	/// using namespace std;
+	/// using namespace mvIMPACT::acquire;
+	///
+	/// //-----------------------------------------------------------------------------
+	/// template<typename _Ty>
+	/// string decToBinString( _Ty value )
+	/// //-----------------------------------------------------------------------------
+	/// {
+	///   const size_t bitCount = sizeof(_Ty)*8;
+	///   ostringstream oss;
+	///   for( size_t i=0; i<bitCount; i++ )
+	///   {
+	///     oss << ( ( value & ( 1 << ( bitCount - 1 - i ) ) ) ? "1" : "0" );
+	///   }
+	///   return oss.str();
+	/// }
+	///
+	/// //-----------------------------------------------------------------------------
+	/// void printIOStateOfAValidRequest( const Request* pRequest )
+	/// //-----------------------------------------------------------------------------
+	/// {
+	///   if( pRequest->infoIOStatesAtExposureStart.isValid() )
+	///   {
+	///      cout << pRequest->infoIOStatesAtExposureStart.name() << ": " << decToBinString( pRequest->infoIOStatesAtExposureStart.read() ) << endl;
+	///   }
+	/// }
+	///\endcode
+	///\htmlinclude code_fragment_end.html
+	///\xmlonly
+	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+	///\endxmlonly
 	/// \note This property is not supported by every device. Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b>
 	/// to check if this property is available or not.
 	PropertyI infoIOStatesAtExposureStart;
@@ -7089,6 +7272,11 @@ public:
 	/// If this property contains the value '0' no footer is attached to this image.
 	PropertyI imageFooterSize;
 	/// \brief An integer property <b>(read-only)</b> containing the offset (in bytes) to the next pixel of the specified channel of this image.
+	///
+	/// \note
+	/// This property will store \a imageChannelCount values. These can be queried one by one using the \a index parameter of the function
+	/// <b>mvIMPACT::acquire::PropertyI::read()</b> or in a single call by using the overloaded \a read function accepting a reference to a
+	/// vector.
 	PropertyI imagePixelPitch;
 	/// \brief An integer property <b>(read-only)</b> containing the number of channels this image consists of.
 	///
@@ -7104,12 +7292,32 @@ public:
 	PropertyI imageChannelCount;
 	/// \brief An integer property <b>(read-only)</b> containing the offset (in bytes) to each channel belonging to the current image relative to the address
 	/// contained in <b>mvIMPACT::acquire::Request::imageData</b>.
+	///
+	/// \note
+	/// This property will store \a imageChannelCount values. These can be queried one by one using the \a index parameter of the function
+	/// <b>mvIMPACT::acquire::PropertyI::read()</b> or in a single call by using the overloaded \a read function accepting a reference to a
+	/// vector.
 	PropertyI imageChannelOffset;
 	/// \brief An integer property <b>(read-only)</b> containing the number of effective bits stored in each channel belonging to the current image.
+	///
+	/// \note
+	/// This property will store \a imageChannelCount values. These can be queried one by one using the \a index parameter of the function
+	/// <b>mvIMPACT::acquire::PropertyI::read()</b> or in a single call by using the overloaded \a read function accepting a reference to a
+	/// vector.
 	PropertyI imageChannelBitDepth;
 	/// \brief An integer property <b>(read-only)</b> containing the offset (in bytes) to the next line of each channel beloning to the current image.
+	///
+	/// \note
+	/// This property will store \a imageChannelCount values. These can be queried one by one using the \a index parameter of the function
+	/// <b>mvIMPACT::acquire::PropertyI::read()</b> or in a single call by using the overloaded \a read function accepting a reference to a
+	/// vector.
 	PropertyI imageLinePitch;
 	/// \brief An string property <b>(read-only)</b> containing the string descriptors of each channel belonging to the current image.
+	///
+	/// \note
+	/// This property will store \a imageChannelCount values. These can be queried one by one using the \a index parameter of the function
+	/// <b>mvIMPACT::acquire::PropertyI::read()</b> or in a single call by using the overloaded \a read function accepting a reference to a
+	/// vector.
 	///
 	/// For an RGB image this property e.g. might contain three values "R", "G" and "B".
 	///\xmlonly
@@ -7170,7 +7378,7 @@ public:
 	///
 	/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBayerMosaicParity</b>.
 	PropertyIBayerMosaicParity imageBayerMosaicParity;
-	PYTHON_ONLY(%mutable;)
+PYTHON_ONLY(%mutable;)
 #ifdef DOTNET_ONLY_CODE
 	PropertyIRequestResult getRequestResult( void ) const { return requestResult; }
 	PropertyIRequestState getRequestState( void ) const { return requestState; }
@@ -7302,7 +7510,7 @@ public:
 		locator.bindComponent( resultQueue, "ResultQueue" );
 		locator.bindComponent( requestToUse, "RequestToUse" );
 	}
-	PYTHON_ONLY(%immutable;)
+PYTHON_ONLY(%immutable;)
 	/// \brief The mode this object shall be operated in.
 	///
 	/// Valid values for this property are defined by the enumeration 
@@ -7351,13 +7559,13 @@ public:
 	/// \brief An integer property defining which request object shall be used for the next image request.
 	///
 	/// This is an advanced feature that should only be used if needed. A value smaller than 0 will
-	/// result in an automatic mode. This is the dfault behaviour and the driver will decide which buffer to use next then.
+	/// result in an automatic mode. This is the default behaviour and the driver will decide which buffer to use next then.
 	///
 	/// A request can only be send to the driver once. Until this request is not returned to the user it can't
 	/// be send again thus this property must be changed for each request if multiple request shall be send to
 	/// the capture queue.
 	PropertyI requestToUse;
-	PYTHON_ONLY(%mutable;)
+PYTHON_ONLY(%mutable;)
 #ifdef DOTNET_ONLY_CODE
 	PropertyIImageRequestControlMode	getMode( void ) const { return mode; }
 	PropertyI							getImageCount( void ) const { return imageCount; }
@@ -7365,6 +7573,122 @@ public:
 	PropertyI							getResultQueue( void ) const { return resultQueue; }
 	PropertyI							getRequestToUse( void ) const { return requestToUse; }
 #endif // #ifdef DOTNET_ONLY_CODE
+};
+
+//-----------------------------------------------------------------------------
+/// \brief A default request factory.
+///
+/// Applications need to derive from this class and must re-implement the function
+/// <b>mvIMPACT::acquire::RequestFactory::createRequest</b> to work with custom
+/// objects derived from <b>mvIMPACT::acquire::Request</b>.
+///
+/// Deriving from <b>mvIMPACT::acquire::Request</b> can be useful when a certain
+/// device driver of device offers a custom feature that is returned as part of
+/// the request object that can not be accessed using the <b>mvIMPACT::acquire::Request</b>
+/// class offered by this interface.
+///
+///\xmlonly
+/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+///\endxmlonly
+///\htmlinclude code_fragment_start_cpp.html
+/// <b>EXAMPLE:</b>
+///
+/// This shows how a request factory could be used to create custom request objects
+/// from within a <b>mvIMPACT::acquire::FunctionInterface</b> instance.
+///
+///\code
+/// class MyRequestFactory;
+///
+/// //-----------------------------------------------------------------------------
+/// // Example for a derived request object. It doesn't introduce new functionality
+/// // but rebinds an existing property. Custom properties could bound in a similar
+/// // way.
+/// class MyRequest : public mvIMPACT::acquire::Request
+/// //-----------------------------------------------------------------------------
+/// {
+///   friend class MyRequestFactory;
+///   void init( void )
+///   {
+///     DeviceComponentLocator locator(m_pRefData->m_pDev, dltRequest);
+///     std::ostringstream oss;
+///     oss << "Entry " << m_pRefData->m_requestNr;
+///     locator.bindSearchBase( locator.searchbase_id(), oss.str() );
+///     locator.bindComponent( myRequestResult, "Result" );
+///   }
+/// protected:
+///   explicit MyRequest( Device* pDev, int requestNr ) : Request(pDev, requestNr), myRequestResult()
+///   {
+///     init();
+///   }
+/// public:
+///   explicit MyRequest( const MyRequest& src ) : Request(src), myRequestResult(src.myRequestResult) {}
+///   MyRequest& operator=( const MyRequest& rhs )
+///   {
+///     if( this != &rhs )
+///     {
+///       Request::operator=( rhs );
+///       init();
+///     }
+///     return *this;
+///   }
+///   PropertyIRequestResult myRequestResult;
+/// };
+///
+/// //-----------------------------------------------------------------------------
+/// // Example for a factory that creates 'MyRequest' instances
+/// class MyRequestFactory : public mvIMPACT::acquire::RequestFactory
+/// //-----------------------------------------------------------------------------
+/// {
+/// public:
+///   virtual mvIMPACT::acquire::Request* createRequest( Device* pDev, int requestNr ) { return new MyRequest(pDev, requestNr); }
+/// };
+///
+///\endcode
+///
+/// Now the request factory must be passed to the constructor of the function interface
+///
+///\code
+/// //-----------------------------------------------------------------------------
+/// void fn( mvIMPACT::acquire::Device* pDev )
+/// //-----------------------------------------------------------------------------
+/// {
+///   // ... some code ...
+///   MyRequestFactory mrf;
+///   FunctionInterface fi(pDev, &mrf);
+///   // ... more additional code
+///   // assuming we got back a request from the driver at this point:
+///   const Request* pRequest = fi.getRequest( getRequestFromSomewhere() );
+///   if( pRequest->isOK() )
+///   {
+///     const MyRequest* pMyRequest(dynamic_cast<const MyRequest*>(pRequest));
+///     cout << pMyRequest->myRequestResult.name() << ": " << pMyRequest->myRequestResult.readS() << endl;
+///   }
+///   // ... probably even more additional code
+/// }
+///\endcode
+///\htmlinclude code_fragment_end.html
+///\xmlonly
+/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+///\endxmlonly
+class RequestFactory
+//-----------------------------------------------------------------------------
+{
+public:
+#if defined(WRAP_DOTNET) || defined(DOTNET_ONLY_CODE)
+	virtual Request* createRequest(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from
+									/// a <b>mvIMPACT::acquire::>DeviceManager</b> object.
+									Device* pDev,
+									/// The request number that that internally has been assigned to this
+									/// request by the device driver.
+									int requestNr ) { return 0; }
+#else
+	virtual Request* createRequest(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from
+									/// a <b>mvIMPACT::acquire::>DeviceManager</b> object.
+									Device* /*pDev*/,
+									/// The request number that that internally has been assigned to this
+									/// request by the device driver.
+									int /*requestNr*/ ) { return 0; }
+#endif // #if defined(WRAP_DOTNET) || defined(DOTNET_ONLY_CODE)
 };
 
 //-----------------------------------------------------------------------------
@@ -7436,7 +7760,7 @@ public:
 ///     if( fi.isRequestNrValid( requestNr ) )
 ///     {
 ///       pRequest = fi.getRequest( requestNr );
-///       if( fi.isRequestOK( pRequest ) )
+///       if( pRequest->isOK() )
 ///       {
 ///         ++cnt;
 ///         if( cnt%100 == 0 )
@@ -7479,43 +7803,45 @@ class FunctionInterface
 //-----------------------------------------------------------------------------
 {
 	typedef std::vector<Request*> RequestVector;
-	#ifndef DOXYGEN_SHOULD_SKIP_THIS
-	//-----------------------------------------------------------------------------
-	struct ReferenceCountedData
-	//-----------------------------------------------------------------------------
-	{
-		ComponentList						m_requestList;
-		ComponentList						m_imageRequestControlList;
-		mutable std::vector<std::string>	m_imageRequestControls;
-		mutable RequestVector				m_requests;
-		mutable std::vector<std::string>	m_settings;
-		mutable unsigned int				m_lastImageRequestChangedCounter;
-		mutable unsigned int				m_lastSettingsListChangedCounter;
-		Device*								m_pDevice;
-		PropertyI							m_requestCount;
-		ComponentList						m_settingsList;
-		unsigned int						m_refCnt;
-		ReferenceCountedData( Device* pDev ) : m_requestList(), m_imageRequestControlList(),
-			m_imageRequestControls(), m_requests(), m_settings(), m_lastImageRequestChangedCounter(0),
-			m_lastSettingsListChangedCounter(0), m_pDevice(pDev), m_requestCount(),
-			m_settingsList(), m_refCnt(1) {}
-		ReferenceCountedData( const ReferenceCountedData& src ) : m_requestList(src.m_requestList),
-			m_imageRequestControlList(src.m_imageRequestControlList), m_imageRequestControls(),
-			m_requests(), m_settings(), m_lastImageRequestChangedCounter(0),
-			m_lastSettingsListChangedCounter(0), m_pDevice(src.m_pDevice), m_requestCount(),
-			m_settingsList(src.m_settingsList), m_refCnt(1) {}
-		~ReferenceCountedData()
+#	ifndef DOXYGEN_SHOULD_SKIP_THIS
+		//-----------------------------------------------------------------------------
+		struct ReferenceCountedData
+		//-----------------------------------------------------------------------------
 		{
-			RequestVector::size_type rvSize = m_requests.size();
-			for( RequestVector::size_type i=0; i<rvSize; i++ )
+			ComponentList						m_requestList;
+			ComponentList						m_imageRequestControlList;
+			mutable std::vector<std::string>	m_imageRequestControls;
+			mutable RequestVector				m_requests;
+			mutable std::vector<std::string>	m_settings;
+			mutable unsigned int				m_lastImageRequestChangedCounter;
+			mutable unsigned int				m_lastSettingsListChangedCounter;
+			Device*								m_pDevice;
+			RequestFactory*						m_pRequestFactory;
+			PropertyI							m_requestCount;
+			ComponentList						m_settingsList;
+			unsigned int						m_refCnt;
+			ReferenceCountedData( Device* pDev, RequestFactory* pRequestFactory ) : m_requestList(), m_imageRequestControlList(),
+				m_imageRequestControls(), m_requests(), m_settings(), m_lastImageRequestChangedCounter(0),
+				m_lastSettingsListChangedCounter(0), m_pDevice(pDev), m_pRequestFactory(pRequestFactory),
+				m_requestCount(), m_settingsList(), m_refCnt(1) {}
+			ReferenceCountedData( const ReferenceCountedData& src ) : m_requestList(src.m_requestList),
+				m_imageRequestControlList(src.m_imageRequestControlList), m_imageRequestControls(),
+				m_requests(), m_settings(), m_lastImageRequestChangedCounter(0),
+				m_lastSettingsListChangedCounter(0), m_pDevice(src.m_pDevice),
+				m_pRequestFactory(src.m_pRequestFactory), m_requestCount(),
+				m_settingsList(src.m_settingsList), m_refCnt(1) {}
+			~ReferenceCountedData()
 			{
-				delete m_requests[i];
+				RequestVector::size_type rvSize = m_requests.size();
+				for( RequestVector::size_type i=0; i<rvSize; i++ )
+				{
+					delete m_requests[i];
+				}
 			}
-		}
-		// make sure there are NO assignments by accident!
-		ReferenceCountedData& operator=( const ReferenceCountedData& rhs );
-	} *m_pRefData;
-	#endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
+			// make sure there are NO assignments by accident!
+			ReferenceCountedData& operator=( const ReferenceCountedData& rhs );
+		} *m_pRefData;
+#	endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
 	//-----------------------------------------------------------------------------
 	void dealloc( void )
 	//-----------------------------------------------------------------------------
@@ -7555,7 +7881,14 @@ class FunctionInterface
 				// this might happen, if there are several instances referring to the same device
 				// and another instance has created new requests in the meantime, or if this instance
 				// has just been created
-				m_pRefData->m_requests.push_back( new Request( m_pRefData->m_pDevice, static_cast<int>(m_pRefData->m_requests.size()) ) );
+				if( m_pRefData->m_pRequestFactory )
+				{
+					m_pRefData->m_requests.push_back( m_pRefData->m_pRequestFactory->createRequest( m_pRefData->m_pDevice, static_cast<int>(m_pRefData->m_requests.size()) ) );
+				}
+				else
+				{
+					m_pRefData->m_requests.push_back( new Request(m_pRefData->m_pDevice, static_cast<int>(m_pRefData->m_requests.size())) );
+				}
 				++it;
 			}
 		}
@@ -7621,13 +7954,17 @@ public:
 	/// <b>Device::open</b>
 	explicit FunctionInterface(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from
 								/// a <b>mvIMPACT::acquire::>DeviceManager</b> object.
-								Device* pDev ) : m_pRefData(0)
+								Device* pDev,
+								/// A pointer to a request factory.
+								/// By supplying a custom request factory the user can control the type of request objects
+								/// that will be created by the function interface.
+								RequestFactory* pRequestFactory = 0 ) : m_pRefData(0)
 	{
 		if( !pDev->isOpen() )
 		{
 			pDev->open();
 		}
-		m_pRefData = new ReferenceCountedData(pDev);
+		m_pRefData = new ReferenceCountedData(pDev, pRequestFactory);
 		DeviceComponentLocator locator(pDev, dltSetting);
 		m_pRefData->m_settingsList = ComponentList(locator.searchbase_id());
 		locator.bindSearchBaseList( pDev, dltRequest );
@@ -7651,18 +7988,18 @@ public:
 		dealloc();
 	}
 #ifndef WRAP_PYTHON
-	/// \brief Allows assignments of <b>mvIMPACT::acquire::FunctionInterface</b> objects
-	FunctionInterface& operator=( const FunctionInterface& rhs )
-	{
-		if( this != &rhs )
+		/// \brief Allows assignments of <b>mvIMPACT::acquire::FunctionInterface</b> objects
+		FunctionInterface& operator=( const FunctionInterface& rhs )
 		{
-			dealloc();
-			m_pRefData = rhs.m_pRefData;
-			// inc. the NEW reference count
-			++m_pRefData->m_refCnt;
+			if( this != &rhs )
+			{
+				dealloc();
+				m_pRefData = rhs.m_pRefData;
+				// inc. the NEW reference count
+				++m_pRefData->m_refCnt;
+			}
+			return *this;
 		}
-		return *this;
-	}
 #endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
 	/// \brief Manually starts the acquisition engine of this device driver instance.
 	///
@@ -7826,6 +8163,27 @@ public:
 		updateRequests();
 		return m_pRefData->m_requests.at( nr );
 	}
+	/// \brief Returns a <b>mvIMPACT::acquire::ComponentList</b> object to a setting with a specified name.
+	///
+	/// This function returns a <b>mvIMPACT::acquire::ComponentList</b> object to a setting with a specified name
+	/// or will raise an exception if no such setting exists.
+	///
+	/// \return A <b>mvIMPACT::acquire::ComponentList</b> object to a setting with a specified name
+	ComponentList getSetting(	/// The name of the setting to locate
+								const std::string& name ) const
+	{
+		ComponentIterator it(m_pRefData->m_settingsList);
+		it = it.firstChild();
+		while( it.isValid() )
+		{
+			if( name == it.name() )
+			{
+				return ComponentList(it);
+			}
+			++it;
+		}
+		ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, PROPHANDLING_COMPONENT_NOT_FOUND, INVALID_ID, "Setting '" + name + "' could not be found" );
+	}
 	/// \brief Allows to set a request into configuration mode.
 	///
 	/// In configuration mode certain properties like <b>mvIMPACT::acquire::Request::imageData</b>,
@@ -7988,7 +8346,7 @@ public:
 	/// \return
 	/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
 	/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
-	int imageRequestUnlock( /// The number of the request to unlock. This is typically
+	int imageRequestUnlock(	/// The number of the request to unlock. This is typically
 							/// a value returned from a call to
 							/// <b>mvIMPACT::acquire::FunctionInterface::imageRequestWaitFor</b>.
 							int requestNr ) const { return DMR_ImageRequestUnlock( m_pRefData->m_pDevice->hDrv(), requestNr ); }
@@ -8010,46 +8368,41 @@ public:
 	/// results. <br><br>When the result is negative the return value is an error code.
 	/// The error code that is returned in most of the cases will be <b>mvIMPACT::acquire::DEV_WAIT_FOR_REQUEST_FAILED</b>.
 	/// To find out possible reasons for this error have a look at the corresponding explanation.
-	int imageRequestWaitFor( /// The maximum wait time in milli-seconds(ms) for
-							 /// this request to become ready. If \a timeout_ms
-							 /// is '-1', the functions time-out interval never
-							 /// elapses. Please note, that each request has it's own timeout, that is independent from
-							 /// this wait timeout, thus this function will return with a valid request after the timeout
-							 /// for this request has elapsed even if e.g. a trigger has not been detected. For detailed
-							 /// information on the interaction of the timeout of this function and the timeout of a
-							 /// request please refer to the chapter \ref ImageAcquisition_section_capture in the C++ section.
-							 int timeout_ms,
-							 /// The queue where to wait for the request.
-							 /// The number of request queues available depends on the number of video channels offered by the
-							 /// device. The queue a processed request ends up in can be defined using the property
-							 /// <b>mvIMPACT::acquire::ImageRequestControl::resultQueue</b>.
-							 int queueNr = 0 ) const
+	int imageRequestWaitFor(	/// The maximum wait time in milli-seconds(ms) for
+								/// this request to become ready. If \a timeout_ms
+								/// is '-1', the functions time-out interval never
+								/// elapses. Please note, that each request has it's own timeout, that is independent from
+								/// this wait timeout, thus this function will return with a valid request after the timeout
+								/// for this request has elapsed even if e.g. a trigger has not been detected. For detailed
+								/// information on the interaction of the timeout of this function and the timeout of a
+								/// request please refer to the chapter \ref ImageAcquisition_section_capture in the C++ section.
+								int timeout_ms,
+								/// The queue where to wait for the request.
+								/// The number of request queues available depends on the number of video channels offered by the
+								/// device. The queue a processed request ends up in can be defined using the property
+								/// <b>mvIMPACT::acquire::ImageRequestControl::resultQueue</b>.
+								int queueNr = 0 ) const
 	{
 		int requestNr;
 		TDMR_ERROR result = DMR_ImageRequestWaitFor( m_pRefData->m_pDevice->hDrv(), timeout_ms, queueNr, &requestNr );
-		if( result != DMR_NO_ERROR )
-		{
-			return result;
-		}
-		return requestNr;
+		return ( result != DMR_NO_ERROR ) ? static_cast<int>(result) : requestNr;
 	}
 	/// \brief Check if \a requestNr specifies a valid <b>mvIMPACT::acquire::Request</b>
 	/// \return <br>
 	/// - true if \a requestNr specifies a valid request.
 	/// - false otherwise
 	bool isRequestNrValid( int requestNr ) const { return requestNr >= 0; }
-	/// \brief Checks if a request has been processed successfully.
+	/// \brief Checks if a request has been processed successfully(<b>deprecated</b>).
+	///
+	/// \note
+	/// This function has been declared deprecated and will be removed in version 1.13.0 of this interface.
+	/// Use <b>mvIMPACT::acquire::Request::isOK()</b> instead and see the corresponding 'Porting existing code'
+	/// section in the documentation.
 	/// \return <br>
 	/// - true if the request has been processed successfully.
 	/// - false otherwise.
-	bool isRequestOK( const Request* p ) const
-	{
-		if( p )
-		{
-			return ( p->requestResult.read() == rrOK );
-		}
-		return false;
-	}
+	MVIMPACT_DEPRECATED_CPP( bool isRequestOK(	/// The request to check
+												const Request* p ) const );
 	/// \brief Loads a previously stored setting.
 	///
 	/// This function can be used to restore a previously stored setting again.
@@ -8121,7 +8474,14 @@ public:
 	/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> or <b>mvIMPACT::acquire::TPROPHANDLING_ERROR</b> otherwise.
 	int saveSettingToDefault(	/// Specifies where the information shall be stored.
 								TScope scope = sUser ) const { return DMR_SaveSettingToDefault( m_pRefData->m_pDevice->hDrv(), scope ); }
-	/// \brief Stores the current system settings under a default location.
+#	ifndef WRAP_PYTHON
+	/// \brief Stores the current system settings under a default location(<b>deprecated</b>).
+	///
+	/// \note
+	/// This function has been declared deprecated and will be removed in version 1.13.0 of this interface.
+	/// All features that have been stored using this method will now also be
+	/// handled by the functions that load and save settings.
+	/// Please see the corresponding 'Porting existing code' section in the documentation.
 	///
 	/// These are the settings which can be altered by creating an instance of the class
 	/// <b>mvIMPACT::acquire::SystemBase</b>. Under Windows&copy; this function will store the current settings
@@ -8136,84 +8496,32 @@ public:
 	/// \return
 	/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
 	/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> or <b>mvIMPACT::acquire::TPROPHANDLING_ERROR</b> otherwise.
-	int saveSystemToDefault(	/// Specifies where the information shall be stored.
-								TScope scope = sUser ) const { return DMR_SaveSystemToDefault( m_pRefData->m_pDevice->hDrv(), scope ); }
+	MVIMPACT_DEPRECATED_CPP( int saveSystemToDefault(	/// Specifies where the information shall be stored.
+														TScope scope = sUser ) const );
+#	endif // #	ifndef WRAP_PYTHON
 };
 
-#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-	//-----------------------------------------------------------------------------
-	/// \brief An interface class to access DMA memory related properties.
-	///
-	/// This class can be used to configure the way the device works with DMA memory.
-	/// This is an advanced feature and shall only be used if neccessary or to
-	/// fine tune an application to achieve optimal performance.
-	/// 
-	/// All frame grabbers belonging to the mvTITAN, mvGAMMA, mvSIGMA and mvDELTA series use a special,
-	/// preallocated block of memory(DMA memory) as target for fast image transfer. The total size of
-	/// this block has to be set during driver installation. The memory is claimed from the operating 
-	/// system during startup and is shared between all installed devices.
-	///
-	/// The memory size needed to achieve optimal performance depends on the image size to grab, the queue depth
-	/// and the mode the memory manager is operated in. Valid modes are defined by the enumeration 
-	/// <b>mvIMPACT::acquire::TMemoryManagerMode</b> and can be selected by modifying the property
-	/// <b>mvIMPACT::acquire::ImageMemoryManager::mode</b>.
-	///
-	/// \note This class is currently available for frame grabber devices only.
-	class ImageMemoryManager : public ComponentCollection
-	//-----------------------------------------------------------------------------
-	{
-	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::InfoBase</b> object.
-		explicit ImageMemoryManager(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from
-										/// a <b>mvIMPACT::acquire::DeviceManager</b> object.
-										Device* pDev ) : ComponentCollection(pDev),
-										  mode(), allocatedDMAMemory_bytes(),
-										  usedDMAMemory_bytes(), usedBlocks(),
-										  poolMode(), poolBlockSize_bytes(),
-										  poolBlockCount()
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#	if !defined(WRAP_PYTHON) // To date, no customer uses Python, so we don't need backward compatibility here.
+		//-----------------------------------------------------------------------------
+		inline int FunctionInterface::saveSystemToDefault( TScope scope /* = sUser */ ) const
+		//-----------------------------------------------------------------------------
 		{
-			DeviceComponentLocator locator(pDev, dltImageMemoryManager );
-			m_hRoot = locator.searchbase_id();
-			locator.bindComponent( mode, "Mode" );
-			locator.bindComponent( allocatedDMAMemory_bytes, "AllocatedDMAMemory_bytes" );
-			locator.bindComponent( usedDMAMemory_bytes, "UsedDMAMemory_bytes" );
-			locator.bindComponent( usedBlocks, "UsedBlocks" );
-			locator.bindComponent( poolMode, "PoolMode" );
-			locator.bindComponent( poolBlockSize_bytes, "PoolBlockSize_bytes" );
-			locator.bindComponent( poolBlockCount, "PoolBlockCount" );
+			return DMR_SaveSystemToDefault( m_pRefData->m_pDevice->hDrv(), scope );
 		}
-		PYTHON_ONLY(%immutable;)
-		/// \brief An enumerated integer property containing the mode the memory manager is currently operated in.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TMemoryManagerMode</b>.
-		PropertyIMemoryManagerMode mode;
-		/// \brief An integer property <b>(read-only)</b> containing the size of the allocated DMA memory (in bytes).
-		PropertyI allocatedDMAMemory_bytes;
-		/// \brief An integer property <b>(read-only)</b> containing the size of the DMA memory (in bytes) currently used by the device.
-		PropertyI usedDMAMemory_bytes;
-		/// \brief An integer property <b>(read-only)</b> containing the number of individual blocks of DMA memory currently used by the device.
-		PropertyI usedBlocks;
-		/// \brief An enumerated integer property containing the mode the memory managers memory pool is currently operated in.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TMemoryManagerPoolMode</b>.
-		PropertyIMemoryManagerPoolMode poolMode;
-		/// \brief An integer property defining the size (in bytes) to use for each block of DMA memory.
-		PropertyI poolBlockSize_bytes;
-		/// \brief An integer property <b>(read-only)</b> containing the number of individual blocks of DMA memory currently available when using 
-		/// the current pool block size and pool mode.
-		PropertyI poolBlockCount;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyIMemoryManagerMode getMode( void ) const { return mode; }
-		PropertyI getAllocatedDMAMemory( void ) const { return allocatedDMAMemory_bytes; }
-		PropertyI getUsedDMAMemory( void ) const { return usedDMAMemory_bytes; }
-		PropertyI getUsedBlocks( void ) const { return usedBlocks; }
-		PropertyIMemoryManagerPoolMode getPoolMode( void ) const { return poolMode; }
-		PropertyI getPoolBlockSize( void ) const { return poolBlockSize_bytes; }
-		PropertyI getPoolBlockCount( void ) const { return poolBlockCount; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+		//-----------------------------------------------------------------------------
+		inline bool FunctionInterface::isRequestOK( const Request* p ) const
+		//-----------------------------------------------------------------------------
+		{
+			if( p )
+			{
+				return ( p->requestResult.read() == rrOK );
+			}
+			return false;
+		}
+#	endif // #if !defined(WRAP_PYTHON)
+#endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
 
 //-----------------------------------------------------------------------------
 /// \brief A base class to access various general information about the device and its
@@ -8245,7 +8553,7 @@ protected:
 		locator.bindComponent( recommendedListsForUIs, "RecommendedListsForUIs" );
 	}
 public:
-	PYTHON_ONLY(%immutable;)
+PYTHON_ONLY(%immutable;)
 	/// \brief An integer property <b>(read-only)</b> containing the device driver version used by this device.
 	///
 	/// This is the version of the underlying hardware driver. For device drivers that don't have another
@@ -8286,7 +8594,7 @@ public:
 	/// \brief A string property <b>(read-only)</b> containing an array of full search pathes to lists which are recommended
 	/// to be displayed in a user interface that is created dynamically.
 	PropertyS recommendedListsForUIs;
-	PYTHON_ONLY(%mutable;)
+PYTHON_ONLY(%mutable;)
 #ifdef DOTNET_ONLY_CODE
 	PropertyS getDeviceDriverVersion( void ) const { return deviceDriverVersion; }
 	PropertyS getDriverDate( void ) const { return driverDate; }
@@ -8311,220 +8619,48 @@ public:
 					Device* pDev ) : InfoBase(pDev) {}
 };
 
-#if !defined(IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION)
-	//-----------------------------------------------------------------------------
-	/// \brief A more specific class to query information about a <b>mvBlueDevice</b>
-	/// device and its driver.
-	///
-	/// This class contains a collection of properties providing various information about
-	/// a <b>mvBlueDevice</b> device and its driver.
-	class InfoBlueDevice : public InfoBase
-	//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+/// \brief A base class for essential device related settings.
+///
+/// This class acts as a base class for essential device related settings. It only contains
+/// features that are available for every device.
+class BasicDeviceSettings : public ComponentCollection
+//-----------------------------------------------------------------------------
+{
+public:
+	explicit BasicDeviceSettings(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+										Device* pDev,
+										/// The name of the driver internal setting to access with this instance.
+										/// A list of valid setting names can be obtained by a call to
+										/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
+										/// settings can be created with the function
+										/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
+										const std::string& settingName = "Base" ) : ComponentCollection(pDev), basedOn(), imageRequestTimeout_ms()
 	{
-	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::InfoBlueDevice</b> object.
-		explicit InfoBlueDevice(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-								Device* pDev ) : InfoBase(pDev),
-								  sensorXRes(), sensorYRes(), sensorColorMode(), sensorType()
-		{
-			ComponentLocator locator(m_hRoot, "Camera" );
-			locator.bindComponent( sensorXRes, "SensorXRes" );
-			locator.bindComponent( sensorYRes, "SensorYRes" );
-			locator.bindComponent( sensorColorMode, "SensorColorMode" );
-			locator.bindComponent( sensorType, "SensorType" );
-		}
-		PYTHON_ONLY(%immutable;)
-		/// \brief An integer property <b>(read-only)</b> containing the horizontal resolution
-		/// of the camera sensor.
-		///
-		/// If the device has more than one sensor head, and all these sensor heads can be accessed using the current interface,
-		/// this property will contain as many values as the devices offers sensor heads.
-		PropertyI sensorXRes;
-		/// \brief An integer property <b>(read-only)</b> containing the vertical resolution
-		/// of the camera sensor.
-		///
-		/// If the device has more than one sensor head, and all these sensor heads can be accessed using the current interface,
-		/// this property will contain as many values as the devices offers sensor heads.
-		PropertyI sensorYRes;
-		/// \brief An enumerated integer property <b>(read-only)</b> containing the type of the sensor
-		/// (color/mono/...)(if known).
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TInfoSensorColorMode</b>.
-		///
-		/// \note
-		/// If nothing is known about this feature, this property will contain <b>mvIMPACT::acquire::iscmUnknown</b>.
-		///
-		/// If the device has more than one sensor head, and all these sensor heads can be accessed using the current interface,
-		/// this property will contain as many values as the devices offers sensor heads.
-		PropertyIInfoSensorColorMode sensorColorMode;
-		/// \brief An enumerated integer property <b>(read-only)</b> containing the type of sensor chip of the
-		/// camera(if known).
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TInfoSensorType</b>.
-		///
-		/// This usually will either be <b>mvIMPACT::acquire::istCCD</b> or <b>mvIMPACT::acquire::istCMOS</b>.
-		///
-		/// If the device has more than one sensor head, and all these sensor heads can be accessed using the current interface,
-		/// this property will contain as many values as the devices offers sensor heads.
-		PropertyIInfoSensorType sensorType;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyI							getSensorXRes( void ) const { return sensorXRes; }
-		PropertyI							getSensorYRes( void ) const { return sensorYRes; }
-		PropertyIInfoSensorColorMode		getSensorColorMode( void ) const { return sensorColorMode; }
-		PropertyIInfoSensorType				getSensorType( void ) const { return sensorType; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-#endif // #if !defined(IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION)
-
-#ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
-	//-----------------------------------------------------------------------------
-	/// \brief A more specific class to query information about a <b>mvBlueCOUGAR</b>
-	/// or <b>mvBlueLYNX-M7</b> device and its driver.
+		DeviceComponentLocator locator(pDev, dltSetting, settingName);
+		locator.bindComponent( basedOn, "BasedOn" );
+		locator.bindSearchBase( locator.searchbase_id(), "Camera" );
+		m_hRoot = locator.searchbase_id();
+		locator.bindComponent( imageRequestTimeout_ms, "ImageRequestTimeout_ms" );
+	}
+PYTHON_ONLY(%immutable;)
+	/// \brief A string property <b>(read-only)</b> containing the name of the setting this setting is based on.
+	PropertyS basedOn;
+	/// \brief An integer property defining the maximum time to wait for an image in ms.
 	///
-	/// This class contains a collection of properties providing various information about
-	/// a <b>mvBlueCOUGAR</b> or <b>mvBlueLYNX-M7</b> device and its driver.
-	class InfoBlueCOUGAR : public InfoBlueDevice
-	//-----------------------------------------------------------------------------
-	{
-	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::InfoBlueCOUGAR</b> object.
-		explicit InfoBlueCOUGAR(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-								Device* pDev ) : InfoBlueDevice(pDev), deviceBootloaderVersion(), deviceRFSVersion(),
-								deviceKernelVersion(), deviceFPGAVersion(),deviceStatus(), deviceStatusMessage(),
-								clientConnectionState()
-		{
-			ComponentLocator locator(m_hRoot, "Camera");
-			locator.bindComponent( deviceBootloaderVersion, "DeviceBootloaderVersion" );
-			locator.bindComponent( deviceRFSVersion, "DeviceRFSVersion" );
-			locator.bindComponent( deviceKernelVersion, "DeviceKernelVersion" );
-			locator.bindComponent( deviceFPGAVersion, "DeviceFPGAVersion" );
-			locator.bindComponent( deviceStatus, "DeviceStatus" );
-			locator.bindComponent( deviceStatusMessage, "DeviceStatusMessage" );
-			locator.bindComponent( deviceSensorRevision, "DeviceSensorRevision" );
-			locator.bindComponent( clientConnectionState, "ClientConnectionState" );
-		}
-		PYTHON_ONLY(%immutable;)
-		/// \brief A 64 bit integer property <b>(read-only)</b> containing the current bootloader version of this device.
-		///
-		/// \note
-		/// This feature is currently not supported by <b>mvBlueCOUGAR-S</b> devices.
-		PropertyI64 deviceBootloaderVersion;
-		/// \brief A 64 bit integer property <b>(read-only)</b> containing the current version of the root file system (RFS) of this device.
-		///
-		/// \note
-		/// This feature is currently not supported by <b>mvBlueCOUGAR-S</b> devices.
-		PropertyI64 deviceRFSVersion;
-		/// \brief A 64 bit integer property <b>(read-only)</b> containing the current kernel version of this device.
-		///
-		/// \note
-		/// This feature is currently not supported by <b>mvBlueCOUGAR-S</b> devices.
-		PropertyI64 deviceKernelVersion;
-		/// \brief A 64 bit integer property <b>(read-only)</b> containing the current FPGA version of this device.
-		///
-		/// \note
-		/// This feature is currently not supported by <b>mvBlueCOUGAR-S</b> devices.
-		PropertyI64 deviceFPGAVersion;
-		/// \brief A 64 bit integer property <b>(read-only)</b> containing the current device status of the sensor head of this device.
-		///
-		/// If the device has more than one sensor head, and all these sensor heads can be accessed using the current interface,
-		/// this property will contain as many values as the devices offers sensor heads.
-		///
-		/// \note
-		/// This feature is currently not supported by <b>mvBlueCOUGAR-S</b> devices.
-		PropertyI64 deviceStatus;
-		/// \brief A string property <b>(read-only)</b> containing the current device status message of the sensor head of this device.
-		///
-		/// If the device has more than one sensor head, and all these sensor heads can be accessed using the current interface,
-		/// this property will contain as many values as the devices offers sensor heads.
-		///
-		/// \note
-		/// This feature is currently not supported by <b>mvBlueCOUGAR-S</b> devices.
-		PropertyS deviceStatusMessage;
-		/// \brief A 64 bit integer property <b>(read-only)</b> containing the current revision of the sensor head of this device.
-		///
-		/// If the device has more than one sensor head, and all these sensor heads can be accessed using the current interface,
-		/// this property will contain as many values as the devices offers sensor heads.
-		///
-		/// \note
-		/// This feature is currently not supported by <b>mvBlueCOUGAR-S</b> devices.
-		PropertyI64 deviceSensorRevision;
-		/// \brief An integer property <b>(read-only)</b> providing information about the current connection state of a remote
-		/// client.
-		///
-		/// A value different from 0 indicates, that at least one client is connected to this device. When <b>NOT</b> working locally
-		/// this property will always contain '1'.
-		PropertyI clientConnectionState;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyI64 getDeviceBootloaderVersion( void ) const { return deviceBootloaderVersion; }
-		PropertyI64 getDeviceRFSVersion( void ) const { return deviceRFSVersion; }
-		PropertyI64 getDeviceKernelVersion( void ) const { return deviceKernelVersion; }
-		PropertyI64 getDeviceFPGAVersion( void ) const { return deviceFPGAVersion; }
-		PropertyI64 getDeviceStatus( void ) const { return deviceStatus; }
-		PropertyS getDeviceStatusMessage( void ) const { return deviceStatusMessage; }
-		PropertyI64 getDeviceSensorRevision( void ) const { return deviceSensorRevision; }
-		PropertyI getClientConnectionState( void ) const { return clientConnectionState; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-#endif // #ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
-
-#ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
-	//-----------------------------------------------------------------------------
-	/// \brief A more specific class to query information about a <b>mvBlueFOX</b>
-	/// device and its driver.
-	///
-	/// This class contains a collection of properties providing various information about
-	/// a <b>mvBlueFOX</b> device and its driver.
-	class InfoBlueFOX : public InfoBlueDevice
-	//-----------------------------------------------------------------------------
-	{
-	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::InfoBlueFOX</b> object.
-		explicit InfoBlueFOX(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-								Device* pDev ) : InfoBlueDevice(pDev), firmwareVersion(), sensorFPGAVersion(), sensorCaps(),
-								  userEEPROMSize()
-		{
-			ComponentLocator locator(m_hRoot);
-			locator.bindComponent( firmwareVersion, "FirmwareVersion" );
-			locator.bindSearchBase( locator.searchbase_id(), "Camera" );
-			locator.bindComponent( sensorFPGAVersion, "SensorFPGAVersion" );
-			locator.bindComponent( sensorCaps, "SensorCaps" );
-			locator.bindComponent( userEEPROMSize, "UserEEPROMSize" );
-		}
-		PYTHON_ONLY(%immutable;)
-		/// \brief An integer property <b>(read-only)</b> containing the firmware version of this device.
-		PropertyI firmwareVersion;
-		/// \brief An integer property <b>(read-only)</b> containing the FPGA version of the camera(if known).
-		///
-		/// \note
-		/// If nothing is known about this feature, this property will contain '-1'.
-		PropertyI sensorFPGAVersion;
-		/// \brief An integer property <b>(read-only)</b> containing a bit mask containing information
-		/// about the sensors capabilities(if known).
-		///
-		/// \note
-		/// If nothing is known about this feature, this property will contain '-1'.
-		PropertyI sensorCaps;
-		/// \brief An integer property <b>(read-only)</b> containing the size of the user EEPROM that can be accessed
-		/// using the I2C access features of <b>mvIMPACT::acquire::I2CControl</b>.
-		///
-		/// \note
-		/// The size may vary depending on the product. Even different products with the same sensor might report
-		/// different values here.
-		///
-		/// \note
-		/// The user EEPROM uses a virtual I2C address of 0x1A2 for write access and 0x1A3 for read access.
-		PropertyI userEEPROMSize;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyI getFirmwareVersion( void ) const { return firmwareVersion; }
-		PropertyI getSensorFPGAVersion( void ) const { return sensorFPGAVersion; }
-		PropertyI getSensorCaps( void ) const { return sensorCaps; }
-		PropertyI getUserEEPROMSize( void ) const { return userEEPROMSize; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-#endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+	/// When this property is set to 0 the timeout never elapses. If the timeout this property
+	/// defines elapses the currently processed request will be returned to the user even if no data
+	/// has been captured so far. The result structure of the request object should be examined in that
+	/// case. Also this should be considered as an error from the users point of view in which case he
+	/// should clean up the acquisition queue by calling <b>mvIMPACT::acquire::FunctionInterface::imageRequestReset</b>.
+	/// Afterwards the capture loop can be restarted.
+	PropertyI imageRequestTimeout_ms;
+PYTHON_ONLY(%mutable;)
+#ifdef DOTNET_ONLY_CODE
+	PropertyS getBasedOn( void ) const { return basedOn; }
+	PropertyI getImageRequestTimeout_ms( void ) const { return imageRequestTimeout_ms; }
+#endif // #ifdef DOTNET_ONLY_CODE
+};
 
 //-----------------------------------------------------------------------------
 /// \brief A class to configure the behaviour of trigger signals
@@ -8538,16 +8674,15 @@ public:
 /// mode. Always call <b>mvIMPACT::acquire::Component::isValid</b> to check wether
 /// a feature is available or not before using it. Otherwise an exception will
 /// be generated.
-class TriggerControl
+class TriggerControl : public ComponentCollection
 //-----------------------------------------------------------------------------
 {
 	friend class CameraSettingsBlueCOUGAR;
 	friend class CameraSettingsFrameGrabber;
-	ComponentList m_list;
 	Method m_triggerSoftware;
-	explicit TriggerControl( HLIST hList ) : m_list(hList), m_triggerSoftware()
+	explicit TriggerControl( HLIST hList ) : ComponentCollection(hList), m_triggerSoftware()
 	{
-		ComponentLocator locator(hList);
+		ComponentLocator locator(m_hRoot);
 		locator.bindComponent( m_triggerSoftware, "TriggerSoftware@i" );
 		locator.bindComponent( triggerMode, "TriggerMode" );
 		locator.bindComponent( triggerSource, "TriggerSource" );
@@ -8567,16 +8702,22 @@ class TriggerControl
 		locator.bindComponent( triggerOverlap, "TriggerOverlap" );
 	}
 public:
-	std::string getDescription( void ) const { return m_list.name(); }
-	TDMR_ERROR triggerSoftware( void ) const
+	/// \brief Returns a name of the trigger being configured.
+	std::string getDescription( void ) const { return ComponentList(m_hRoot).name(); }
+	/// \brief Generates of software trigger command.
+	///
+	/// \return
+	/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
+	/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
+	int triggerSoftware( void ) const
 	{
 		if( !m_triggerSoftware.isValid() )
 		{
 			return DMR_FEATURE_NOT_AVAILABLE;
 		}
-		return static_cast<TDMR_ERROR>(m_triggerSoftware.call());
+		return m_triggerSoftware.call();
 	}
-	PYTHON_ONLY(%immutable;)
+PYTHON_ONLY(%immutable;)
 	/// \brief Defines if the selected trigger is active.
 	PropertyI64 triggerMode;
 	/// \brief Defines the signal that will cause the trigger event.
@@ -8603,8 +8744,8 @@ public:
 	///
 	/// This defines when a valid trigger will be accepted (or latched) for a new frame.
 	/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDeviceTriggerOverlap</b>.
-	PropertyIDeviceTriggerOverlap triggerOverlap;
-	PYTHON_ONLY(%mutable;)
+	PropertyI64DeviceTriggerOverlap triggerOverlap;
+PYTHON_ONLY(%mutable;)
 #ifdef DOTNET_ONLY_CODE
 	PropertyI64 getTriggerMode( void ) const { return triggerMode; }
 	PropertyI64 getTriggerSource( void ) const { return triggerSource; }
@@ -8612,5954 +8753,9 @@ public:
 	PropertyI getTriggerDivider( void ) const { return triggerDivider; }
 	PropertyF getTriggerDelayAbs_us( void ) const { return triggerDelayAbs_us; }
 	PropertyI getTriggerDelayLines( void ) const { return triggerDelayLines; }
-	PropertyIDeviceTriggerOverlap getTriggerOverlap( void ) const { return triggerOverlap; }
+	PropertyI64DeviceTriggerOverlap getTriggerOverlap( void ) const { return triggerOverlap; }
 #endif // #ifdef DOTNET_ONLY_CODE
 };
-
-//-----------------------------------------------------------------------------
-/// \brief A class to represent a digital input pin.
-class DigitalInput
-//-----------------------------------------------------------------------------
-{
-	friend class	IOSubSystem;
-	HDRV			m_hDrv;
-	PropertyI		m_register;
-	int				m_bitNumber;
-	std::string		m_description;
-	explicit		DigitalInput( HDRV hDrv, PropertyI reg, int bitNumber, const std::string desc ) : m_hDrv(hDrv), m_register(reg), m_bitNumber(bitNumber), m_description(desc) {}
-public:
-	/// \brief Returns the current state of this input pin.
-	/// \return
-	/// - true if the current state of this pin is considered as 'logic 1'
-	/// - false otherwise
-	bool get( void ) const
-	{
-		DMR_UpdateDigitalInputs( m_hDrv );
-		return m_register.read(m_bitNumber) != 0;
-	}
-	/// \brief Returns a description for this digital input.
-	///
-	/// This might contain connector descriptions or other information like
-	/// e.g. 'Trigger-In(J8.4/J8.5)', which means, this is the trigger input
-	/// of connector \a J8 pins \a 4 and \a 5.
-	std::string getDescription( void ) const { return m_description; }
-};
-
-//-----------------------------------------------------------------------------
-/// \brief A class to represent a digital output pin.
-class DigitalOutput
-//-----------------------------------------------------------------------------
-{
-	friend class	IOSubSystem;
-	PropertyI		m_register;
-	int				m_bitNumber;
-	std::string		m_description;
-	explicit		DigitalOutput( PropertyI reg, int bitNumber, const std::string desc ) : m_register(reg), m_bitNumber(bitNumber), m_description(desc) {}
-public:
-	/// \brief Inverts the current state of the digital output and returns the
-	/// previous state.
-	/// \return
-	/// - true if the previous state of this pin was considered as 'logic 1'
-	/// - false otherwise
-	bool flip( void )
-	{
-		bool oldState = get();
-		m_register.write( !oldState, m_bitNumber );
-		return oldState;
-	}
-	/// \brief Returns the current state of this output pin.
-	/// \return
-	/// - true if the current state of this pin is considered as 'logic 1'
-	/// - false otherwise
-	bool get( void ) const { return m_register.read( m_bitNumber ) != 0; }
-	/// \brief Checks if the caller has write/modify access to this digital output.
-	///
-	/// Some devices will offer access to digital outputs, but these outputs can't be switched manually.
-	/// E.g. a device might offer a digital output, that can only be configured to stay either high or
-	/// low during frame exposure but can't be switched to high at a certain user defined moment. For
-	/// such an output, this function will return false.
-	///
-	/// If the user calls a function belonging to this class, that would modify the state of the 
-	/// associated digital output, an exception will be raised.
-	///
-	/// \return
-	/// - true if the caller is allowed to call write/modify operation for this component.
-	/// - false otherwise.
-	bool isWriteable( void ) const { return m_register.isWriteable(); }
-	/// \brief Sets the output pin to 'logic 1'.
-	void set( void ) { m_register.write( 1, m_bitNumber ); }
-	/// \brief Sets the output pin to 'logic 0'.
-	void reset( void ) { m_register.write( 0, m_bitNumber ); }
-	/// \brief Returns a description for this digital output.
-	///
-	/// This might contain connector descriptions or other information like
-	/// e.g. 'CC1(J1)', which means, this is the CameraLink&reg; control 
-	/// channel 1 of connector \a J1.
-	std::string getDescription( void ) const { return m_description; }
-};
-
-//-----------------------------------------------------------------------------
-/// \brief A class to represent a sync. output pin.
-///
-/// Instances of this class can be used to define and generate sync. signals 
-/// at the corresponding outputs of the device.
-///
-/// \note
-/// Instances of this class can't be constructed directly, but must be obtained
-/// via the device specific class derived from <b>mvIMPACT::acquire::IOSubSystem</b>.
-class SyncOutput
-//-----------------------------------------------------------------------------
-{
-	friend class IOSubSystem;
-	ComponentList m_list;
-	explicit SyncOutput( HLIST hList ) : m_list(hList), frequency_Hz(), lowPart_pc()
-	{
-		ComponentLocator locator(hList);
-		locator.bindComponent( frequency_Hz, "Frequency_Hz" );
-		locator.bindComponent( lowPart_pc, "LowPart_pc" );
-	}
-public:
-	PYTHON_ONLY(%immutable;)
-	/// \brief A float property defining the frequency(in Hertz) for the sync. signal
-	/// generated by this pin.
-	PropertyF frequency_Hz;
-	/// \brief A float property defining the width in percent the sync. signal stays
-	/// low during one period. The output signal generated will be a square pulse.
-	PropertyF lowPart_pc;
-	PYTHON_ONLY(%mutable;)
-	/// \brief Returns a description for this sync. output.
-	///
-	/// This might contain connector descriptions or other information like
-	/// e.g. 'VD-OUT(J9.24)', which means, this is the VD output at connector J9
-	/// pin 24.
-	std::string getDescription( void ) const { return m_list.name(); }
-#ifdef DOTNET_ONLY_CODE
-	PropertyF getFrequency_Hz( void ) const { return frequency_Hz; }
-	PropertyF getLowPart_pc( void ) const { return lowPart_pc; }
-#endif // #ifdef DOTNET_ONLY_CODE
-};
-
-//-----------------------------------------------------------------------------
-/// \brief A class to represent one step of a real time control(<b>RTCtr</b>) program.
-///
-/// An object of this class represents a single instruction in a program represented
-/// by an <b>mvIMPACT::acquire::RTCtrProgram</b>. <b>mvIMPACT::acquire::RTCtrProgramStep</b> object can't be constructed
-/// directly, but must be accessed via the function
-/// <b>mvIMPACT::acquire::RTCtrProgram::programStep</b> of the program they belong
-/// to.
-///
-/// The instruction this <b>mvIMPACT::acquire::RTCtrProgramStep</b> will executed when the program is
-/// executed is defined by the property <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b>. Depending
-/// on the value of this property certain other parameters will influence the
-/// behaviour of this instruction.
-class RTCtrProgramStep
-//-----------------------------------------------------------------------------
-{
-	friend class RTCtrProgram;
-	explicit RTCtrProgramStep( HOBJ hObj ) : address(), frameID(), clocks_us(),
-	  digitalInputs(), digitalOutputs(), sensorHeads(), opCode(), controllerRegister(),
-	  registerValue()
-	{
-		ComponentLocator locator( hObj );
-		locator.bindComponent( address, "Address" );
-		locator.bindComponent( frameID, "FrameID" );
-		locator.bindComponent( clocks_us, "Clocks_us" );
-		locator.bindComponent( digitalInputs, "DigitalInputs" );
-		locator.bindComponent( digitalOutputs, "DigitalOutputs" );
-		locator.bindComponent( sensorHeads, "SensorHeads" );
-		locator.bindComponent( opCode, "OpCode" );
-		locator.bindComponent( controllerRegister, "ControllerRegister" );
-		locator.bindComponent( registerValue, "RegisterValue" );
-	}
-public:
-	PYTHON_ONLY(%immutable;)
-	/// \brief An integer property, which defines the absolute jump address within this <b>mvIMPACT::acquire::RTCtrProgram</b>.
-	///
-	/// This property only is taken into account, if <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> is set to <b>mvIMPACT::acquire::rtctrlProgJumpLoc</b>.
-	PropertyI address;
-	/// \brief An integer property, which defines the frame ID of the triggered image <b>mvIMPACT::acquire::RTCtrProgram</b>.
-	///
-	/// This property only is taken into account, if <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> is set to <b>mvIMPACT::acquire::rtctrlProgTriggerSet</b>.
-	PropertyI frameID;
-	/// \brief An integer property, which defines the waiting time <b>mvIMPACT::acquire::RTCtrProgram</b>.
-	///
-	/// This property only is taken into account, if <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> is set to <b>mvIMPACT::acquire::rtctrlProgWaitClocks</b>.
-	PropertyI clocks_us;
-	/// \brief An enumerated integer property to define for which digital input state this program step waits for.
-	///
-	/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDigIOState</b>.
-	///
-	/// This property only is taken into account, if <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> is set to <b>mvIMPACT::acquire::rtctrlProgWaitDigin</b>.
-	PropertyIDigIOState digitalInputs;
-	/// \brief An enumerated integer property to define how to set the digital outputs
-	/// of this device.
-	///
-	/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDigIOState</b>.
-	///
-	/// This property only is taken into account, if <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> is set to <b>mvIMPACT::acquire::rtctrlProgSetDigout</b>.
-	PropertyIDigIOState digitalOutputs;
-	/// \brief An enumerated integer property to define which sensor heads to trigger (for devices with more than one sensor head).
-	///
-	/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDigIOState</b>.
-	///
-	/// This property only is taken into account, if <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> is set to <b>mvIMPACT::acquire::rtctrlProgTriggerSet</b>
-	/// or <b>mvIMPACT::acquire::rtctrlProgTriggerReset</b>.
-	PropertyIDigIOState sensorHeads;
-	/// \brief An enumerated integer property defining the general purpose of this <b>mvIMPACT::acquire::RTCtrProgramStep</b> object.
-	///
-	/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TRTProgOpCodes</b>.
-	PropertyIRTProgOpCodes opCode;
-	/// \brief An integer property, which defines the index of the controller register to refer in this <b>mvIMPACT::acquire::RTCtrProgramStep</b>.
-	///
-	/// This property only is taken into account, if <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> is set to 
-	/// <b>mvIMPACT::acquire::rtctrlProgRegisterSet</b>, <b>mvIMPACT::acquire::rtctrlProgRegisterAdd</b>,
-	/// <b>mvIMPACT::acquire::rtctrlProgRegisterSub</b>, <b>mvIMPACT::acquire::rtctrlProgJumpLocOnZero</b>
-	/// or <b>mvIMPACT::acquire::rtctrlProgJumpLocOnNotZero</b>.
-	///
-	/// \note
-	/// This feature will not be available for every device offering a HRTC. It will be available if the translation
-	/// dictionary of the property <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> contains 
-	/// <b>mvIMPACT::acquire::rtctrlProgRegisterSet</b>, <b>mvIMPACT::acquire::rtctrlProgRegisterAdd</b>,
-	/// <b>mvIMPACT::acquire::rtctrlProgRegisterSub</b>, <b>mvIMPACT::acquire::rtctrlProgJumpLocOnZero</b>
-	/// or <b>mvIMPACT::acquire::rtctrlProgJumpLocOnNotZero</b>.
-	///
-	/// Read the properties translation dictionary with
-	/// the functions <b>mvIMPACT::acquire::PropertyIPulseStartTrigger::getTranslationDictString</b> and
-	/// <b>mvIMPACT::acquire::PropertyIPulseStartTrigger::getTranslationDictValue</b>.
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyIPulseStartTrigger::getTranslationDict</b>
-	/// in addition to the functions mentioned above.
-	///\htmlinclude code_fragment_end.html
-	PropertyI controllerRegister;
-	/// \brief An integer property, which defines the a value to associate with a register access in this <b>mvIMPACT::acquire::RTCtrProgramStep</b>.
-	///
-	/// This property only is taken into account, if <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> is set to 
-	/// <b>mvIMPACT::acquire::rtctrlProgRegisterSet</b>, <b>mvIMPACT::acquire::rtctrlProgRegisterAdd</b>
-	/// or <b>mvIMPACT::acquire::rtctrlProgRegisterSub</b>.
-	///
-	/// \note
-	/// This feature will not be available for every device offering a HRTC. It will be available if the translation
-	/// dictionary of the property <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> contains 
-	/// <b>mvIMPACT::acquire::rtctrlProgRegisterSet</b>, <b>mvIMPACT::acquire::rtctrlProgRegisterAdd</b>,
-	/// or <b>mvIMPACT::acquire::rtctrlProgRegisterSub</b>.
-	///
-	/// Read the properties translation dictionary with
-	/// the functions <b>mvIMPACT::acquire::PropertyIPulseStartTrigger::getTranslationDictString</b> and
-	/// <b>mvIMPACT::acquire::PropertyIPulseStartTrigger::getTranslationDictValue</b>.
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyIPulseStartTrigger::getTranslationDict</b>
-	/// in addition to the functions mentioned above.
-	///\htmlinclude code_fragment_end.html
-	PropertyI registerValue;
-	PYTHON_ONLY(%mutable;)
-#ifdef DOTNET_ONLY_CODE
-	PropertyI getAddress( void ) const { return address; }
-	PropertyI getFrameID( void ) const { return frameID; }
-	PropertyI getClocks_us( void ) const { return clocks_us; }
-	PropertyIDigIOState getDigitalInputs( void ) const { return digitalInputs; }
-	PropertyIDigIOState getDigitalOutputs( void ) const { return digitalOutputs; }
-	PropertyIDigIOState getSensorHeads( void ) const { return sensorHeads; }
-	PropertyIRTProgOpCodes getOpCode( void ) const { return opCode; }
-	PropertyI getControllerRegister( void ) const { return controllerRegister; }
-	PropertyI getRegisterValue( void ) const { return registerValue; }
-#endif // #ifdef DOTNET_ONLY_CODE
-};
-
-//-----------------------------------------------------------------------------
-/// \brief A class to represent real time control programs
-///
-/// Real time control programs can be used to control the way how an when images
-/// are exposed and transmitted to the user.
-///
-/// An <b>mvIMPACT::acquire::RTCtrProgram</b> e.g. can be used to achieve a constant frame rate with
-/// a desired frequency. This can be done e.g. by triggering the camera with a constant frequency.
-///
-///\xmlonly
-/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-///\endxmlonly
-///\htmlinclude code_fragment_start_cpp.html
-/// <b>EXAMPLE:</b>
-/// An appropriate signal for triggering the camera can be generated as follows:
-///\code
-/// #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
-///
-/// using namespace mvIMPACT::acquire;
-///
-/// void runAt10Hz( Device* pBF )
-/// {
-///   CameraSettingsBlueFOX bfs( pBF );
-///   IOSubSystemBlueFOX bfIOs( pBF );
-///   // define a HRTC program that results in a define image frequency
-///   // the hardware real time controller shall be used to trigger an image
-///   bfs.triggerSource.write( ctsRTCtrl );
-///   // when the hardware real time controller switches the trigger signal to 
-///   // high the exposure of the image shall start
-///   bfs.triggerMode.write( ctmOnRisingEdge );
-///
-///   // error checks
-///   if( bfIOs.RTCtrProgramCount() == 0 )
-///   {
-///     // no HRTC controllers available (this never happens for the mvBlueFOX)
-///     return;
-///   }
-///
-///   RTCtrProgram* pRTCtrlprogram = bfIOs.getRTCtrProgram( 0 );
-///   if( !pRTCtrlprogram )
-///   {
-///     // this only should happen if the system is short of memory
-///     return;
-///   }
-///
-///   // start of the program
-///
-///   // we need 5 steps for the program
-///   pRTCtrlprogram->setProgramSize(5);
-///
-///   // wait a certain amount of time to achieve the desired frequency
-///   int progStep = 0;
-///   RTCtrProgramStep* pRTCtrlStep = 0;
-///   pRTCtrlStep = pRTCtrlprogram->programStep( progStep++ );
-///   pRTCtrlStep->opCode.write( rtctrlProgWaitClocks );
-///   pRTCtrlStep->clocks_us.write( 99900 );
-///
-///   // trigger an image
-///   pRTCtrlStep = pRTCtrlprogram->programStep( progStep++ );
-///   pRTCtrlStep->opCode.write( rtctrlProgTriggerSet );
-///
-///   // high time for the trigger signal (should not be smaller than 100 us)
-///   pRTCtrlStep = pRTCtrlprogram->programStep( progStep++ );
-///   pRTCtrlStep->opCode.write( rtctrlProgWaitClocks );
-///   pRTCtrlStep->clocks_us.write( 100 );
-///
-///   // end trigger signal
-///   pRTCtrlStep = pRTCtrlprogram->programStep( progStep++ );
-///   pRTCtrlStep->opCode.write( rtctrlProgTriggerReset );
-///
-///   // restart the program
-///   pRTCtrlStep = pRTCtrlprogram->programStep( progStep++ );
-///   pRTCtrlStep->opCode.write( rtctrlProgJumpLoc );
-///   pRTCtrlStep->address.write( 0 );
-///
-///   // start the program
-///   pRTCtrlprogram->mode.write( rtctrlModeRun );
-///
-///   // Now this camera will deliver images at exactly 10 Hz ( 1 / ( 99900 us + 100us ) )
-///   // when it is constantly feed with image requests.
-/// }
-///\endcode
-///\htmlinclude code_fragment_end.html
-///\xmlonly
-/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-///\endxmlonly
-///
-/// Once this program has been defined it can be executed by setting the \a mode
-/// property to <b>mvIMPACT::acquire::rtctrlModeRun</b>. As in this example we do not
-/// wait for an external signal the property <b>triggerMode</b>
-/// must be set to a value demanding an external signal
-/// ( e.g. <b>mvIMPACT::acquire::ctmOnRisingEdge </b> ) and the  property 
-/// <b>triggerMode</b> must be set to <b>mvIMPACT::acquire::ctsRTCtrl</b>
-/// to inform the driver, that the signal generate by the real time program shall
-/// be used as the trigger signal.
-///
-/// \note
-/// <b>mvIMPACT::acquire::RTCtrProgram</b> objects can't be created directly! To access an <b>mvIMPACT::acquire::RTCtrProgram</b>
-/// associated with a certain device create an instance of an object derived from
-/// <b>mvIMPACT::acquire::IOSubSystem</b> and then use the function
-/// <b>mvIMPACT::acquire::IOSubSystem::RTCtrProgramCount()</b> to find out if there are
-/// hardware real time controller machines available for this device and if so how
-/// many of them can be accessed. Pointers to the machines then can be obtained by calling the
-/// function <b>mvIMPACT::acquire::IOSubSystem::getRTCtrProgram()</b> with the number of the
-/// controller (zero based) to be modified.
-class RTCtrProgram
-//-----------------------------------------------------------------------------
-{
-	friend class IOSubSystem;
-	typedef std::vector<RTCtrProgramStep*> RTCtrlProgramStepVector;
-	#ifndef DOXYGEN_SHOULD_SKIP_THIS
-	//-----------------------------------------------------------------------------
-	struct ReferenceCountedData
-	//-----------------------------------------------------------------------------
-	{
-		HDRV                            m_hDrv;
-		mutable RTCtrlProgramStepVector m_programSteps;
-		PropertyI                       m_programSize;
-		HLIST                           m_hRTCtrList;
-		HOBJ                            m_programStepList;
-		unsigned int                    m_refCnt;
-		ReferenceCountedData( HDRV hDrv, HLIST hList ) : m_hDrv(hDrv), m_programSteps(), m_programSize(),
-			m_hRTCtrList(hList), m_programStepList(), m_refCnt(1) {}
-		~ReferenceCountedData()
-		{
-			RTCtrlProgramStepVector::size_type vSize = m_programSteps.size();
-			for( RTCtrlProgramStepVector::size_type i=0; i<vSize; i++ )
-			{
-				delete m_programSteps[i];
-			}
-		}
-	} *m_pRefData;
-	#endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
-	//-----------------------------------------------------------------------------
-	void bindPublicProperties( HLIST hList )
-	//-----------------------------------------------------------------------------
-	{
-		ComponentLocator locator( hList );
-		locator.bindComponent( mode, "Mode" );
-		locator.bindComponent( filename, "Filename" );
-		locator.bindComponent( programState, "ProgramState" );
-	}
-	//-----------------------------------------------------------------------------
-	void dealloc( void )
-	//-----------------------------------------------------------------------------
-	{
-		--(m_pRefData->m_refCnt);
-		if( m_pRefData->m_refCnt == 0 )
-		{
-			delete m_pRefData;
-		}
-	}
-	//-----------------------------------------------------------------------------
-	void updateProgram( void ) const
-	//-----------------------------------------------------------------------------
-	{
-		RTCtrlProgramStepVector::size_type vSize = m_pRefData->m_programSteps.size();
-		unsigned int lSize = ComponentList( m_pRefData->m_programStepList ).size();
-		if( lSize < vSize )
-		{
-			// steps have been deleted somewhere...
-			for( unsigned int i=lSize; i<vSize; i++ )
-			{
-				delete m_pRefData->m_programSteps[i];
-			}
-			m_pRefData->m_programSteps.resize( lSize );
-		}
-		else if( lSize > vSize )
-		{
-			// new steps have been created
-			ComponentIterator iter( m_pRefData->m_programStepList );
-			iter = iter.firstChild();
-			// move to the next valid end point
-			for( unsigned int i=0; i<vSize; i++ )
-			{
-				++iter;
-			}
-
-			while( iter.isValid() )
-			{
-				m_pRefData->m_programSteps.push_back( new RTCtrProgramStep( iter ) );
-				++iter;
-			}
-		}
-	}
-	//-----------------------------------------------------------------------------
-	explicit RTCtrProgram( HDRV hDrv, HLIST hList ) : m_pRefData(new ReferenceCountedData(hDrv, hList)), mode(),
-	  filename(), programState()
-	//-----------------------------------------------------------------------------
-	{
-		ComponentLocator locator( hList );
-		locator.bindComponent( m_pRefData->m_programSize, "ProgramSize" );
-		bindPublicProperties( m_pRefData->m_hRTCtrList );
-		m_pRefData->m_programStepList = locator.findComponent( "RTCtrProgram" );
-		updateProgram();
-	}
-public:
-	/// \brief Constructs a new <b>mvIMPACT::acquire::RTCtrProgram</b> from
-	/// and exisiting one.
-	explicit RTCtrProgram(	/// A constant reference to the <b>mvIMPACT::acquire::RTCtrProgram</b> object, this object shall be created from
-							const RTCtrProgram& src ) : m_pRefData(src.m_pRefData), mode(src.mode),
-							  filename(src.filename), programState(src.programState)
-	{
-		++(m_pRefData->m_refCnt);
-	}
-	/// \brief Class destructor.
-	~RTCtrProgram()
-	{
-		dealloc();
-	}
-#ifndef WRAP_PYTHON
-	/// \brief Allows assignments of <b>mvIMPACT::acquire::RTCtrProgram</b> objects
-	RTCtrProgram& operator=( const RTCtrProgram& rhs )
-	{
-		if( this != &rhs )
-		{
-			dealloc();
-			m_pRefData = rhs.m_pRefData;
-			// inc. the NEW reference count
-			++m_pRefData->m_refCnt;
-			bindPublicProperties( m_pRefData->m_hRTCtrList );
-		}
-		return *this;
-	}
-#endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
-	/// \brief A function to define the number of instructions this program should consist of.
-	void setProgramSize(	/// The new number of program instructions
-							int newSize )
-	{
-		m_pRefData->m_programSize.write( newSize );
-		updateProgram();
-	}
-	/// \brief Returns the number of program instructions for this program.
-	/// \return The number of program instructions for this program.
-	int getProgramSize( void ) const { return m_pRefData->m_programSize.read(); }
-	/// \brief Returns a pointer to a program instruction of the program.
-	///
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	/// If \a nr is invalid(too large) a STL out_of_range exception
-	/// will be thrown.
-	///\htmlinclude code_fragment_end.html
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///
-	/// \return A pointer to a program instruction of the program.
-	RTCtrProgramStep* programStep(	/// The index of the program instruction to obtain.
-									unsigned int nr ) const
-	{
-		updateProgram();
-		return m_pRefData->m_programSteps.at( nr );
-	}
-	PYTHON_ONLY(%immutable;)
-	/// \brief An enumerated integer property defining the current state this program is into.
-	///
-	/// In order to affect the behaviour of the image acquisition an <b>mvIMPACT::acquire::RTCtrProgram</b> must be in
-	/// running mode. Apart from that the property <b>triggerSource</b> must be set
-	/// appropriately.
-	///
-	/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TRTCtrlModes</b>.
-	PropertyIRTCtrlModes mode;
-	/// \brief A string property storing the filename for this program.
-	///
-	/// <b>mvIMPACT::acquire::RTCtrProgram</b>s can be stored and loaded from/to XML files.
-	/// To do this, this property must be set to the desired filename.
-	/// \sa
-	/// <b>mvIMPACT::acquire::RTCtrProgram::load, <br>mvIMPACT::acquire::RTCtrProgram::save</b>
-	PropertyS filename;
-	/// \brief A string property <b>(read-only)</b> containing information
-	/// about the current state of the program.
-	PropertyS programState;
-	PYTHON_ONLY(%mutable;)
-#ifdef DOTNET_ONLY_CODE
-	PropertyIRTCtrlModes		getMode( void ) const { return mode; }
-	PropertyS					getFilename( void ) const { return filename; };
-	PropertyS					getProgramState( void ) const { return programState; };
-#endif // #ifdef DOTNET_ONLY_CODE
-	/// \brief Loads an existing program specified by the property <b>mvIMPACT::acquire::RTCtrProgram::filename</b>.
-	///
-	/// The default file extension for these programs is '*.rtp'. If the user doesn't
-	/// specify this file extension, it is appended automatically. Only
-	/// files of this type can be loaded by this function.
-	int load( void ) { return DMR_LoadRTCtrProgram( m_pRefData->m_hDrv, m_pRefData->m_hRTCtrList ); }
-	/// \brief stores the current state of the program under the name specified by the
-	/// property <b>mvIMPACT::acquire::RTCtrProgram::filename</b>
-	///
-	/// The default file extension for files stored using this function is '*.rtp'. If
-	/// the user doesn't specify this file extension, it is appended automatically. Only
-	/// files of this type can be loaded by the function <b>mvIMPACT::acquire::RTCtrProgram::load</b>.
-	int save( void ) { return DMR_SaveRTCtrProgram( m_pRefData->m_hDrv, m_pRefData->m_hRTCtrList ); }
-};
-
-//-----------------------------------------------------------------------------
-/// \brief An interface class to model a internal driver event that the user can
-/// wait for(<b>deprecated</b>).
-///
-/// \note
-/// This class has been declared <b>deprecated</b> and will be removed in future versions
-/// of this interface. A more flexible way of getting informed about changes in driver features
-/// has been added to the interface and should be used instead. An example for this new method can
-/// be found here: \ref ExampleApplications_subsection_Callback_source
-///
-/// An event can be anything that occurs at a certain time within the driver or
-/// something that can be reported by the hardware. Typical examples might
-/// be the detection of an external trigger signal, a change at one of the
-/// digital inputs of a device or the start of a VD pulse send from a camera and
-/// detected by a capture device.
-///
-/// Sometimes one or more of these events might be important for an application.
-/// E.g. the user might want to get a notification each time the state of 
-/// one of the digital inputs of a device changes in order to read the current
-/// state from the device.
-///
-/// Events will return a timestamp, that can be used to synchronize the event 
-/// with a certain chronology of other events.
-///
-/// \note
-/// Instances of this class can't be constructed directly. Valid objects must be
-/// obtained via the class <b>mvIMPACT::acquire::EventSubSystem</b>.
-class Event
-//-----------------------------------------------------------------------------
-{
-	friend class EventSubSystem;
-	mutable EventData m_data;
-	HDRV m_hDrv;
-	TDeviceEventType m_type;
-	explicit Event( HDRV hDrv, HOBJ hObjSettings ) : m_data(), m_hDrv(hDrv), m_type(detNone), mode(), 
-	  queueDepth(), type()
-	{
-		memset( &m_data, 0, sizeof(m_data) );
-		ComponentLocator locator(hObjSettings);
-		locator.bindComponent( mode, "Mode" );
-		locator.bindComponent( queueDepth, "QueueDepth" );
-		locator.bindComponent( type, "Type" );
-		// buffer this type as it doesn't change and this provides faster access at runtime.
-		m_type = type.read();
-	}
-public:
-	/// \brief Returns a const reference to the <b>mvIMPACT::acquire::EventData</b> structure of this event.
-	///
-	/// The referenced <b>mvIMPACT::acquire::EventData</b> structure contains additional information about
-	/// the image, e.g. a timestamp that defines the time this event has been reported by the device.
-	///
-	/// \note
-	/// Please do <b>NOT</b> store this reference in some variable to use it for the
-	/// evaluation of the next notification you get for this event as well, as this will <b>NOT</b> update
-	/// the referenced data. Whenever <b>mvIMPACT::acquire::Event::getData</b> is called the function
-	/// will make sure that the data in the returned structure is up to date while when working with
-	/// an old reference to the <b>mvIMPACT::acquire::EventData</b> structure the data in the structure
-	/// will refer to the previous result.
-	MVIMPACT_DEPRECATED_CPP( const EventData& getData( void ) const );
-	PYTHON_ONLY(%immutable;)
-	/// \brief An enumerated integer property <b>(read-only)</b> defining the mode this event
-	/// is currently operated in.
-	///
-	/// This property must be used whenever the user wants to receive notification from this event
-	/// Valid values for this property are defined by the enumeration 
-	/// <b>mvIMPACT::acquire::TDeviceEventMode</b>.
-	PropertyIDeviceEventMode mode;
-	/// \brief Currently unsupported.
-	/// 
-	/// \note
-	/// This feature is subject to change! Don't use it!
-	PropertyI queueDepth;
-	/// \brief An enumerated integer property <b>(read-only)</b> containing the type of this event.
-	///
-	/// Valid values for this property are defined by the enumeration 
-	/// <b>mvIMPACT::acquire::TDeviceEventType</b>.
-	PropertyIDeviceEventType type;
-	PYTHON_ONLY(%mutable;)
-#ifdef DOTNET_ONLY_CODE
-	PropertyIDeviceEventMode getMode( void ) const { return mode; }
-	PropertyI getQueueDepth( void ) const { return queueDepth; }
-	PropertyIDeviceEventType getType( void ) const { return type; }
-#endif // #ifdef DOTNET_ONLY_CODE
-};
-
-//-----------------------------------------------------------------------------
-/// \brief A class containing the result of a wait call for events(<b>deprecated</b>).
-///
-/// \note
-/// This class has been declared <b>deprecated</b> and will be removed in future versions
-/// of this interface. A more flexible way of getting informed about changes in driver features
-/// has been added to the interface and should be used instead. An example for this new method can
-/// be found here: \ref ExampleApplications_subsection_Callback_source
-///
-/// Objects of this class will be returned by <b>mvIMPACT::acquire::EventSubSystem::waitFor</b>
-/// calls.
-class EventWaitResults
-//-----------------------------------------------------------------------------
-{
-	int m_errorCode;
-	TDeviceEventType m_waitMask;
-	TDeviceEventType m_resultMask;
-public:
-	/// \brief Constructs a new <b>mvIMPACT::acquire::EventWaitResults</b> object.
-	explicit EventWaitResults(	/// The error code returned by the wait function
-								int errorCode,
-								/// The wait mask passed to the wait function
-								TDeviceEventType waitMask,
-								/// The result mask of the wait function call
-								TDeviceEventType resultMask );
-	/// \brief The error code returned by the wait function.
-	int errorCode( void ) const { return m_errorCode; }
-	/// \brief The wait mask passed to the wait function.
-	TDeviceEventType waitMask( void ) const { return m_waitMask; }
-	/// \brief The result mask of the wait function call.
-	TDeviceEventType resultMask( void ) const { return m_resultMask; }
-};
-
-//-----------------------------------------------------------------------------
-/// \brief An interface class that provides access to all event handling related
-/// objects and functions(<b>deprecated</b>).
-///
-/// \note
-/// This class has been declared <b>deprecated</b> and will be removed in future versions
-/// of this interface. A more flexible way of getting informed about changes in driver features
-/// has been added to the interface and should be used instead. An example for this new method can
-/// be found here: \ref ExampleApplications_subsection_Callback_source
-///
-/// Events from the <b>mvIMPACT Acquire</b> interfaces point of view are certain
-/// things reported by the hardware like e.g. the detection of a frame start or
-/// the change on one of the digital inputs of a device.
-///
-/// This class combines everything that is related <b>mvIMPACT Acquire</b>s event
-/// handling.
-///\xmlonly
-/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-///\endxmlonly
-///\htmlinclude code_fragment_start_cpp.html
-/// <b>EXAMPLE:</b>
-///
-///\code
-/// //-----------------------------------------------------------------------------
-/// void fn( void )
-/// //-----------------------------------------------------------------------------
-/// {
-///   // create an interface to the event processing
-///   unsigned int frameStartEventCnt = 0;
-///   EventSubSystem ess(getDevicePointerFromSomewhere());
-///   Event* pEvent = ess.getEventByType( detFrameStart );
-///   if( !pEvent )
-///   {
-///     cout << "Frame start events not supported by this device." << endl;
-///     return;
-///   }
-///   
-///   pEvent->mode.write( demNotify );
-///   TDeviceEventType type = pEvent->type.read();
-///   TDeviceEventType resultMask;
-///   int timeout_ms = 500;
-/// 
-///   while( !g_boTerminated )
-///   {
-///     // wait for frame start event
-///		EventWaitResults waitResult = ess.waitFor( timeout_ms, type );
-///     if( ( waitResult.errorCode() == DMR_NO_ERROR ) )
-///     {
-///       // we are just waiting for one event type, thus the result mask ain't interessting
-///       frameStartEventCnt = pEvent->getData().count;
-///       // do something
-///     }
-///     else
-///     {
-///       // no event detected within the given timeout
-///     }
-///   }
-/// }
-///\endcode
-///\htmlinclude code_fragment_end.html
-///\xmlonly
-/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-///\endxmlonly
-class EventSubSystem
-//-----------------------------------------------------------------------------
-{
-	typedef std::vector<Event*> EventVector;
-	typedef std::map<TDeviceEventType, Event*> EventTypeToEventMap;
-	typedef std::map<std::string, Event*> StringToEventMap;
-	#ifndef DOXYGEN_SHOULD_SKIP_THIS
-	//-----------------------------------------------------------------------------
-	struct ReferenceCountedData
-	//-----------------------------------------------------------------------------
-	{
-		EventVector          m_vEvents;
-		EventTypeToEventMap  m_mTypeToEvent;
-		StringToEventMap     m_mNameToEvent;
-		HDRV                 m_hDrv;
-		int                  m_refCnt;
-		ReferenceCountedData( HDRV hDrv ) : m_vEvents(), m_mTypeToEvent(), m_mNameToEvent(), 
-			m_hDrv(hDrv), m_refCnt(1) {}
-		~ReferenceCountedData()
-		{
-			m_mTypeToEvent.clear();
-			m_mNameToEvent.clear();
-			EventVector::size_type vSize = m_vEvents.size();
-			for( EventVector::size_type i=0; i<vSize; i++ )
-			{
-				delete m_vEvents[i];
-			}
-		}
-	} *m_pRefData;
-	#endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
-	//-----------------------------------------------------------------------------
-	void dealloc( void )
-	//-----------------------------------------------------------------------------
-	{
-		--(m_pRefData->m_refCnt);
-		if( m_pRefData->m_refCnt == 0 )
-		{
-			delete m_pRefData;
-		}
-	}
-public:
-	/// \brief Constructs a new <b>mvIMPACT::acquire::EventSubSystem</b> object.
-	explicit MVIMPACT_DEPRECATED_CPP( EventSubSystem(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-								Device* pDev ) );
-	/// \brief Constructs a new <b>mvIMPACT::acquire::EventSubSystem</b> from an existing one.
-	///
-	/// Internal data is reference counted, thus modifying an event obtained from \a src will also
-	/// modify the same event obtained from this newly constructed class.
-	explicit EventSubSystem(	/// A reference to an existing <b>mvIMPACT::acquire::EventSubSystem</b>.
-								const EventSubSystem& src ) : m_pRefData(src.m_pRefData)
-	{
-		++(m_pRefData->m_refCnt);
-	}
-	~EventSubSystem() { dealloc(); }
-#ifndef WRAP_PYTHON
-	/// \brief Allows assignment of one <b>mvIMPACT::acquire::EventSubSystem</b> to another.
-	///
-	/// Internal data is reference counted, thus modifying an event obtained from \a src will also
-	/// modify the same event obtained from this newly constructed class.
-	EventSubSystem& operator=(	/// A reference to an existing <b>mvIMPACT::acquire::EventSubSystem</b>.
-								const EventSubSystem& rhs )
-	{
-		if( this != &rhs )
-		{
-			dealloc();
-			m_pRefData = rhs.m_pRefData;
-			++(m_pRefData->m_refCnt);
-		}
-		return *this;
-	}
-#endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
-	/// \brief Returns a reference to an <b>mvIMPACT::acquire::Event</b> based on the index in the internal array of event references.
-	///
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	/// If the index is either equal or higher than the number of recognized events<br>
-	/// a STL out_of_range exception is thrown.
-	///\htmlinclude code_fragment_end.html
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-	///\endxmlonly
-	/// \return
-	/// - a pointer to a <b>mvIMPACT::acquire::Event</b> object specifying the event
-	/// the given index in the internal list if available.
-	/// - an invalid pointer or reference otherwise.
-	Event* getEventByIndex(	/// The index of the event object the user wants to access.
-							int index ) const { return m_pRefData->m_vEvents.at( index ); }
-	/// \brief Returns a reference to an <b>mvIMPACT::acquire::Event</b> based on the type of the event.
-	///
-	/// \return
-	/// - a pointer to a <b>mvIMPACT::acquire::Event</b> object specifying the event of
-	/// the given type in the internal list if available.
-	/// - an invalid pointer or reference otherwise.
-	Event* getEventByType(	/// The type of the event object the user wants to access.
-							TDeviceEventType type ) const
-	{
-		EventTypeToEventMap::iterator it = m_pRefData->m_mTypeToEvent.find( type );
-		if( it != m_pRefData->m_mTypeToEvent.end() )
-		{
-			return it->second;
-		}
-		return 0;
-	}
-	/// \brief Returns a reference to an <b>mvIMPACT::acquire::Event</b> based on the type (represented as a string) of the event.
-	///
-	/// \return
-	/// - a pointer to a <b>mvIMPACT::acquire::Event</b> object specifying the event of
-	/// the given type in the internal list if available.
-	/// - an invalid pointer or reference otherwise.
-	Event* getEventByName(	/// The name/string representation of the event object the user wants to access.
-							const std::string& name ) const
-	{
-		StringToEventMap::iterator it = m_pRefData->m_mNameToEvent.find( name );
-		if( it != m_pRefData->m_mNameToEvent.end() )
-		{
-			return it->second;
-		}
-		return 0;
-	}
-	/// \brief Returns the number of different event types available for the device that has been passed
-	/// to the constructor of this object.
-	unsigned int getEventCount( void ) const { return static_cast<unsigned int>(m_pRefData->m_vEvents.size()); }
-	/// \brief Allows to wait for the occurrence of one or more events(<b>deprecated</b>).
-	///
-	/// \note
-	/// This function has been declared <b>deprecated</b> and will be removed in future versions
-	/// of this interface. A more flexible way of getting informed about changes in driver features
-	/// has been added to the interface and should be used instead. An example for this new method can
-	/// be found here: \ref ExampleApplications_subsection_Callback_source
-	///
-	/// This function must be called to wait for one or more events to becomes signalled by the device
-	/// driver.
-	///
-	/// \return A <b>mvIMPACT::acquire::EventWaitResults</b> object containing information about the
-	/// result of this operation.
-	MVIMPACT_DEPRECATED_CPP( EventWaitResults waitFor(	/// The timeout in ms defining the maximum time to be spend waiting
-								int timeout_ms,
-								/// A mask specifying the event types to wait for. Here values defined by
-								/// <b>mvIMPACT::acquire::TDeviceEventType</b> can be ORed together.
-								TDeviceEventType mask ) );
-};
-
-#if !defined(WRAP_PYTHON) && !defined(WRAP_DOTNET) // To date, no customer uses Python, so we don't need backward compatibility here.
-	//-----------------------------------------------------------------------------
-	inline const EventData& Event::getData( void ) const
-	//-----------------------------------------------------------------------------
-	{
-		TDMR_ERROR result = DMR_NO_ERROR;
-		if( ( result = DMR_EventGetData( m_hDrv, m_type, 0, 0, &m_data, sizeof(m_data) ) ) != DMR_NO_ERROR )
-		{
-			std::ostringstream oss;
-			oss << "Couldn't obtain event data for event type " << m_type << "(string representation: " << type.name() << ")";
-			ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, INVALID_ID, oss.str() );
-		}
-		return m_data;
-	}
-
-	//-----------------------------------------------------------------------------
-	inline EventWaitResults::EventWaitResults( int errorCode, TDeviceEventType waitMask, TDeviceEventType resultMask ) : m_errorCode(errorCode), m_waitMask(waitMask), m_resultMask(resultMask) {}
-	//-----------------------------------------------------------------------------
-
-	//-----------------------------------------------------------------------------
-	inline EventSubSystem::EventSubSystem( Device* pDev ) : m_pRefData(0)
-	//-----------------------------------------------------------------------------
-	{
-		if( !pDev->isOpen() )
-		{
-			pDev->open();
-		}
-
-		m_pRefData = new ReferenceCountedData(pDev->hDrv());
-
-		TDMR_ERROR result;
-		HLIST hList;
-		if( ( result = DMR_FindList( pDev->hDrv(), 0, dmltEventSubSystemSettings, 0, &hList ) ) == DMR_NO_ERROR )
-		{
-			ComponentIterator it(hList);
-			it = it.firstChild();
-			while( it.isValid() )
-			{
-				Event* p = new Event(pDev->hDrv(), it.hObj());
-				m_pRefData->m_mTypeToEvent.insert( std::make_pair( p->type.read(), p ) );
-				m_pRefData->m_mNameToEvent.insert( std::make_pair( p->type.readS(), p ) );
-				m_pRefData->m_vEvents.push_back( p );
-				++it;
-			}
-		}
-	}
-
-	//-----------------------------------------------------------------------------
-	inline EventWaitResults EventSubSystem::waitFor( int timeout_ms, TDeviceEventType mask )
-	//-----------------------------------------------------------------------------
-	{
-		TDeviceEventType resultMask;
-		int errorCode = DMR_EventWaitFor( m_pRefData->m_hDrv, timeout_ms, mask, 0, 0, &resultMask );
-		return EventWaitResults(errorCode, mask, resultMask);
-	}
-#endif // #if !defined(WRAP_PYTHON) && !defined(WRAP_DOTNET)
-
-//-----------------------------------------------------------------------------
-/// \brief A class to configure the creation of digital signals passed to one or more of the digital
-/// outputs of a device.
-class PulseStartConfiguration : public ComponentCollection
-//-----------------------------------------------------------------------------
-{
-	friend class IOSubSystem;
-	explicit PulseStartConfiguration( HLIST hList, int nr ) : ComponentCollection(hList), m_nr(nr),
-		pulseStartTrigger(), digitalSignal(), divider(), frequency_Hz(), triggerMoment()
-	{
-		ComponentLocator locator(m_hRoot);
-		locator.bindComponent( pulseStartTrigger, "PulseStartTrigger" );
-		locator.bindComponent( digitalSignal, "DigitalSignal" );
-		locator.bindComponent( divider, "Divider" );
-		locator.bindComponent( frequency_Hz, "Frequency_Hz" );
-		locator.bindComponent( triggerMoment, "TriggerMoment" );
-	}
-	int m_nr;
-public:
-	int number( void ) const { return m_nr; }
-	PYTHON_ONLY(%immutable;)
-	/// \brief An enumerated integer property that will define how/when a digital signal is generated by the
-	/// device.
-	///
-	/// When certain digital output signals
-	///
-	/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TPulseStartTrigger</b>.
-	///
-	/// \note
-	/// Not every device will offer the same options.
-	/// Check for valid modes by reading the properties translation dictionary with
-	/// the functions <b>mvIMPACT::acquire::PropertyIPulseStartTrigger::getTranslationDictString</b> and
-	/// <b>mvIMPACT::acquire::PropertyIPulseStartTrigger::getTranslationDictValue</b>.
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyIPulseStartTrigger::getTranslationDict</b>
-	/// in addition to the functions mentioned above.
-	///\htmlinclude code_fragment_end.html
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-	///\endxmlonly
-	PropertyIPulseStartTrigger pulseStartTrigger;
-	/// \brief An enumerated property to define one or more signals, that will trigger the creation of the associated output signals.
-	///
-	/// This property will be visible and thus active when <b>mvIMPACT::acquire::PulseStartConfiguration::digitalSignal</b> is switched
-	/// to <b>mvIMPACT::acquire::pstDigitalSignal</b>.
-	///
-	/// Depending on the device one or more signals can be defined as 'active for output signal creation'. When more than one signal can be
-	/// defined, calling <b>mvIMPACT::acquire::PropertyIDigitalSignal::allowsValueCombinations</b> will return true.
-	///
-	/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDigitalSignal</b>.
-	///
-	///\if BUILD_MVHYPERION_DOCUMENTATION
-	/// Currently when more than one signal can be defined here, these signals will have an 'or relationship', which means that when any of these
-	/// signals is detected, it will trigger the creation of the associated output signals.
-	///
-	/// The following signals are defined:
-	/// <table width="100%">
-	/// <tr>
-	///   <th>enum Value</th>
-	///   <th>Associated signal</th>
-	/// </tr>
-	/// <tr>
-	///   <td>mvIMPACT::acquire::dsSignal1</td>
-	///   <td>Line Valid(J1)</td>
-	/// </tr>
-	/// <tr>
-	///   <td>mvIMPACT::acquire::dsSignal2</td>
-	///   <td>Line Valid(J2)</td>
-	/// </tr>
-	/// <tr>
-	///   <td>mvIMPACT::acquire::dsSignal3</td>
-	///   <td>Frame Valid(J1)</td>
-	/// </tr>
-	/// <tr>
-	///   <td>mvIMPACT::acquire::dsSignal4</td>
-	///   <td>Frame Valid(J2)</td>
-	/// </tr>
-	/// <tr>
-	///   <td>mvIMPACT::acquire::dsSignal5</td>
-	///   <td>Trigger-In(J3.4/J3.5)</td>
-	/// </tr>
-	/// <tr>
-	///   <td>mvIMPACT::acquire::dsSignal6</td>
-	///   <td>Sync-In(J3.6/J3.7)</td>
-	/// </tr>
-	/// <tr>
-	///   <td>mvIMPACT::acquire::dsSignal7</td>
-	///   <td>Trigger-In(J4.4/J4.5)</td>
-	/// </tr>
-	/// <tr>
-	///   <td>mvIMPACT::acquire::dsSignal8</td>
-	///   <td>Sync-In(J4.6/J4.7)</td>
-	/// </tr>
-	/// <tr>
-	///   <td>mvIMPACT::acquire::dsSignal9</td>
-	///   <td>DigIn0(J6.9)</td>
-	/// </tr>
-	/// <tr>
-	///   <td>mvIMPACT::acquire::dsSignal10</td>
-	///   <td>DigIn1(J6.10)</td>
-	/// </tr>
-	/// <tr>
-	///   <td>mvIMPACT::acquire::dsSignal11</td>
-	///   <td>DigIn2(J6.11)</td>
-	/// </tr>
-	/// <tr>
-	///   <td>mvIMPACT::acquire::dsSignal12</td>
-	///   <td>DigIn3(J6.12)</td>
-	/// </tr>
-	/// </table>
-	///\endif
-	PropertyIDigitalSignal digitalSignal;
-	/// \brief An integer property defining a factor by which the external input signal shall divided.
-	///
-	/// Every \a divider-value pulse will be used then. All others will be skipped.
-	PropertyI divider;
-	/// \brief A float property defining the frequency in Hz. for the creation of the output signals associated with
-	/// configuration.
-	///
-	/// This property will be visible and thus active when <b>mvIMPACT::acquire::PulseStartConfiguration::digitalSignal</b> is switched
-	/// to <b>mvIMPACT::acquire::pstPeriodically</b>.
-	PropertyF frequency_Hz;
-	/// \brief An enumerated integer property defining the exact moment when this pulse start configuration shall be triggered.
-	///
-	/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TTriggerMoment</b>.
-	PropertyITriggerMoment triggerMoment;
-	PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-	PropertyIPulseStartTrigger getPulseStartTrigger( void ) const { return pulseStartTrigger; }
-	PropertyIDigitalSignal getDigitalSignal( void ) const { return digitalSignal; }
-	PropertyI getDivider( void ) const { return divider; }
-	PropertyF getFrequency_Hz( void ) const { return frequency_Hz; }
-	PropertyITriggerMoment getTriggerMoment( void ) const { return triggerMoment; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-};
-
-//-----------------------------------------------------------------------------
-/// \brief A base class to handle digital inputs and outputs.
-///
-/// This class can't be instantiated by the user, but acts as a base class for
-/// hardware specific classes. Please use a device specific class suitable for the device
-/// you are working with instead. The documentation of the device specific class will also 
-/// contain some example code.
-class IOSubSystem
-//-----------------------------------------------------------------------------
-{
-protected:
-	#ifndef DOXYGEN_SHOULD_SKIP_THIS
-	typedef std::vector<RTCtrProgram*> RTCtrProgramVector;
-	typedef std::vector<DigitalInput*> DigitalInputVector;
-	typedef std::vector<DigitalOutput*> DigitalOutputVector;
-	typedef std::vector<SyncOutput*> SyncOutputVector;
-	typedef std::vector<PulseStartConfiguration*> PulseStartConfigurationVector;
-	//-----------------------------------------------------------------------------
-	struct ReferenceCountedData
-	//-----------------------------------------------------------------------------
-	{
-		HDRV                          m_hDrv;
-		DigitalInputVector            m_vInputs;
-		DigitalOutputVector           m_vOutputs;
-		SyncOutputVector              m_vHDOutputs;
-		SyncOutputVector              m_vVDOutputs;
-		mutable RTCtrProgramVector    m_RTCtrPrograms;
-		PulseStartConfigurationVector m_PulseStartConfigurations;
-		unsigned int                  m_refCnt;
-		ReferenceCountedData( HDRV hDrv ) : m_hDrv(hDrv), m_vInputs(), m_vOutputs(),
-			m_vHDOutputs(), m_vVDOutputs(), m_RTCtrPrograms(), m_PulseStartConfigurations(), m_refCnt(1) {}
-		~ReferenceCountedData()
-		{
-			DigitalInputVector::size_type vInputsSize = m_vInputs.size();
-			for( DigitalInputVector::size_type i=0; i<vInputsSize; i++ )
-			{
-				delete m_vInputs[i];
-			}
-
-			DigitalOutputVector::size_type vOutputsSize = m_vOutputs.size();
-			for( DigitalOutputVector::size_type j=0; j<vOutputsSize; j++ )
-			{
-				delete m_vOutputs[j];
-			}
-
-			SyncOutputVector::size_type vSyncOutputsSize = m_vHDOutputs.size();
-			for( SyncOutputVector::size_type k=0; k<vSyncOutputsSize; k++ )
-			{
-				delete m_vHDOutputs[k];
-			}
-
-			vSyncOutputsSize = m_vVDOutputs.size();
-			for( SyncOutputVector::size_type l=0; l<vSyncOutputsSize; l++ )
-			{
-				delete m_vVDOutputs[l];
-			}
-
-			RTCtrProgramVector::size_type vRTCProgSize = m_RTCtrPrograms.size();
-			for( RTCtrProgramVector::size_type m=0; m<vRTCProgSize; m++ )
-			{
-				delete m_RTCtrPrograms[m];
-			}
-
-			PulseStartConfigurationVector::size_type vPulseStartConfigurationsSize = m_PulseStartConfigurations.size();
-			for( PulseStartConfigurationVector::size_type n=0; n<vPulseStartConfigurationsSize; n++ )
-			{
-				delete m_PulseStartConfigurations[n];
-			}
-		}
-	} *m_pRefData;
-	//-----------------------------------------------------------------------------
-	explicit IOSubSystem( Device* pDev ) : m_pRefData(0)
-	//-----------------------------------------------------------------------------
-	{
-		if( !pDev->isOpen() )
-		{
-			pDev->open();
-		}
-		m_pRefData = new ReferenceCountedData(pDev->hDrv());
-	}
-	//-----------------------------------------------------------------------------
-	void dealloc( void )
-	//-----------------------------------------------------------------------------
-	{
-		--(m_pRefData->m_refCnt);
-		if( m_pRefData->m_refCnt == 0 )
-		{
-			delete m_pRefData;
-		}
-	}
-	void registerDigitalInput( PropertyI reg, int nr, const std::string& desc ) { m_pRefData->m_vInputs.push_back( new DigitalInput( m_pRefData->m_hDrv, reg, nr, desc ) ); }
-	void registerDigitalOutput( PropertyI reg, int nr, const std::string& desc ) { m_pRefData->m_vOutputs.push_back( new DigitalOutput( reg, nr, desc ) ); }
-	void registerHDOutput( HLIST hList ) { m_pRefData->m_vHDOutputs.push_back( new SyncOutput(hList) ); }
-	void registerVDOutput( HLIST hList ) { m_pRefData->m_vVDOutputs.push_back( new SyncOutput(hList) ); }
-	void registerRTCtrProgram( HDRV hDrv, HLIST hList ) { m_pRefData->m_RTCtrPrograms.push_back( new RTCtrProgram( hDrv, hList ) ); }
-	void registerPulseStartConfiguration( HLIST hList ) { m_pRefData->m_PulseStartConfigurations.push_back( new PulseStartConfiguration( hList, static_cast<int>(m_pRefData->m_PulseStartConfigurations.size()) ) ); }
-	#endif // DOXYGEN_SHOULD_SKIP_THIS
-public:
-	/// \brief Constructs a new <b>mvIMPACT::acquire::IOSubSystem</b> from
-	/// and exisiting one.
-	explicit IOSubSystem(	/// A constant reference to the <b>mvIMPACT::acquire::IOSubSystem</b> object, this object shall be created from
-							const IOSubSystem& src ) : m_pRefData(src.m_pRefData)
-	{
-		++(m_pRefData->m_refCnt);
-	}
-	virtual ~IOSubSystem()
-	{
-		dealloc();
-	}
-#ifndef WRAP_PYTHON
-	/// \brief Allows assignments of <b>mvIMPACT::acquire::IOSubSystem</b> objects
-	IOSubSystem& operator=( const IOSubSystem& rhs )
-	{
-		if( this != &rhs )
-		{
-			dealloc();
-			m_pRefData = rhs.m_pRefData;
-			// inc. the NEW reference count
-			++m_pRefData->m_refCnt;
-		}
-		return *this;
-	}
-#endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
-	/// \brief Returns a pointer to a <b>mvIMPACT::acquire::PulseStartConfiguration</b> associated with
-	/// this device.
-	///
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	/// If \a nr is invalid(too large) a STL out_of_range exception
-	/// will be thrown.
-	///\htmlinclude code_fragment_end.html
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-	///\endxmlonly
-	PulseStartConfiguration* getPulseStartConfiguration(	/// The number of the pulse start configuration to return
-															unsigned int nr ) const { return m_pRefData->m_PulseStartConfigurations.at( nr ); }
-	/// \brief Returns the number of <b>mvIMPACT::acquire::PulseStartConfiguration</b>s available for the <b>mvIMPACT::acquire::Device</b>
-	/// associated with this object.
-	unsigned int getPulseStartConfigurationCount( void ) const { return static_cast<unsigned int>(m_pRefData->m_PulseStartConfigurations.size()); }
-	/// \brief Returns a pointer to a <b>mvIMPACT::acquire::RTCtrProgram</b> associated with
-	/// this device.
-	///
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	/// If \a nr is invalid(too large) a STL out_of_range exception
-	/// will be thrown.
-	///\htmlinclude code_fragment_end.html
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-	///\endxmlonly
-	RTCtrProgram* getRTCtrProgram(	/// The number of the real time controller program to return
-									unsigned int nr ) const { return m_pRefData->m_RTCtrPrograms.at( nr ); }
-	/// \brief Returns the number of <b>mvIMPACT::acquire::RTCtrProgram</b>s available for the <b>mvIMPACT::acquire::Device</b>
-	/// associated with this object.
-	unsigned int RTCtrProgramCount( void ) const { return static_cast<unsigned int>(m_pRefData->m_RTCtrPrograms.size()); }
-	/// \brief Returns the number of <b>mvIMPACT::acquire::DigitalInput</b>s available for the <b>mvIMPACT::acquire::Device</b>
-	/// associated with this object.
-	unsigned int getInputCount( void ) const { return static_cast<unsigned int>(m_pRefData->m_vInputs.size()); }
-	/// \brief Returns the current state of the digital input register.
-	///
-	/// This function can be used to read all digital inputs as a single value. Each
-	/// bit represents the status of one digital output pin.
-	///
-	/// <b>EXAMPLE:</b>
-	///
-	/// a value of '3' returned by this function means, that digital inputs 0 and 1 are
-	/// currently have a voltage considered as logical '1' applied to them.
-	virtual unsigned int readInputRegister( void ) const = 0;
-	/// \brief Returns a const pointer to a <b>mvIMPACT::acquire::DigitalInput</b> object.
-	///
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	/// If \a nr references an invalid pin a STL out_of_range exception
-	/// will be thrown.
-	///\htmlinclude code_fragment_end.html
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///
-	/// \note
-	/// The possibility to access the digital inputs of a device as single objects is
-	/// just provided for convenience. The same thing can be achieved by calling the
-	/// function <b>mvIMPACT::acquire::IOSubSystem::readInputRegister</b>.
-	const DigitalInput* input(	/// The number of the digital input.
-								unsigned int nr ) const { return m_pRefData->m_vInputs.at( nr ); }
-	/// \brief Returns a pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object.
-	///
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	/// If \a nr references an invalid pin a STL out_of_range exception
-	/// will be thrown.
-	///\htmlinclude code_fragment_end.html
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///
-	/// \note
-	/// The possibility to access the digital outputs of a device as single objects is
-	/// just provided for convenience. The same thing can be achieved by calling the function
-	/// <b>mvIMPACT::acquire::IOSubSystem::writeOutputRegister</b> with the corresponding bit mask.
-	DigitalOutput* output(	/// The number of the digital output.
-							unsigned int nr ) const { return m_pRefData->m_vOutputs.at( nr ); }
-	/// \brief Returns the number of digital outputs available for the <b>mvIMPACT::acquire::Device</b>
-	/// associated with this object.
-	unsigned int getOutputCount( void ) const { return static_cast<unsigned int>(m_pRefData->m_vOutputs.size()); }
-	/// \brief Returns the current state of the digital output register.
-	///
-	/// This function can be used to read all digital outputs as a single value. Each
-	/// bit represents the status of one digital output pin.
-	///
-	/// <b>EXAMPLE:</b>
-	///
-	/// a value of '3' returned by this function means, that digital output 0 and 1 are
-	/// currently set to high.
-	virtual unsigned int readOutputRegister( void ) const = 0;
-	/// \brief Alters the state of the digital output register.
-	///
-	/// This function can be used to alter the state of certain (or all) digital outputs
-	/// with a single function call. By working with the parameter \a mask certain bits
-	/// can remain unaffected.
-	///
-	/// <b>EXAMPLE:</b>
-	///
-	/// If the previous state of a digital output register was '5', which means, that outputs
-	/// 0 and 2 are set to high a call to
-	/// <b>mvIMPACT::acquire::IOSubSystem::writeOutputRegister</b> with
-	/// \a value set to 2 and \a mask set to 3 would result in '6' as the new value for the
-	/// output register. Pin 2 will remain unaffected, as \a mask states just to modify
-	/// pin 0 and 1 ( 3 = 00000011 binary ).
-	///
-	///\code
-	/// currentValue = 5, mask = 3, value = 2
-	/// ( currentValue & ~mask ) | value -> new Value
-	/// ( 00000101b(current value) & 11111100(~mask) ) | 00000010(value) -> 0000110(new value of the register)
-	///\endcode
-	virtual void writeOutputRegister(	/// The value to be applied to the output register
-										unsigned int value,
-										/// The mask to specify which pins to modify. A bit
-										/// set to '1' in this parameter means, that the
-										/// state of this output has to adopt its style according to
-										/// the value in \a value.
-										unsigned int mask = UINT_MAX ) = 0;
-};
-
-#ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
-	//-----------------------------------------------------------------------------
-	/// \brief A class to handle the digital inputs and outputs for <b>mvBlueFOX</b>
-	/// USB cameras.
-	///
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	///
-	/// A sample to show how to work with this class and the mvBlueFOX (Creating and instance
-	/// of this class for another device might aise an exception):
-	///
-	///\code
-	/// #include <iostream>
-	/// #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
-	///
-	/// using namespace std;
-	/// using namespace mvIMPACT::acquire;
-	///
-	/// void doSomeIOStuff( Device* pBF )
-	/// {
-	///   IOSubSystemBlueFOX bfIOs( pBF );
-	///   cout << "output 0 was " << bfIOs.output(0)->get() << " and is now(after flipping) ";
-	///   bfIOs.output(0)->flip();
-	///   cout << bfIOs.output(0)->get() << endl;
-	///   cout << "input threshold(" << bfIOs.digitalInputThreshold.readS() << ") set to " << bfdit10V << endl;
-	///   if( bfIOs.digitalInputThreshold.isWriteable() ) // mvBlueFOX-M doesn't support modifying the input threshold
-	///   {
-	///     bfIOs.digitalInputThreshold.write( bfdit10V );
-	///     cout << "input threshold is now " << bfIOs.digitalInputThreshold.readS() << endl;
-	///   }
-	///   cout << "input 0 is " << bfIOs.input(0)->get() << endl;
-	///   cout << "press ENTER." << endl;
-	///   cin.get();
-	///   cout << "input 0 is " << bfIOs.input(0)->get() << endl;
-	///   cout << "press ENTER." << endl;
-	///   cin.get();
-	///   cout << "input 0 is " << bfIOs.input(0)->get() << endl;
-	///   // switch on digital out 0 and 1 ( 3 = 00000011 binary )
-	///   bfIOs.writeOutputRegister( 3 );
-	///   cout << "outputs: %d, inputs: " << bfIOs.readOutputRegister(), bfIOs.readInputRegister() ;
-	///   // the next line will reset bit 0 only, resulting in output 1 to remain high
-	///   // as the mask parameter of '1' defines that only the LSB of the register will be
-	///   // affected by the first parameter of the function call
-	///   bfIOs.writeOutputRegister( 0, 1 );
-	///   cout << "outputs: " << bfIOs.readOutputRegister() << ", inputs " << bfIOs.readInputRegister() << endl;
-	/// }
-	///\endcode
-	///\htmlinclude code_fragment_end.html
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///
-	/// \note
-	/// The <b>mvBlueFOX</b> defines an additional property <b>mvIMPACT::acquire::CameraSettingsBlueFOX::flashMode</b>.
-	/// This might affect the state of the digital outputs as well.
-	///
-	/// If a digital output is defined to be 'logic 0' but the flash mode is switched on
-	/// for the same digital output, the output will be high during the expose time of
-	/// the camera sensor. If a digital output is defined to be 'logic 1' the output will
-	/// be high all the time.
-	class IOSubSystemBlueFOX : public IOSubSystem
-	//-----------------------------------------------------------------------------
-	{
-	private:
-		unsigned int readRegister( const PropertyI& reg ) const
-		{
-			std::vector<int> v;
-			reg.read( v );
-			std::vector<int>::size_type vSize = v.size();
-			unsigned int result = 0;
-			for( std::vector<int>::size_type i=0; i<vSize; i++ )
-			{
-				result |= ( ( v[i] & 1 ) << i );
-			}
-			return result;
-		}
-		unsigned int readRegisterAtomic( const PropertyI& reg ) const
-		{
-			std::vector<int> v;
-			reg.read( v, true );
-			std::vector<int>::size_type vSize = v.size();
-			unsigned int result = 0;
-			for( std::vector<int>::size_type i=0; i<vSize; i++ )
-			{
-				result |= ( ( v[i] & 1 ) << i );
-			}
-			return result;
-		}
-		PropertyI m_inputRegister;
-		PropertyI m_outputRegister;
-	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::IOSubSystemBlueFOX</b> object.
-		explicit IOSubSystemBlueFOX(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-										Device* pDev ) : IOSubSystem(pDev), m_inputRegister(), m_outputRegister(), digitalInputThreshold()
-		{
-			DeviceComponentLocator locator(pDev, dltIOSubSystem);
-			locator.bindComponent( digitalInputThreshold, "DigitalInputThreshold" );
-			locator.bindComponent( m_inputRegister, "DigitalInputs" );
-			locator.bindComponent( m_outputRegister, "DigitalOutputs" );
-
-			// register all input pins
-			unsigned int pinCount = m_inputRegister.valCount();
-			for( unsigned int i=0; i<pinCount; i++ )
-			{
-				std::ostringstream oss;
-				oss << "DigitialInput" << i;
-				registerDigitalInput( m_inputRegister, i, oss.str() );
-			}
-
-			// register all output pins
-			pinCount = m_outputRegister.valCount();
-			for( unsigned int j=0; j<pinCount; j++ )
-			{
-				std::ostringstream oss;
-				oss << "DigitalOutput" << j;
-				registerDigitalOutput( m_outputRegister, j, oss.str() );
-			}
-
-			// register all real time control machines if available
-			HLIST hList = locator.findComponent( "HardwareRealTimeController" );
-			if( hList != INVALID_ID )
-			{
-				unsigned int cnt = ComponentList(hList).size();
-				TDMR_ERROR result = DMR_NO_ERROR;
-				for( unsigned int k=0; k<cnt; k++ )
-				{
-					if( ( result = DMR_FindList( pDev->hDrv(), 0, dmltRTCtr, k, &hList ) ) == DMR_NO_ERROR )
-					{
-						registerRTCtrProgram( pDev->hDrv(), hList );
-					}
-				}
-			}
-		}
-		/// \brief Returns the current state of the digital input register.
-		///
-		/// This function can be used to read all digital inputs as a single value. Each
-		/// bit represents the status of one digital output pin.
-		///
-		/// <b>EXAMPLE:</b>
-		///
-		/// a value of '3' returned by this function means, that digital inputs 0 and 1 are
-		/// currently have a voltage considered as logical '1' applied to them.
-		virtual unsigned int readInputRegister( void ) const
-		{
-			DMR_UpdateDigitalInputs( m_pRefData->m_hDrv );
-			return readRegister( m_inputRegister );
-		}
-		/// \brief Returns the current state of the digital input register.
-		///
-		/// This function can be used to read all digital inputs as a single value <b>at the same time</b>. Each
-		/// bit represents the status of one digital output pin.
-		///
-		/// <b>EXAMPLE:</b>
-		///
-		/// a value of '3' returned by this function means, that digital inputs 0 and 1 are
-		/// currently have a voltage considered as logical '1' applied to them.
-		unsigned int readInputRegisterAtomic( void ) const
-		{
-			DMR_UpdateDigitalInputs( m_pRefData->m_hDrv );
-			return readRegisterAtomic( m_inputRegister );
-		}
-		/// \brief Returns the current state of the digital output register.
-		///
-		/// This function can be used to read all digital outputs as a single value. Each
-		/// bit represents the status of one digital output pin.
-		///
-		/// <b>EXAMPLE:</b>
-		///
-		/// a value of '3' returned by this function means, that digital output 0 and 1 are
-		/// currently set to high.
-		virtual unsigned int readOutputRegister( void ) const { return readRegister( m_outputRegister ); }
-		/// \brief Returns the current state of the digital output register.
-		///
-		/// This function can be used to read all digital outputs as a single value <b>at the same time</b>. Each
-		/// bit represents the status of one digital output pin.
-		///
-		/// <b>EXAMPLE:</b>
-		///
-		/// a value of '3' returned by this function means, that digital output 0 and 1 are
-		/// currently set to high.
-		unsigned int readOutputRegisterAtomic( void ) const { return readRegisterAtomic( m_outputRegister ); }
-		/// \brief Alters the state of the digital output register.
-		///
-		/// This function can be used to alter the state of certain (or all) digital outputs
-		/// with a single function call. By working with the parameter \a mask certain bits
-		/// can remain unaffected.
-		///
-		/// <b>EXAMPLE:</b>
-		///
-		/// If the previous state of a digital output register was '5', which means, that outputs
-		/// 0 and 2 are set to high a call to
-		/// <b>mvIMPACT::acquire::IOSubSystem::writeOutputRegister</b> with
-		/// \a value set to 2 and \a mask set to 3 would result in '6' as the new value for the
-		/// output register. Pin 2 will remain unaffected, as \a mask states just to modify
-		/// pin 0 and 1 ( 3 = 00000011 binary ).
-		void writeOutputRegister(	/// The value to be applied to the output register
-									unsigned int value,
-									/// The mask to specify which pins to modify. A bit
-									/// set to '1' in this parameter means, that the
-									/// state of this output has to adopt its style according to
-									/// the value in \a value.
-									unsigned int mask = UINT_MAX )
-		{
-			unsigned int newVal = ( readRegister( m_outputRegister ) & ~mask ) | ( mask & value );
-			DigitalOutputVector::size_type vSize = m_pRefData->m_vOutputs.size();
-			std::vector<int> v(vSize);
-			for( std::vector<int>::size_type i=0; i<vSize; i++ )
-			{
-				v[i] = ( ( newVal & ( 1 << i ) ) != 0 );
-			}
-			m_outputRegister.write( v );
-		}
-		/// \brief Alters the state of the digital output register.
-		///
-		/// This function can be used to alter the state of certain (or all) digital outputs
-		/// with a single function call <b>at the same time</b>. By working with the parameter \a mask
-		/// certain bits can remain unaffected.
-		///
-		/// <b>EXAMPLE:</b>
-		///
-		/// If the previous state of a digital output register was '5', which means, that outputs
-		/// 0 and 2 are set to high a call to
-		/// <b>mvIMPACT::acquire::IOSubSystem::writeOutputRegister</b> with
-		/// \a value set to 2 and \a mask set to 3 would result in '6' as the new value for the
-		/// output register. Pin 2 will remain unaffected, as \a mask states just to modify
-		/// pin 0 and 1 ( 3 = 00000011 binary ).
-		void writeOutputRegisterAtomic(	/// The value to be applied to the output register
-										unsigned int value,
-										/// The mask to specify which pins to modify. A bit
-										/// set to '1' in this parameter means, that the
-										/// state of this output has to adopt its style according to
-										/// the value in \a value.
-										unsigned int mask = UINT_MAX )
-		{
-			unsigned int newVal = ( readRegister( m_outputRegister ) & ~mask ) | ( mask & value );
-			DigitalOutputVector::size_type vSize = m_pRefData->m_vOutputs.size();
-			std::vector<int> v(vSize);
-			for( std::vector<int>::size_type i=0; i<vSize; i++ )
-			{
-				v[i] = ( ( newVal & ( 1 << i ) ) != 0 );
-			}
-			m_outputRegister.write( v, true );
-		}
-		PYTHON_ONLY(%immutable;)
-		/// \brief An enumerated integer property defining the threshold for the digital
-		/// inputs in Volt.
-		///
-		/// If a voltage applied to the digital input lies above the threshold this pin
-		/// will be considered as 'logic 1' otherwise it will be considered as 'logic 0'.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBlueFOXDigitalInputThreshold</b>.
-		///
-		/// \note
-		/// This property is <b>read-only</b> for <b>mvBlueFOX-M</b> devices and will always be 2V.
-		PropertyIBlueFOXDigitalInputThreshold digitalInputThreshold;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyIBlueFOXDigitalInputThreshold getDigitalInputThreshold( void ) const { return digitalInputThreshold; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-#endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
-
-#if !defined(IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION)
-	//-----------------------------------------------------------------------------
-	/// \brief A base class to handle the digital inputs and outputs for devices.
-	///
-	/// This class provides a convenient basic access to the digital inputs and 
-	/// outputs of almost every device supported by this interface.
-	///
-	/// \note
-	/// This class may <b>NOT</b> be used for mvBlueFOX devices.
-	///
-	/// \note
-	/// The number of digital inputs and outputs available will vary significantly
-	/// from device to device. Some devices might not even have digital inputs and/or
-	/// digital outputs. Therefore it's crucial to check for available pins before
-	/// using them. The corresponding functions to do that can be found in the
-	/// base class <b>mvIMPACT::acquire::IOSubSystem</b>.
-	///
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	///
-	/// <b>EXAMPLES</b>(lists all available digital inputs and outputs and their description): 
-	///\code
-	/// #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
-	/// #include <iostream>
-	///
-	/// using namespace std;
-	/// using namespace mvIMPACT::acquire;
-	///
-	/// void listIOPins( Device* pDev )
-	/// {
-	///   IOSubSystemCommon io(pDev);
-	///   unsigned int iCnt = io.getInputCount();
-	///   cout << "available digital inputs: " << iCnt << endl;
-	///   for( unsigned int d=0; d<iCnt; d++ )
-	///   {
-	///     out << io.input(d)->getDescription() << endl;
-	///   }
-	///   unsigned int oCnt = io.getOutputCount();
-	///   cout << "available digital outputs: " << oCnt << endl;
-	///   for( unsigned int e=0; e<oCnt; e++ )
-	///   {
-	///     DigitalOutput* pOutput = io.output(e);
-	///     out << "setting " << pOutput->getDescription() << " to high" << endl;
-	///     // set this output to logic '1'
-	///     pOutput->set();
-	///   }
-	/// }
-	///\endcode
-	///\htmlinclude code_fragment_end.html
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-	///\endxmlonly
-	class IOSubSystemCommon : public IOSubSystem
-	//-----------------------------------------------------------------------------
-	{
-		ComponentList m_inputs;
-	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::IOSubSystemCommon</b> object.
-		explicit IOSubSystemCommon(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-									Device* pDev ) : IOSubSystem(pDev), m_inputs()
-		{
-			DeviceComponentLocator locator(pDev, dltIOSubSystem);
-			HOBJ hObj = locator.findComponent( "PulseStartConfigurations" );
-			if( hObj != INVALID_ID )
-			{
-				ComponentIterator itPulseConfigs(hObj);
-				itPulseConfigs = itPulseConfigs.firstChild();
-				while( itPulseConfigs.isValid() )
-				{
-					registerPulseStartConfiguration( itPulseConfigs.hObj() );
-					++itPulseConfigs;
-				}
-			}
-
-			locator.bindComponent( m_inputs, "DigitalInputs", 0, 1 );
-			if( m_inputs.isValid() )
-			{
-				ComponentIterator it(m_inputs);
-				it = it.firstChild();
-				while( it.isValid() )
-				{
-					registerDigitalInput( PropertyI(it), 0, it.name() );
-					++it;
-				}
-			}
-
-			ComponentList outputs;
-			locator.bindComponent( outputs, "DigitalOutputs", 0, 1 );
-			if( outputs.isValid() )
-			{
-				ComponentIterator it(outputs);
-				it = it.firstChild();
-				while( it.isValid() )
-				{
-					if( it.isList() )
-					{
-						ComponentLocator outputStateLocator(it);
-						registerDigitalOutput( PropertyI(outputStateLocator.findComponent("State")), 0, it.name() );
-					}
-					++it;
-				}
-			}
-
-			// register all real time control machines if available
-			HLIST hList = locator.findComponent( "HardwareRealTimeController" );
-			if( hList != INVALID_ID )
-			{
-				unsigned int cnt = ComponentList(hList).size();
-				TDMR_ERROR result = DMR_NO_ERROR;
-				for( unsigned int k=0; k<cnt; k++ )
-				{
-					if( ( result = DMR_FindList( pDev->hDrv(), 0, dmltRTCtr, k, &hList ) ) == DMR_NO_ERROR )
-					{
-						registerRTCtrProgram( pDev->hDrv(), hList );
-					}
-				}
-			}
-		}
-		/// \brief Returns the current state of the digital input register.
-		///
-		/// This function can be used to read all digital inputs as a single value. Each
-		/// bit represents the status of one digital output pin.
-		///
-		/// <b>EXAMPLE:</b>
-		///
-		/// a value of '3' returned by this function means, that digital inputs 0 and 1 are
-		/// currently have a voltage considered as logical '1' applied to them.
-		///
-		/// \return The current state of the digital inputs where bit 0 in the result represents
-		/// the state of digital input 0, bit 1 the state of digital input 1 a.s.o..
-		virtual unsigned int readInputRegister( void ) const
-		{
-			DMR_UpdateDigitalInputs( m_pRefData->m_hDrv );
-			if( !m_inputs.isValid() )
-			{
-				return 0; 
-			}
-			unsigned int result = 0;
-			ComponentIterator it( m_inputs );
-			int i=0;
-			it = it.firstChild();
-			while( it.isValid() )
-			{
-				PropertyI input(it);
-				result |= ( ( input.read() & 1 ) << i );
-				++it;
-				++i;
-			}
-			return result;
-		}
-		/// \brief Returns the current state of the digital output register.
-		///
-		/// This function can be used to read all digital outputs as a single value. Each
-		/// bit represents the status of one digital output pin.
-		///
-		/// <b>EXAMPLE:</b>
-		///
-		/// a value of '3' returned by this function means, that digital output 0 and 1 are
-		/// currently set to high.
-		///
-		/// \return The current state of the digital outputs where bit 0 in the result represents
-		/// the state of digital output 0, bit 1 the state of digital output 1 a.s.o..
-		virtual unsigned int readOutputRegister( void ) const
-		{
-			unsigned int result = 0;
-			DigitalOutputVector::size_type vSize = m_pRefData->m_vOutputs.size();
-			for( DigitalOutputVector::size_type i=0; i<vSize; i++ )
-			{
-				result |= ( ( m_pRefData->m_vOutputs[i]->get() & 1 ) << i );
-			}
-			return result;
-		}
-		/// \brief Alters the state of the digital output register.
-		///
-		/// This function can be used to alter the state of certain (or all) digital outputs
-		/// with a single function call. By working with the parameter \a mask certain bits
-		/// can remain unaffected.
-		///
-		/// <b>EXAMPLE:</b>
-		///
-		/// If the previous state of a digital output register was '5', which means, that outputs
-		/// 0 and 2 are set to high a call to
-		/// <b>mvIMPACT::acquire::IOSubSystem::writeOutputRegister</b> with
-		/// \a value set to 2 and \a mask set to 3 would result in '6' as the new value for the
-		/// output register. Pin 2 will remain unaffected, as \a mask states just to modify
-		/// pin 0 and 1 ( 3 = 00000011 binary ).
-		void writeOutputRegister(	/// The value to be applied to the output register
-									unsigned int value,
-									/// The mask to specify which pins to modify. A bit
-									/// set to '1' in this parameter means, that the
-									/// state of this output has to adopt its style according to
-									/// the value in \a value.
-									unsigned int mask = UINT_MAX )
-		{
-			DigitalOutputVector::size_type vSize = m_pRefData->m_vOutputs.size();
-			for( DigitalOutputVector::size_type i=0; i<vSize; i++ )
-			{
-				if( mask & ( 1 << i ) )
-				{
-					if( value & ( 1 << i ) )
-					{
-						m_pRefData->m_vOutputs[i]->set();
-					}
-					else
-					{
-						m_pRefData->m_vOutputs[i]->reset();
-					}
-				}
-			}
-		}
-	};
-#endif // #if !defined(IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION)
-
-#ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
-	/// \brief A class to create complex digital output signals.
-	///
-	/// Instances of this class can be used to create more complex digital output
-	/// related signals like a single pulse or sequence of pulses on a certain pin
-	/// as a reaction on a signal on one of the digital inputs of a device.
-	///
-	/// The availability of the features provided by this class heavily depends on the
-	/// used capture device. Therefore it's crucial to check if a desired feature is available
-	/// at all. This class either provides the functions needed for these checks or its
-	/// functions will return appropriate error codes.
-	class OutputSignalGeneratorBlueDevice
-	//-----------------------------------------------------------------------------
-	{
-		#ifndef DOXYGEN_SHOULD_SKIP_THIS
-		//-----------------------------------------------------------------------------
-		struct OutputProperties
-		//-----------------------------------------------------------------------------
-		{
-			PropertyIDeviceDigitalOutputMode mode;
-			PropertyIBoolean inverter;
-			OutputProperties( HLIST hOutput ) : mode()
-			{
-				ComponentLocator locator(hOutput);
-				locator.bindComponent( mode, "Mode" );
-				locator.bindComponent( inverter, "Inverter" );
-			}
-		};
-		//-----------------------------------------------------------------------------
-		struct ReferenceCountedData
-		//-----------------------------------------------------------------------------
-		{
-			std::map<std::string, OutputProperties*> m_mOutputs;
-			unsigned int                             m_refCnt;
-			ReferenceCountedData() : m_mOutputs(), m_refCnt(1) {}
-			~ReferenceCountedData()
-			{
-				std::map<std::string, OutputProperties*>::iterator itEnd = m_mOutputs.end();
-				std::map<std::string, OutputProperties*>::iterator it = m_mOutputs.begin();
-				while( it != itEnd )
-				{
-					delete it->second;
-					++it;
-				}
-			}
-		} *m_pRefData;
-		//-----------------------------------------------------------------------------
-		void dealloc( void )
-		//-----------------------------------------------------------------------------
-		{
-			--(m_pRefData->m_refCnt);
-			if( m_pRefData->m_refCnt == 0 )
-			{
-				delete m_pRefData;
-			}
-		}
-		//-----------------------------------------------------------------------------
-		OutputProperties* getOutputProperties( DigitalOutput* pOutput ) const
-		//-----------------------------------------------------------------------------
-		{
-			if( pOutput )
-			{
-				std::map<std::string, OutputProperties*>::iterator it = m_pRefData->m_mOutputs.find( pOutput->getDescription() );
-				if( it != m_pRefData->m_mOutputs.end() )
-				{
-					return it->second;
-				}
-			}
-			return 0;
-		}
-		#endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
-	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::OutputSignalGeneratorBlueDevice</b> object.
-		explicit OutputSignalGeneratorBlueDevice(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-													Device* pDev ) : m_pRefData(0)
-		{
-			m_pRefData = new ReferenceCountedData();
-			DeviceComponentLocator locator(pDev, dltIOSubSystem);
-			ComponentList outputs;
-			locator.bindComponent( outputs, "DigitalOutputs" );
-			if( outputs.isValid() )
-			{
-				ComponentIterator it(outputs.hObj());
-				it = it.firstChild();
-				while( it.isValid() )
-				{
-					if( it.isList() )
-					{
-						m_pRefData->m_mOutputs.insert( std::pair<std::string, OutputProperties*>(it.name(), new OutputProperties(it)) );
-					}
-					++it;
-				}
-			}
-		}
-		/// \brief Constructs a new <b>mvIMPACT::acquire::OutputSignalGeneratorBlueDevice</b> from
-		/// and exisiting one.
-		explicit OutputSignalGeneratorBlueDevice(	/// A constant reference to the <b>mvIMPACT::acquire::OutputSignalGeneratorBlueDevice</b> object, this object shall be created from
-													const OutputSignalGeneratorBlueDevice& src ) : m_pRefData(src.m_pRefData)
-		{
-			++(m_pRefData->m_refCnt);
-		}
-		/// \brief Class destructor.
-		~OutputSignalGeneratorBlueDevice()
-		{
-			dealloc();
-		}
-#	ifndef WRAP_PYTHON
-		/// \brief Allows assignments of <b>mvIMPACT::acquire::OutputSignalGeneratorBlueDevice</b> objects
-		OutputSignalGeneratorBlueDevice& operator=( const OutputSignalGeneratorBlueDevice& rhs )
-		{
-			if( this != &rhs )
-			{
-				dealloc();
-				m_pRefData = rhs.m_pRefData;
-				// inc. the NEW reference count
-				++m_pRefData->m_refCnt;
-			}
-			return *this;
-		}
-#	endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
-		/// \brief Removes the signal definition from the specified output pin.
-		///
-		/// Whenever a signal has been defined for a a certain digital output
-		/// pin, this pin can no longer controlled using the corresponding functions
-		/// in the class <b>mvIMPACT::acquire::DigitalOutput</b>. This function removes the
-		/// signal definition and hands back manual control of that digital output to the user.
-		/// \return
-		/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
-		/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
-		int undefineSignal(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
-							/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemCommon</b>
-							/// for this device.
-							DigitalOutput* pOutput )
-		{
-			OutputProperties* p = getOutputProperties( pOutput );
-			if( p )
-			{
-				p->mode.write( ddomManual );
-				return DMR_NO_ERROR;
-			}
-			else
-			{
-				return DMR_FEATURE_NOT_AVAILABLE;
-			}
-		}
-		/// \brief Checks whether the specified output can be used to create an inverted expose active signal.
-		bool canCreateExposeActiveSignal(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
-											/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemCommon</b>
-											/// for this device.
-											DigitalOutput* pOutput ) const
-		{
-			OutputProperties* p = getOutputProperties( pOutput );
-			if( !p || !p->mode.isValid() )
-			{
-				return false;
-			}
-			unsigned int dictSize = p->mode.dictSize();
-			for( unsigned int i=0; i<dictSize; i++ )
-			{
-				if( p->mode.getTranslationDictValue( i ) == ddomExposureActive )
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-		/// \brief Checks whether the specified output can be used to create an inverted version of a certain signal.
-		bool canInvertSignal(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
-								/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemCommon</b>
-								/// for this device.
-								DigitalOutput* pOutput ) const
-		{
-			OutputProperties* p = getOutputProperties( pOutput );
-			return ( p && p->inverter.isValid() );
-		}
-		/// \brief Returns the current mode a digital output is operated in.
-		///
-		/// If the mode is not selectable for the current output an exception will be raised.
-		TDeviceDigitalOutputMode getOutputMode(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
-												/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemCommon</b>
-												/// for this device.
-												DigitalOutput* pOutput ) const
-		{
-			OutputProperties* p = getOutputProperties( pOutput );
-			if( !p )
-			{
-				ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, DMR_FEATURE_NOT_AVAILABLE, INVALID_ID, "Unsupported feature query(Could not obtain pointer to output properties)" );
-			}
-			return p->mode.read();
-		}
-		/// \brief Checks wheter the specified output is currently operated in a certain mode
-		bool isOutputModeActive(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
-									/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemCommon</b>
-									/// for this device.
-									DigitalOutput* pOutput,
-									/// The mode the specified output shall be checked for.
-									TDeviceDigitalOutputMode mode ) const
-		{
-			OutputProperties* p = getOutputProperties( pOutput );
-			return ( p && p->mode.isValid() && ( p->mode.read() == mode ) );
-		}
-		/// \brief Checks whether the specified output will currently invert a certain internal signal.
-		bool isSignalInverted(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
-								/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemCommon</b>
-								/// for this device.
-								DigitalOutput* pOutput ) const
-		{
-			OutputProperties* p = getOutputProperties( pOutput );
-			return ( p && p->mode.isValid() && p->inverter.isValid() && ( p->inverter.read() == bTrue ) );
-		}
-		/// \brief This function will configure the digital output to switch state during the active exposure time.
-		///
-		/// After calling this function the digital output will invert its current state at the beginning of the exposure of
-		/// the sensor and switch back to the initial value at the end of the exposure time. This can be useful to control
-		/// a flash connected to the digital output.
-		///
-		/// \return An error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
-		int setOutputMode(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
-							/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemCommon</b>
-							/// for this device.
-							DigitalOutput* pOutput,
-							/// The mode the specified output shall be operated in. If the mode passed to the
-							/// function is not available for the output or the device an exception will be raised.
-							TDeviceDigitalOutputMode mode,
-							/// Set this parameter to true, to invert the exposure signal
-							bool boInverted = false )
-		{
-			OutputProperties* p = getOutputProperties( pOutput );
-			if( p && p->mode.isValid() )
-			{
-				p->mode.write( mode );
-				if( p->inverter.isValid() )
-				{
-					p->inverter.write( boInverted ? bTrue : bFalse );
-				}
-				else if( boInverted )
-				{
-					return DMR_FEATURE_NOT_AVAILABLE;
-				}
-				return DMR_NO_ERROR;
-			}
-			else
-			{
-				return DMR_FEATURE_NOT_AVAILABLE;
-			}
-		}
-	};
-#endif // #ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
-
-#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-	//-----------------------------------------------------------------------------
-	/// \brief A class to handle the digital inputs and outputs for frame grabber
-	/// devices.
-	///
-	/// This class provides a convenient basic access to the digital inputs and 
-	/// outputs of a frame grabber device.
-	///
-	/// \note
-	/// The number of digital inputs and outputs available will vary significantly
-	/// from device to device. Some devices might not even have digital inputs and/or
-	/// digital outputs. Therefore it's crucial to check for available pins before
-	/// using them. The corresponding functions to do that can be found in the
-	/// base class <b>mvIMPACT::acquire::IOSubSystem</b>.
-	///
-	/// To create more complex digital output related signals the class 
-	/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber</b> should be used.
-	class IOSubSystemFrameGrabber : public IOSubSystemCommon
-	//-----------------------------------------------------------------------------
-	{
-	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b> object.
-		explicit IOSubSystemFrameGrabber(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-											Device* pDev ) : IOSubSystemCommon(pDev), syncOutputMode()
-		{
-			DeviceComponentLocator locator(pDev, dltIOSubSystem);
-			ComponentIterator itSyncs;
-			locator.bindComponent( itSyncs, "SyncOutputs", 0, 1 );
-			if( itSyncs.isValid() && itSyncs.firstChild() )
-			{
-				locator.bindSearchBase( locator.searchbase_id(), "SyncOutputs" );
-				locator.bindComponent( syncOutputMode, "Mode" );
-				itSyncs = itSyncs.firstChild();
-				while( itSyncs.isValid() )
-				{
-					if( itSyncs.isList() )
-					{
-						std::string name = itSyncs.name();
-						if( name.substr( 0, 3 ) == "VD-" )
-						{
-							registerVDOutput( itSyncs );
-						}
-						else if( name.substr( 0, 3 ) == "HD-" )
-						{
-							registerHDOutput( itSyncs );
-						}
-						else
-						{
-							; // type not recognized?!
-						}
-					}
-					++itSyncs;
-				} 
-			}
-		}
-		/// \brief Returns the number of available HD output pins for the <b>mvIMPACT::acquire::Device</b>
-		/// associated with this object.
-		unsigned int getHDOutputCount( void ) const { return static_cast<unsigned int>(m_pRefData->m_vHDOutputs.size()); }
-		/// \brief Returns a pointer to a <b>mvIMPACT::acquire::SyncOutput</b> object that represents
-		/// a HD output for this device.
-		///
-		/// \a outputNr <b>MUST</b> be a valid number ( larger or equal than 0 and smaller than the
-		/// value returned by <b>mvIMPACT::acquire::IOSubSystemFrameGrabber::getHDOutputCount</b>.
-		///
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// If \a nr references an invalid pin a STL out_of_range exception
-		/// will be thrown.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///
-		/// \return A pointer to a <b>mvIMPACT::acquire::SyncOutput</b> object.
-		SyncOutput* HDOutput(	/// The number of the HD output to return.
-								unsigned int nr ) const { return m_pRefData->m_vHDOutputs.at( nr ); }
-		/// \brief Returns the number of available VD output pins for the <b>mvIMPACT::acquire::Device</b>
-		/// associated with this object.
-		unsigned int getVDOutputCount( void ) const { return static_cast<unsigned int>(m_pRefData->m_vVDOutputs.size()); }
-		/// \brief Returns a pointer to a <b>mvIMPACT::acquire::SyncOutput</b> object that represents
-		/// a VD output for this device.
-		///
-		/// \a outputNr <b>MUST</b> be a valid number ( larger or equal than 0 and smaller than the
-		/// value returned by <b>mvIMPACT::acquire::IOSubSystemFrameGrabber::getVDOutputCount</b>.
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// If \a nr references an invalid pin a STL out_of_range exception
-		/// will be thrown.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///
-		/// \return A pointer to a <b>mvIMPACT::acquire::SyncOutput</b> object.
-		SyncOutput* VDOutput(	/// The number of the VD output to return.
-								unsigned int nr ) const { return m_pRefData->m_vVDOutputs.at( nr ); }
-		PYTHON_ONLY(%immutable;)
-		/// \brief An enumerated integer property defining the current mode for sync. signal creation.
-		///
-		/// Sometimes it's desired to create a signal to sync. cameras connected to a capture device.
-		/// E.g. when capturing 3 monochrome cameras in parallel these should be synchronized. Therefore
-		/// some devices can create HD and VD signals that synchronize the connected cameras.
-		///
-		/// To create snyc. signals this property must be set either to <b>mvIMPACT::acquire::dsomNonInterlaced</b>
-		/// or <b>mvIMPACT::acquire::dsomInterlaced</b>.
-		///
-		/// In interlaced mode only the frequency of the VD signals can be modified, while in non-interlaced
-		/// mode the width (in percent) the signal stays low can be modified as well.
-		///
-		/// Now e.g. to sync. two or more CCIR compliant cameras connected to a capture device, that can
-		/// create sync. signals, the HD signals must be generated with a CCIR compliant frequency.
-		/// The function <b>mvIMPACT::acquire::IOSubSystemFrameGrabber::HDOutput</b> can be used to access the
-		/// desired output pin. Then it's property <b>mvIMPACT::acquire::SyncOutput::frequency_Hz</b> is
-		/// set to 15625 Hz (CCIR standard). The remaining values can be left untouched. The capture device
-		/// will no generate HD signals with the desired frequency and VD outputs with the frequency
-		/// stored by the property <b>mvIMPACT::acquire::SyncOutput::frequency_Hz</b> belonging to the
-		/// pointer to the object returned by a call to <b>mvIMPACT::acquire::IOSubSystemFrameGrabber::VDOutput</b>.
-		PropertyIDeviceSyncOutMode syncOutputMode;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyIDeviceSyncOutMode getSyncOutputMode( void ) const { return syncOutputMode; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-
-	//-----------------------------------------------------------------------------
-	/// \brief A class to create complex digital output signals.
-	///
-	/// Instances of this class can be used to create more complex digital output
-	/// related signals like a single pulse or sequence of pulses on a certain pin
-	/// as a reaction on a signal on one of the digital inputs of a device.
-	///
-	/// The availability of the features provided by this class heavily depends on the
-	/// used capture device. Therefore it's crucial to check if a desired feature is available
-	/// at all. This class either provides the functions needed for these checks or its
-	/// functions will return appropriate error codes.
-	///
-	/// \note
-	/// If the property <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::controlMode</b>
-	/// is not available <b>NO</b> feature of this class can be used.
-	/// 
-	/// \note
-	/// If the translation dictionary of <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::controlMode</b>
-	/// does not contain <b>mvIMPACT::acquire::docmRTC</b> the function
-	/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::defineLineScanPulse</b> will <b>NOT</b>
-	/// be available.
-	///
-	/// \note 
-	/// Calling unsupported functions or accessing unsupported features will raise an exception.
-	///
-	/// Pointers to <b>mvIMPACT::acquire::DigitalOutput</b> objects <b>MUST</b> be obtained
-	/// by an instance to a <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b> object of the
-	/// same device.
-	///
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	///
-	/// <b>EXAMPLES:</b>
-	///\code
-	/// #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
-	/// #include <iostream>
-	/// #include <vector>
-	///
-	/// using namespace std;
-	/// using namespace mvIMPACT::acquire;
-	///
-	/// Device* pDev = getValidDevicePointerFromSomewhere();
-	/// IOSubSystemFrameGrabber io(pDev);
-	/// unsigned int iCnt = io.getInputCount();
-	/// cout << "available digital inputs: " << iCnt << endl;
-	/// for( unsigned int d=0; d<iCnt; d++ )
-	/// {
-	///   cout << io.input(d)->getDescription() << endl;
-	/// }
-	/// unsigned int oCnt = io.getOutputCount();
-	/// cout << "available digital outputs: " << oCnt << endl;
-	/// // set all available digital outputs to high
-	/// for( unsigned int e=0; e<oCnt; e++ )
-	/// {
-	///   DigitalOutput* pOutput = io.output(e);
-	///   cout << "setting " << pOutput->getDescription() << " to high" << endl;
-	///   pOutput->set();
-	/// }
-	///
-	/// // check there is at least one digital output
-	/// if( oCnt > 0 )
-	/// {
-	///   OutputSignalGeneratorFrameGrabber osg(pDev);
-	///   // check if this device supports enhanced signal creation at all
-	///   if( osg.controlMode.isValid() )
-	///   {
-	///     // define a simple pulse on the first digital output detected. 
-	///     // this pulse will be low after 100 us for
-	///     // 200us and then switches back to high.
-	///     osg.definePulse( io.output( 0 ), 0, 100, 200 );
-	/// 
-	///     // define a more complex pulse
-	///     vector<int> v;
-	///     v.push_back(100);
-	///     v.push_back(299);
-	///     v.push_back(666);
-	///     osg.definePulseSequence( io.output( 0 ), 0, v );
-	///     osg.controlMode.write( docmSoftware );
-	///     osg.imageTrigger.write( ditAfterDigOutSignals );
-	/// 
-	///     // check if line scan pulse creation is supported by this device
-	///     vector<pair<string, TDigitalOutputControlMode> > dict;
-	///     osg.controlMode.getTranslationDict( dict );
-	///     unsigned int dictSize = osg.controlMode.dictSize();
-	///     for( unsigned int i=0; i<dictSize; i++ )
-	///     {
-	///       if( dict[i].second == docmRTC )
-	///       {
-	///         // supported -> define some signal
-	///         cout << "checkGrabberInterface: This device supports RTC control signal creation." << endl;
-	///         osg.controlMode.write( docmRTC );
-	///         osg.defineLineScanPulse( io.output( 0 ), dsosePeriodically, 100, 100, 1, 1 );
-	///       }
-	///     }
-	///   }
-	/// }
-	///\endcode
-	///\htmlinclude code_fragment_end.html
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///
-	/// Whenever a signal has been defined for a a certain digital output
-	/// pin, this pin can no longer controlled using the corresponding functions
-	/// in the class <b>mvIMPACT::acquire::DigitalOutput</b>. In order to do that
-	/// the pin in question must be released using the function
-	/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::undefineSignal</b>.
-	class OutputSignalGeneratorFrameGrabber
-	//-----------------------------------------------------------------------------
-	{
-		#ifndef DOXYGEN_SHOULD_SKIP_THIS
-		//-----------------------------------------------------------------------------
-		struct OutputProperties
-		//-----------------------------------------------------------------------------
-		{
-			PropertyIDeviceDigitalOutputMode mode;
-			PropertyI polarity;
-			PropertyI delay_us;
-			PropertyI width_us;
-			PropertyI width_pclk;
-			PropertyI startLevel;
-			PropertyI polaritySwitchAfter_us;
-			PropertyIDigitalSignal digitalSignal;
-			PropertyI pulseStartConfiguration;
-			OutputProperties( HLIST hOutput ) : mode(), polarity(), delay_us(), width_us(),
-			  width_pclk(), startLevel(), polaritySwitchAfter_us(), digitalSignal(),
-			  pulseStartConfiguration()
-			{
-				ComponentLocator locator(hOutput);
-				locator.bindComponent( mode, "Mode" );
-				locator.bindComponent( polarity, "Polarity" );
-				locator.bindComponent( delay_us, "Delay_us" );
-				locator.bindComponent( width_us, "Width_us" );
-				locator.bindComponent( width_pclk, "Width_pclk" );
-				locator.bindComponent( startLevel, "StartLevel" );
-				locator.bindComponent( polaritySwitchAfter_us, "PolaritySwitchAfter_us" );
-				locator.bindComponent( digitalSignal, "DigitalSignal" );
-				locator.bindComponent( pulseStartConfiguration, "PulseStartConfiguration" );
-			}
-		};
-		//-----------------------------------------------------------------------------
-		struct ReferenceCountedData
-		//-----------------------------------------------------------------------------
-		{
-			ComponentList                            m_outputs;
-			PropertyIDeviceSignalOutputStartEvent    m_pulseStartEventLineScan;
-			PropertyI                                m_softwareSignalPeriod_pclk;
-			PropertyI                                m_output;
-			PropertyI                                m_width_pclk;
-			PropertyI                                m_polarity;
-			PropertyI                                m_divider;
-			std::map<std::string, OutputProperties*> m_mOutputs;
-			unsigned int                             m_refCnt;
-			ReferenceCountedData() : m_outputs(), m_pulseStartEventLineScan(),
-				m_softwareSignalPeriod_pclk(), m_output(), m_width_pclk(),
-				m_polarity(), m_divider(), m_mOutputs(), m_refCnt(1) {}
-			~ReferenceCountedData()
-			{
-				std::map<std::string, OutputProperties*>::iterator itEnd = m_mOutputs.end();
-				std::map<std::string, OutputProperties*>::iterator it = m_mOutputs.begin();
-				while( it != itEnd )
-				{
-					delete it->second;
-					++it;
-				}
-			}
-		} *m_pRefData;
-		//-----------------------------------------------------------------------------
-		void bindPublicProperties( HLIST hList )
-		//-----------------------------------------------------------------------------
-		{
-			ComponentLocator locator(hList);
-			locator.bindComponent( controlMode, "ControlMode" );
-			locator.bindComponent( pulseStartEvent, "PulseStartEvent" );
-			locator.bindComponent( imageTrigger, "ImageTrigger" );
-		}
-		//-----------------------------------------------------------------------------
-		void dealloc( void )
-		//-----------------------------------------------------------------------------
-		{
-			--(m_pRefData->m_refCnt);
-			if( m_pRefData->m_refCnt == 0 )
-			{
-				delete m_pRefData;
-			}
-		}
-		//-----------------------------------------------------------------------------
-		OutputProperties* getOutputProperties( DigitalOutput* pOutput ) const
-		//-----------------------------------------------------------------------------
-		{
-			if( pOutput )
-			{
-				std::map<std::string, OutputProperties*>::iterator it = m_pRefData->m_mOutputs.find( pOutput->getDescription() );
-				if( it != m_pRefData->m_mOutputs.end() )
-				{
-					return it->second;
-				}
-			}
-			return 0;
-		}
-		#endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
-	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber</b> object.
-		explicit OutputSignalGeneratorFrameGrabber(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-													Device* pDev ) : m_pRefData(0), controlMode(), pulseStartEvent(), imageTrigger()
-		{
-			m_pRefData = new ReferenceCountedData();
-			DeviceComponentLocator locator(pDev, dltIOSubSystem);
-			locator.bindComponent( m_pRefData->m_outputs, "DigitalOutputs" );
-			locator.bindSearchBase( m_pRefData->m_outputs.hObj() );
-			bindPublicProperties( m_pRefData->m_outputs.hObj() );
-			locator.bindComponent( m_pRefData->m_pulseStartEventLineScan, "PulseStartEvent(LineScan)" );
-			locator.bindComponent( m_pRefData->m_softwareSignalPeriod_pclk, "SoftwareSignalPeriod_pclk" );
-			locator.bindComponent( m_pRefData->m_output, "Output" );
-			locator.bindComponent( m_pRefData->m_width_pclk, "Width_pclk" );
-			locator.bindComponent( m_pRefData->m_polarity, "Polarity" );
-			locator.bindComponent( m_pRefData->m_divider, "Divider" );
-			if( m_pRefData->m_outputs.isValid() )
-			{
-				ComponentIterator it(m_pRefData->m_outputs.hObj());
-				it = it.firstChild();
-				while( it.isValid() )
-				{
-					if( it.isList() )
-					{
-						m_pRefData->m_mOutputs.insert( std::pair<std::string, OutputProperties*>(it.name(), new OutputProperties(it)) );
-					}
-					++it;
-				}
-			}
-		}
-		/// \brief Constructs a new <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber</b> from
-		/// and exisiting one.
-		explicit OutputSignalGeneratorFrameGrabber(	/// A constant reference to the <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber</b> object, this object shall be created from
-													const OutputSignalGeneratorFrameGrabber& src ) : m_pRefData(src.m_pRefData),
-													  controlMode(src.controlMode), pulseStartEvent(src.pulseStartEvent), imageTrigger(src.imageTrigger)
-		{
-			++(m_pRefData->m_refCnt);
-		}
-		/// \brief Class destructor.
-		~OutputSignalGeneratorFrameGrabber()
-		{
-			dealloc();
-		}
-#	ifndef WRAP_PYTHON
-		/// \brief Allows assignments of <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber</b> objects
-		OutputSignalGeneratorFrameGrabber& operator=( const OutputSignalGeneratorFrameGrabber& rhs )
-		{
-			if( this != &rhs )
-			{
-				dealloc();
-				m_pRefData = rhs.m_pRefData;
-				// inc. the NEW reference count
-				++m_pRefData->m_refCnt;
-				bindPublicProperties( m_pRefData->m_outputs.hObj() );
-			}
-			return *this;
-		}
-#	endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
-		/// \brief Assigns a single pulse to a digital output.
-		///
-		/// Whenever a single pulse of a certain duration and polarity shall be generated
-		/// on a digital output as a reaction on a trigger signal that was either generated by one of
-		/// digital inputs of the device or software this is the right function to use.
-		///
-		/// When the signal is generated can be defined by the properties 
-		/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::pulseStartEvent</b> and
-		/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::imageTrigger</b>.
-		///
-		/// \sa
-		/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::undefineSignal</b>
-		/// \return
-		/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
-		/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
-		int definePulse(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
-							/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
-							/// for this device.
-							DigitalOutput* pOutput,
-							/// The polarity of the pulse to generate.
-							///
-							/// - 0: The pulse will be low for \a width_pclk and high otherwise
-							/// - 1: The pulse will be high for \a width_pclk and high otherwise
-							int polarity,
-							/// The delay after the trigger event before a signal generation starts
-							int delay,
-							/// The width of the pulse to generate
-							int width,
-							/// The pulse start configuration to be used for this pulse sequence.
-							/// Not every device will support the use of pulse start configurations. Valid objects that
-							/// can be passed to this function can be obtained from a call to <b>mvIMPACT::acquire::IOSubSystem::getPulseStartConfiguration</b>,
-							/// and <b>mvIMPACT::acquire::IOSubSystem::getPulseStartConfigurationCount</b>. If objects of these type are
-							/// not supported, pass 0 or ignor this parameter. In that case the property 
-							/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::imageTrigger</b> will define the start condition
-							/// for the signal output.
-							PulseStartConfiguration* pPulseStartConfiguration = 0 )
-		{
-			OutputProperties* p = getOutputProperties( pOutput );
-			if( p )
-			{
-				p->mode.write( ddomPulse );
-				p->polarity.write( polarity );
-				p->delay_us.write( delay );
-				p->width_us.write( width );
-				if( pPulseStartConfiguration )
-				{
-					p->pulseStartConfiguration.write( pPulseStartConfiguration->number() );
-				}
-				return DMR_NO_ERROR;
-			}
-			else
-			{
-				return DMR_FEATURE_NOT_AVAILABLE;
-			}
-		}
-		/// \brief Assigns a complex signal to a digital output.
-		///
-		/// This function can be used when a complex signal shall be generated
-		/// on a digital output as a reaction on a trigger signal that was either generated by one of
-		/// digital inputs of the device or software.
-		///
-		/// When the signal is generated can be defined by the properties 
-		/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::pulseStartEvent</b> and
-		/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::imageTrigger</b>.
-		///
-		/// \sa
-		/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::undefineSignal</b>
-		/// \return
-		/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
-		/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
-		int definePulseSequence(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
-									/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
-									/// for this device.
-									DigitalOutput* pOutput,
-									/// The start level of the generated signal.
-									///
-									/// - 0: The signal will start with 'low'
-									/// - 1: The signal will start with 'high'
-									int startLevel,
-									/// An array of integer values. Each values defines a switch in polarity
-									/// of the signal after 'x' us.
-									/// An array containing '1000', '2000' therefore will describe a signal
-									/// starting with \a startLevel, switches polarity after 1000 us and then
-									/// again switches polarity after 2000 us.
-									std::vector<int>& sequence,
-									/// The pulse start configuration to be used for this pulse sequence.
-									/// Not every device will support the use of pulse start configurations. Valid objects that
-									/// can be passed to this function can be obtained from a call to <b>mvIMPACT::acquire::IOSubSystem::getPulseStartConfiguration</b>,
-									/// and <b>mvIMPACT::acquire::IOSubSystem::getPulseStartConfigurationCount</b>. If objects of these type are
-									/// not supported, pass 0 or ignor this parameter. In that case the property 
-									/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::imageTrigger</b> will define the start condition
-									/// for the signal output.
-									PulseStartConfiguration* pPulseStartConfiguration = 0 )
-		{
-			OutputProperties* p = getOutputProperties( pOutput );
-			if( p )
-			{
-				p->mode.write( ddomUser );
-				p->startLevel.write( startLevel );
-				p->polaritySwitchAfter_us.write( sequence );
-				if( pPulseStartConfiguration )
-				{
-					p->pulseStartConfiguration.write( pPulseStartConfiguration->number() );
-				}
-				return DMR_NO_ERROR;
-			}
-			else
-			{
-				return DMR_FEATURE_NOT_AVAILABLE;
-			}
-		}
-#	ifndef WRAP_DOTNET
-		/// \brief Receives a list of valid signals that can be passed directly to a certain digital output pin.
-		///
-		/// Whenever it is necessary to output a certain signal (e.g. a digital input signal connected to the device or
-		/// an internal digital signal like e.g. a frame valid signal) to a digital output of the device this can be done
-		/// by a call to the function <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::definePassThroughSignal</b>
-		///
-		/// As the type of signals that a device can send to a digital output depents heavily on the device and even on the 
-		/// digital output as well, this function will return a list of strings and a numerical representation for each signal
-		/// that can be send to this digital output.
-		///
-		/// \note
-		/// This function is much more efficient than calling
-		/// <b>OutputSignalGeneratorFrameGrabber::getValidPassThroughSignalValue</b> and
-		/// <b>OutputSignalGeneratorFrameGrabber::getValidPassThroughSignalString</b> and
-		/// therefore this function should be called whenever all entries are required.
-		///
-		/// \return
-		/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
-		/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
-		int getValidSignalsForPassThroughModes(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
-												/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
-												/// for this device.
-												DigitalOutput* pOutput,
-												/// A reference to a vector that will receive the list of allowed digital signals
-												/// for this particular digital output pin.
-												std::vector<std::pair<std::string, TDigitalSignal> >& sequence ) const
-		{
-			OutputProperties* p = getOutputProperties( pOutput );
-			if( p && p->digitalSignal.isValid() && p->digitalSignal.hasDict() )
-			{
-				p->digitalSignal.getTranslationDict( sequence );
-				return DMR_NO_ERROR;
-			}
-			else
-			{
-				return DMR_FEATURE_NOT_AVAILABLE;
-			}
-		}
-#	endif // WRAP_DOTNET
-		/// \brief Returns the number of signals that can be used for pass through signal definitions for
-		/// a certain digital output pin of this device.
-		unsigned int getValidPassThroughSignalCount(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
-														/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
-														/// for this device.
-														DigitalOutput* pOutput ) const
-		{
-			OutputProperties* p = getOutputProperties( pOutput );
-			if( p && p->digitalSignal.isValid() && p->digitalSignal.hasDict() )
-			{
-				return p->digitalSignal.dictSize();
-			}
-			return 0;
-		}
-		/// \brief Receives a valid signal that can be passed directly to a certain digital output pin.
-		///
-		/// Whenever it is necessary to output a certain signal (e.g. a digital input signal connected to the device or
-		/// an internal digital signal like e.g. a frame valid signal) to a digital output of the device this can be done
-		/// by a call to the function <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::definePassThroughSignal</b>
-		///
-		/// As the type of signals that a device can send to a digital output depents heavily on the device and even on the 
-		/// digital output as well, this function together with the function <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::getValidPassThroughSignalString</b>
-		/// can be used to query a list of strings and a numerical representation for each signal
-		/// that can be send to this digital output.
-		///
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// C++ offers the more efficient function <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::getValidSignalsForPassThroughModes</b>
-		/// to obtain this information.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		TDigitalSignal getValidPassThroughSignalValue(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
-														/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
-														/// for this device.
-														DigitalOutput* pOutput,
-														/// The index of the entry to read from the property. The find out the last valid value for this parameter
-														/// call <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::getValidPassThroughSignalCount</b>
-														int index = 0 ) const
-		{
-			OutputProperties* p = getOutputProperties( pOutput );
-			if( !p || !p->digitalSignal.isValid() || !p->digitalSignal.hasDict() )
-			{
-				ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, DMR_FEATURE_NOT_AVAILABLE, ( p && p->digitalSignal.isValid() ) ? p->digitalSignal.hObj() : INVALID_ID, "Unsupported feature query" );
-			}
-			return p->digitalSignal.getTranslationDictValue( index );
-		}
-		/// \brief Receives a valid string representation of a signal that can be passed directly to a certain digital output pin.
-		///
-		/// Whenever it is necessary to output a certain signal (e.g. a digital input signal connected to the device or
-		/// an internal digital signal like e.g. a frame valid signal) to a digital output of the device this can be done
-		/// by a call to the function <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::definePassThroughSignal</b>
-		///
-		/// As the type of signals that a device can send to a digital output depents heavily on the device and even on the 
-		/// digital output as well, this function together with the function <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::getValidPassThroughSignalString</b>
-		/// can be used to query a list of strings and a numerical representation for each signal
-		/// that can be send to this digital output.
-		///
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// C++ offers the more efficient function <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::getValidSignalsForPassThroughModes</b>
-		/// to obtain this information.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		std::string getValidPassThroughSignalString(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
-														/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
-														/// for this device.
-														DigitalOutput* pOutput,
-														/// The index of the entry to read from the property. The find out the last valid value for this parameter
-														/// call <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::getValidPassThroughSignalCount</b>
-														int index = 0 ) const
-		{
-			OutputProperties* p = getOutputProperties( pOutput );
-			if( !p || !p->digitalSignal.isValid() || !p->digitalSignal.hasDict() )
-			{
-				ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, DMR_FEATURE_NOT_AVAILABLE, ( p && p->digitalSignal.isValid() ) ? p->digitalSignal.hObj() : INVALID_ID, "Unsupported feature query" );
-			}
-			return p->digitalSignal.getTranslationDictString( index );
-		}
-		/// \brief Assing a certain signal to a digital output.
-		///
-		/// Some digital input signals or even some internal signals can be passed directly to one or more
-		/// digital outputs.
-		///
-		/// \return
-		/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
-		/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
-		int definePassThroughSignal(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
-										/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
-										/// for this device.
-										DigitalOutput* pOutput,
-										/// The digital signal that shall be passed to the digital output.
-										/// Valid values for this parameter will be obtained by a call to the function
-										/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::getValidSignalsForPassThroughModes</b>
-										TDigitalSignal digitalSignal,
-										/// If set to \a true, the signal will be inverted internally before being passed to the output.
-										bool boInverted = false )
-		{
-			OutputProperties* p = getOutputProperties( pOutput );
-			if( p && p->digitalSignal.isValid() )
-			{
-				p->mode.write( boInverted ? ddomDigitalSignalPassThroughInv : ddomDigitalSignalPassThrough );
-				p->digitalSignal.write( digitalSignal );
-				return DMR_NO_ERROR;
-			}
-			else
-			{
-				return DMR_FEATURE_NOT_AVAILABLE;
-			}
-		}
-		/// \brief Assing a certain signal to a digital output.
-		///
-		/// Some digital input signals or even some internal signals can be passed directly to one or more
-		/// digital outputs.
-		///
-		/// \return
-		/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
-		/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
-		int definePassThroughSignal(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
-										/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
-										/// for this device.
-										DigitalOutput* pOutput,
-										/// The string representation of the digital output that shall be passed to the digital output.
-										/// Valid values for this parameter will be obtained by a call to the function
-										/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::getValidSignalsForPassThroughModes</b>
-										const std::string& digitalSignal,
-										/// If set to \a true, the signal will be inverted internally before being passed to the output.
-										bool boInverted = false )
-		{
-			OutputProperties* p = getOutputProperties( pOutput );
-			if( p && p->digitalSignal.isValid() )
-			{
-				p->mode.write( boInverted ? ddomDigitalSignalPassThroughInv : ddomDigitalSignalPassThrough );
-				p->digitalSignal.writeS( digitalSignal );
-				return DMR_NO_ERROR;
-			}
-			else
-			{
-				return DMR_FEATURE_NOT_AVAILABLE;
-			}
-		}
-		/// \brief Removes the signal definition from the specified output pin.
-		///
-		/// Whenever a signal has been defined for a a certain digital output
-		/// pin, this pin can no longer controlled using the corresponding functions
-		/// in the class <b>mvIMPACT::acquire::DigitalOutput</b>. This function removes the
-		/// signal definition and hands back manual control of that digital output to the user.
-		/// \return
-		/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
-		/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
-		int undefineSignal(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
-							/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
-							/// for this device.
-							DigitalOutput* pOutput )
-		{
-			OutputProperties* p = getOutputProperties( pOutput );
-			if( p )
-			{
-				p->mode.write( ddomManual );
-				return DMR_NO_ERROR;
-			}
-			else
-			{
-				return DMR_FEATURE_NOT_AVAILABLE;
-			}
-		}
-		/// \brief Defines a pulse to trigger line scan cameras.
-		///
-		/// Calling this function without setting <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::controlMode</b>
-		/// to <b>mvIMPACT::acquire::docmRTC</b> will have <b>NO</b> effect.
-		///
-		/// \note
-		/// Not every frame grabber will offer the <b>mvIMPACT::acquire::docmRTC</b>
-		/// mode. Check is the mode is available by reading the properties translation dictionary with
-		/// the functions <b>mvIMPACT::acquire::PropertyIDigitalOutputControlMode::getTranslationDictString</b> and
-		/// <b>mvIMPACT::acquire::PropertyIDigitalOutputControlMode::getTranslationDictValue</b>. The detailed description
-		/// of this class might contain source code examples for the language you are working with.
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyIDigitalOutputControlMode::getTranslationDict</b>
-		/// in addition to the functions mentioned above.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///
-		/// \sa
-		/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::undefineSignal</b>
-		/// \return
-		/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
-		/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
-		int defineLineScanPulse(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
-									/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
-									/// for this device.
-									DigitalOutput* pOutput,
-									/// Defines the start event for the signal generation. Valid values for this parameter
-									/// are defined by <b>mvIMPACT::acquire::TDeviceSignalOutputStartEvent</b>.
-									TDeviceSignalOutputStartEvent pulseStartEvent,
-									/// Defines the frequency for a continuously generated signal if
-									/// \a pulseStartEvent is <b>mvIMPACT::acquire::dsoseSyncInRisingEdge</b>
-									/// or <b>mvIMPACT::acquire::dsoseSyncInFallingEdge</b> and is 
-									/// ignored otherwise.
-									int softwareSignalPeriod_pclk,
-									/// The width of the signal to generate if \a pulseStartEvent is <b>mvIMPACT::acquire::dsoseSyncInRisingEdge</b>,
-									/// <b>mvIMPACT::acquire::dsosePeriodically</b> or
-									/// <b>mvIMPACT::acquire::dsoseSyncInFallingEdge</b> and is 
-									/// ignored otherwise.
-									int width_pclk,
-									/// The polarity of the signal to generate if \a pulseStartEvent is <b>mvIMPACT::acquire::dsoseSyncInRisingEdge</b>,
-									/// <b>mvIMPACT::acquire::dsosePeriodically</b> or
-									/// <b>mvIMPACT::acquire::dsoseSyncInFallingEdge</b> and is 
-									/// ignored otherwise.
-									///
-									/// - 0: The signal will be low for \a width_pclk and high otherwise
-									/// - 1: The signal will be high for \a width_pclk and high otherwise
-									int polarity,
-									/// Defines the divider value if \a pulseStartEvent is
-									/// <b>mvIMPACT::acquire::dsosePeriodically</b>
-									unsigned int divider )
-		{
-			OutputProperties* p = getOutputProperties( pOutput );
-			if( p )
-			{
-				m_pRefData->m_pulseStartEventLineScan.write( pulseStartEvent );
-				m_pRefData->m_output.writeS( pOutput->getDescription() );
-				switch( pulseStartEvent )
-				{
-				case dsoseSyncInRisingEdge:
-				case dsoseSyncInFallingEdge:
-					m_pRefData->m_width_pclk.write( width_pclk );
-					m_pRefData->m_polarity.write( polarity );
-					m_pRefData->m_divider.write( divider );
-					break;
-				case dsosePeriodically:
-					m_pRefData->m_softwareSignalPeriod_pclk.write( softwareSignalPeriod_pclk );
-					m_pRefData->m_width_pclk.write( width_pclk );
-					m_pRefData->m_polarity.write( polarity );
-					break;
-				default:
-					// nothing to do
-					break;
-				}
-				return DMR_NO_ERROR;
-			}
-			else
-			{
-				return DMR_FEATURE_NOT_AVAILABLE;
-			}
-		}
-		PYTHON_ONLY(%immutable;)
-		/// \brief An enumerated integer property defining the general method used to create output
-		/// signals.
-		///
-		/// This setting always applies to every signal defined. Modifying this property will also 
-		/// change the behaviour of signals already defined.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDigitalOutputControlMode</b>.
-		///
-		/// When switching to <b>mvIMPACT::acquire::docmRTC</b> mode
-		/// only one signal can be created currently.
-		///
-		/// \note
-		/// Not every frame grabber will offer the <b>mvIMPACT::acquire::docmRTC</b>
-		/// mode. Check is the mode is available by reading the properties translation dictionary with
-		/// the functions <b>mvIMPACT::acquire::PropertyIDigitalOutputControlMode::getTranslationDictString</b> and
-		/// <b>mvIMPACT::acquire::PropertyIDigitalOutputControlMode::getTranslationDictValue</b>.
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyIDigitalOutputControlMode::getTranslationDict</b>
-		/// in addition to the functions mentioned above.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///
-		/// Some devices will offer a more flexible way to define this behaviour. In this case, this property won't be available (a call to the function
-		/// <b>mvIMPACT::acquire::Component::isValid</b> will return false). However then calls to <b>mvIMPACT::acquire::IOSubSystem::getPulseStartConfigurationCount</b>
-		/// and <b>mvIMPACT::acquire::IOSubSystem::getPulseStartConfiguration</b> will succeed and the objects returned by 
-		/// <b>mvIMPACT::acquire::IOSubSystem::getPulseStartConfiguration</b> (<b>mvIMPACT::acquire::PulseStartConfiguration</b>) will
-		/// provide a more sofisticated way to define the signal output behaviour of a device.
-		PropertyIDigitalOutputControlMode controlMode;
-		/// \brief An enumerated integer property defining the general behaviour of created output
-		/// signals.
-		///
-		/// This setting always applies to every signal defined. Modifying this property will also 
-		/// change the behaviour of signals already defined.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDeviceSignalOutputStartEvent</b>.
-		PropertyIDeviceSignalOutputStartEvent pulseStartEvent;
-		/// \brief An enumerated integer property defining the general behaviour of created output
-		/// signals.
-		///
-		/// This setting always applies to every signal defined. Modifying this property will also 
-		/// change the behaviour of signals already defined.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDeviceImageTrigger</b>.
-		PropertyIDeviceImageTrigger imageTrigger;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyIDigitalOutputControlMode getControlMode( void ) const { return controlMode; }
-		PropertyIDeviceSignalOutputStartEvent getPulseStartEvent( void ) const { return pulseStartEvent; }
-		PropertyIDeviceImageTrigger getImageTrigger( void ) const { return imageTrigger; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-
-#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-
-#ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
-	//-----------------------------------------------------------------------------
-	/// \brief A class to handle the digital inputs and outputs of a
-	/// <b>mvBlueCOUGAR</b> of <b>mvBlueLYNX-M7</b> device.
-	///
-	/// This class provides a convenient basic access to the digital inputs and 
-	/// outputs of a <b>mvBlueCOUGAR</b> or <b>mvBlueLYNX-M7</b> device.
-	///
-	/// \note
-	/// The number of digital inputs and outputs available will vary significantly
-	/// from device to device. Some devices might not even have digital inputs and/or
-	/// digital outputs. Therefore it's crucial to check for available pins before
-	/// using them. The corresponding functions to do that can be found in the
-	/// base class <b>mvIMPACT::acquire::IOSubSystem</b>.
-	///
-	/// Please also see the code sample in the base class <b>mvIMPACT::acquire::IOSubSystemCommon</b>.
-	class IOSubSystemBlueCOUGAR : public IOSubSystemCommon
-	//-----------------------------------------------------------------------------
-	{
-	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::IOSubSystemBlueCOUGAR</b> object.
-		explicit IOSubSystemBlueCOUGAR(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-										Device* pDev ) : IOSubSystemCommon(pDev)
-		{
-			DeviceComponentLocator locator(pDev, dltIOSubSystem);
-			locator.bindComponent( digitalInputThreshold_mV, "DigitalInputThreshold_mV" );
-		}
-		PYTHON_ONLY(%immutable;)
-		/// \brief An integer property defining the threshold for the digital
-		/// inputs in milli-Volt.
-		///
-		/// If a voltage applied to the digital input lies above the threshold this pin
-		/// will be considered as 'logic 1' otherwise it will be considered as 'logic 0'.
-		///
-		/// \note
-		/// This property is currently only available for <b>mvBlueLYNX-M7</b> devices. Thus always call <b>mvIMPACT::acquire::Component::isValid</b>
-		/// to check if the device you are working it supports this feature. Not doing so and using the feature with a device
-		/// not supporting it will raise an exception.
-		PropertyI digitalInputThreshold_mV;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyI getDigitalInputThreshold_mV( void ) const { return digitalInputThreshold_mV; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-#endif // #ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
-
-//-----------------------------------------------------------------------------
-/// \brief A class describing how a video signal source(e.g. a camera or image sensor) is 
-/// connected to a video signal sink(e.g. a frame grabber)
-///
-/// With an instance of this class the user can define on which input channels the
-/// video signal source used for this setting is connected to the video signal sink and how(in which format) the
-/// video signal source transmits it's data.
-///
-/// Video signal source and video signal sink can both belong to the same physical piece
-/// of hardware. This e.g. might apply to a digital camera that doesn't need a
-/// frame grabber (e.g. a GigE Vision&trade; or USB camera). In such a scenario
-/// certain properties belonging to this class might be read-only or may only allow
-/// a single enumeration value.
-class Connector : public ComponentCollection
-//-----------------------------------------------------------------------------
-{
-public:
-	/// \brief Constructs a new <b>mvIMPACT::acquire::Connector</b> object
-	explicit Connector(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-						Device* pDev,
-						/// The name of the driver internal setting to access with this instance.
-						/// A list of valid setting names can be obtained by a call to
-						/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
-						/// settings can be created with the function
-						/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
-						const std::string& settingName = "Base" ) : ComponentCollection(pDev), cameraOutputUsed(),
-						  videoChannel(), pinDescription()
-	{
-		DeviceComponentLocator locator(pDev, dltSetting, settingName);
-		if( locator.findComponent( "Connector" ) != INVALID_ID )
-		{
-			locator.bindSearchBase( locator.searchbase_id(), "Connector" );
-			m_hRoot = locator.searchbase_id();
-			locator.bindComponent( cameraOutputUsed, "CameraOutputUsed" );
-			locator.bindComponent( videoChannel, "VideoChannel" );
-			locator.bindComponent( pinDescription, "PinDescription" );
-		}
-	}
-	PYTHON_ONLY(%immutable;)
-	/// \brief An enumerated integer property defining the video signal output of the video signal source used for the
-	/// connection to the video signal sink.
-	///
-	/// \note
-	/// Not every video signal sink will support every possible value defined in the enumeration
-	/// <b>mvIMPACT::acquire::TCameraOutput</b>. For example a CameraLink&reg; frame grabber
-	/// will not offer to use a SVideo connector. Therefore the translation dictionary of this
-	/// property should be used to find out, which connector types are available.
-	///
-	/// \note
-	/// This property might not be supported by every device. Therefore always call the function 
-	/// <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-	PropertyICameraOutput cameraOutputUsed;
-	/// \brief An integer property containing the video channel the camera belonging to the current
-	/// setting is connected to.
-	///
-	/// The maximum possible video channel might change when the property 
-	/// <b>mvIMPACT::acquire::Connector::cameraOutputUsed</b> is modified as the different
-	/// ways to transmit a video signal require more or less video input channels. While e.g. a composite
-	/// video signal can be transmitted via a single wire, an RGB signal requires either 3 or 4 wires
-	/// (depending on whether the sync. signal is transmitted on a separate wire or not).
-	/// 
-	/// The first channel will always have the number 0. The limits (max/min values) can be queried
-	/// by calling the function <b>mvIMPACT::acquire::PropertyI::read</b> with either
-	/// <b>mvIMPACT::acquire::plMaxValue</b> or <b>mvIMPACT::acquire::plMinValue</b>.
-	/// as \a index.
-	///
-	/// \note
-	/// This property might not be supported by every device. Therefore always call the function 
-	/// <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-	PropertyI videoChannel;
-	/// \brief A string property <b>(read-only)</b> containing a description for the video channel 
-	/// currently selected by the property <b>mvIMPACT::acquire::Connector::videoChannel</b>
-	///
-	/// The description string contains information about the connector pins belonging to this video
-	/// input of the video signal sink as well as the corresponding name of this video input.
-	///
-	/// \note
-	/// This property might not be supported by every device. Therefore always call the function 
-	/// <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-	PropertyS pinDescription;
-	PYTHON_ONLY(%mutable;)
-#ifdef DOTNET_ONLY_CODE
-	PropertyICameraOutput getCameraOutputUsed( void ) const { return cameraOutputUsed; }
-	PropertyI getVideoChannel( void ) const { return videoChannel; }
-	PropertyS getPinDescription( void ) const { return pinDescription; }
-#endif // #ifdef DOTNET_ONLY_CODE
-};
-
-//-----------------------------------------------------------------------------
-/// \brief A base class for camera related settings.
-///
-/// This class acts as a base class for camera related settings. It only contains
-/// settings that are available for every device!
-class CameraSettingsBase : public ComponentCollection
-//-----------------------------------------------------------------------------
-{
-public:
-	explicit CameraSettingsBase(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-									Device* pDev,
-									/// The name of the driver internal setting to access with this instance.
-									/// A list of valid setting names can be obtained by a call to
-									/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
-									/// settings can be created with the function
-									/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
-									const std::string& settingName = "Base" ) : ComponentCollection(pDev), aoiHeight(),
-									  aoiStartX(), aoiStartY(), aoiWidth(), pixelFormat(), imageRequestTimeout_ms()
-	{
-		DeviceComponentLocator locator(pDev, dltSetting, settingName);
-		locator.bindSearchBase( locator.searchbase_id(), "Camera" );
-		m_hRoot = locator.searchbase_id();
-		locator.bindComponent( imageRequestTimeout_ms, "ImageRequestTimeout_ms" );
-		locator.bindComponent( pixelFormat, "PixelFormat" );
-		if( locator.findComponent( "Aoi" ) != INVALID_ID )
-		{
-			locator.bindSearchBase( locator.searchbase_id(), "Aoi" );
-			locator.bindComponent( aoiHeight, "H" );
-			locator.bindComponent( aoiStartX, "X" );
-			locator.bindComponent( aoiStartY, "Y" );
-			locator.bindComponent( aoiWidth, "W" );
-		}
-	}
-	PYTHON_ONLY(%immutable;)
-	/// \brief An integer property defining the number of lines to capture.
-	PropertyI aoiHeight;
-	/// \brief An integer property defining the X-offset for each capture line.
-	///
-	/// Example: When setting this property to 5 the first pixel in each line of
-	/// the resulting image will be pixel number 5 of each line transmitted by
-	/// the camera.
-	PropertyI aoiStartX;
-	/// \brief An integer property defining the Y-offset.
-	///
-	/// Example: When setting this property to 5 the first line of
-	/// the resulting image will be line number 5 of the image transmitted by
-	/// the camera.
-	PropertyI aoiStartY;
-	/// \brief An integer property defining the number of pixels to capture per line.
-	PropertyI aoiWidth;
-	/// \brief An enumerated integer property defining the pixel format used to transfer the image data into the target
-	/// systems host memory.
-	///
-	/// Support for this property has been added in version 1.11.0 of mvIMPACT Acquire thus old driver versions will
-	/// raise an exception if an application accesses the property without checking if the property is present.
-	///
-	/// By default this property will be set to <b>mvIMPACT::acquire::ibpfAuto</b>. This will result in the previous driver
-	/// behaviour where depending on the various post processing steps that are enabled or disabled the driver will decide
-	/// which transfer format will be used. However sometimes this could result in a transfer format, which is not ideal
-	/// for the application (e.g. when a post processing step of the application needs RGBx888Packed but the systems bandwidth
-	/// is limited the application might want to transfer the data in YUV422 packed and then use the fast format conversion
-	/// algorithm in the driver). This can be achieved by explicitly setting <b>mvIMPACT::acquire::CameraSettingsBase::pixelFormat</b> to
-	/// <b>mvIMPACT::acquire::ibpfYUV422Packed</b> and <b>mvIMPACT::acquire::ImageDestination::pixelFormat</b> to
-	/// <b>mvIMPACT::acquire::ibpfRGBx888Packed</b>.
-	///
-	/// \note
-	/// Selecting a defined transfer format can in some cases result in certain filters (e.g. dark current, ...) to be switched
-	/// of as then the filters themself can no longer influence the trnasfer format, which is sometimes neccessary as not every
-	/// filter does support every input format. Also this property will contain only pixel formats, which are actually supported
-	/// by the capture device, thus in most of the cases this will be a subset of the pixel formats defined by
-	/// <b>mvIMPACT::acquire::TImageBufferPixelFormat</b>
-	///
-	/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TImageBufferPixelFormat</b>.
-	PropertyIImageBufferPixelFormat pixelFormat;
-	/// \brief An integer property defining the maximum time to wait for an image in ms.
-	///
-	/// When this property is set to 0 the timeout never elapses. If the timeout this property
-	/// defines elapses the currently processed request will be returned to the user even if no data
-	/// has been captured so far. The result structure of the request object should be examined in that
-	/// case. Also this should be considered as an error from the users point of view in which case he
-	/// should clean up the acquisition queue by calling <b>mvIMPACT::acquire::FunctionInterface::imageRequestReset</b>.
-	/// Afterwards the capture loop can be restarted.
-	PropertyI imageRequestTimeout_ms;
-	PYTHON_ONLY(%mutable;)
-#ifdef DOTNET_ONLY_CODE
-	PropertyI getAoiHeight( void ) const { return aoiHeight; }
-	PropertyI getAoiStartX( void ) const { return aoiStartX; }
-	PropertyI getAoiStartY( void ) const { return aoiStartY; }
-	PropertyI getAoiWidth( void ) const { return aoiWidth; }
-	PropertyIImageBufferPixelFormat getPixelFormat( void ) const { return pixelFormat; }
-	PropertyI getImageRequestTimeout_ms( void ) const { return imageRequestTimeout_ms; }
-#endif // #ifdef DOTNET_ONLY_CODE
-};
-
-#ifndef IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
-	//-----------------------------------------------------------------------------
-	/// \brief <b>mvVirtualDevice</b> related camera settings.
-	///
-	/// \note
-	/// As this is a device driver meant for testing the interface an allowing to
-	/// start the integration of mvIMPACT Acquire into an application, this class
-	/// might change at ANY time! Changes in the virtual device driver might not
-	/// be backward compatible!
-	class CameraSettingsVirtualDevice : public CameraSettingsBase
-	//-----------------------------------------------------------------------------
-	{
-	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::CameraSettingsVirtualDevice</b> object
-		explicit CameraSettingsVirtualDevice(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-												Device* pDev,
-												/// The name of the driver internal setting to access with this instance.
-												/// A list of valid setting names can be obtained by a call to
-												/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
-												/// settings can be created with the function
-												/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
-												const std::string& settingName = "Base" ) : CameraSettingsBase(pDev, settingName),
-												gain_dB(), testMode(), channelBitDepth(), paddingX(), frameDelay_us(), imageDirectory(), imageType(),
-												bayerMosaicParity(), testImageBarWidth(), userData()
-		{
-			ComponentLocator locator(m_hRoot);
-			locator.bindComponent( gain_dB, "Gain_dB" );
-			locator.bindComponent( testMode, "TestMode" );
-			locator.bindComponent( channelBitDepth, "ChannelBitDepth" );
-			locator.bindComponent( paddingX, "PaddingX" );
-			locator.bindComponent( frameDelay_us, "FrameDelay_us" );
-			locator.bindComponent( imageDirectory, "ImageDirectory" );
-			locator.bindComponent( imageType, "ImageType" );
-			locator.bindComponent( bayerMosaicParity, "BayerMosaicParity" );
-			locator.bindComponent( testImageBarWidth, "TestImageBarWidth" );
-			locator.bindComponent( userData, "UserData" );
-		}
-		PYTHON_ONLY(%immutable;)
-		/// \brief A float property defining the gain in dB to be applied to the test image.
-		PropertyF gain_dB;
-		/// \brief An enumerated integer property defining the test mode use to generate the dummy images.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TVirtualDeviceTestMode</b>.
-		PropertyIVirtualDeviceTestMode testMode;
-		/// \brief An integer property defining the channel bit depth for certain test image generation modes.
-		///
-		/// When <b>mvIMPACT::acquire::CameraSettingsVirtualDevice::testMode</b> is set to <b>mvIMPACT::acquire::vdtmMovingMonoRamp</b>,
-		/// <b>mvIMPACT::acquire::vdtmMovingBayerDataRamp</b> or <b>mvIMPACT::acquire::vdtmBayerWhiteBalanceTestImage</b> this property
-		/// will allow to define the pixel format for the test image.
-		PropertyI channelBitDepth;
-		/// \brief An integer property defining the padding(in bytes) in X-direction for certain test image generation modes.
-		///
-		/// When <b>mvIMPACT::acquire::CameraSettingsVirtualDevice::testMode</b> is set to a mono format(not the weird packed ones!),
-		/// <b>mvIMPACT::acquire::vdtmMovingBayerDataRamp</b> or <b>mvIMPACT::acquire::vdtmBayerWhiteBalanceTestImage</b> this property
-		/// will allow to define the padding in bytes for each line. This will result in images where the line pitch differs from 
-		/// the width multiplied by the bytes per pixel value. E.g. a padding of 1 in X-direction and a width of 5 for a 16 bit mono
-		/// format will result in a line pitch of 11 bytes(5*2 + 1).
-		PropertyI paddingX;
-		/// \brief An integer property defining a delay in us before the 'captured' image is returned to the user
-		PropertyI frameDelay_us;
-		/// \brief A string property defining the directory to capture images from.
-		///
-		/// This feature will only be visible, when the property <b>mvIMPACT::acquire::CameraSettingsVirtualDevice::testMode</b>
-		/// is set to <b>mvIMPACT::acquire::vdtmImageDirectory</b>.
-		PropertyS imageDirectory;
-		/// \brief An enumerated integer property defining what images shall be captured from harddisc.
-		///
-		/// This feature will only be visible, when the property <b>mvIMPACT::acquire::CameraSettingsVirtualDevice::testMode</b>
-		/// is set to <b>mvIMPACT::acquire::vdtmImageDirectory</b>.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TVirtualDeviceTestMode</b>.
-		PropertyIVirtualDeviceImageType imageType;
-		/// \brief An enumerated integer property defining the bayer attribute assigned to the generated test image.
-		///
-		/// When images are acquired via a directory, or a bayer test pattern is generated this can be used to specify the bayer parity.
-		/// <b>mvIMPACT::acquire::bmpUndefined</b> will set the buffers bayer attribute thus will result in a grey(mono) buffer being returned.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBayerMosaicParity</b>.
-		PropertyIBayerMosaicParity bayerMosaicParity;
-		/// \brief An integer property defining the width (in pixels) of the different bars in certain test modes.
-		PropertyI testImageBarWidth;
-		/// \brief A string property that will be copied into the user data property of each request.
-		///
-		/// This e.g. can be used to assign a certain identifier to each image request.
-		PropertyS userData;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyF getGain_dB( void ) const { return gain_dB; }
-		PropertyIVirtualDeviceTestMode getTestMode( void ) const { return testMode; }
-		PropertyI getChannelBitDepth( void ) const { return channelBitDepth; }
-		PropertyI getPaddingX( void ) const { return paddingX; }
-		PropertyI getFrameDelay_us( void ) const { return frameDelay_us; }
-		PropertyS getImageDirectory( void ) const { return imageDirectory; }
-		PropertyIVirtualDeviceImageType getImageType( void ) const { return imageType; }
-		PropertyI getTestImageBarWidth( void ) const { return testImageBarWidth; }
-		PropertyIBayerMosaicParity getBayerMosaicParity( void ) const { return bayerMosaicParity; }
-		PropertyS getUserData( void ) const { return userData; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-#endif // #ifndef IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
-
-#ifndef IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
-	//-----------------------------------------------------------------------------
-	/// \brief <b>mvV4L2</b> related camera settings.
-	///
-	/// \note UNDER CONSTRUCTION! Subject to change.
-	class CameraSettingsV4L2Device : public CameraSettingsBase
-	//-----------------------------------------------------------------------------
-	{
-		ComponentIterator        m_customFeatureIterator;
-	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::CameraSettingsV4L2Device</b> object.
-		explicit CameraSettingsV4L2Device(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-												Device* pDev,
-												/// The name of the driver internal setting to access with this instance.
-												/// A list of valid setting names can be obtained by a call to
-												/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
-												/// settings can be created with the function
-												/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
-												const std::string& settingName = "Base" ) : CameraSettingsBase(pDev, settingName),
-													m_customFeatureIterator(), imageWidth(), imageHeight(), videoStandard(), pixelFormat(),
-													brightness(), contrast(), saturation(), hue(), blackLevel(), autoWhiteBalance(), redBalance(),
-													blueBalance(), gamma(), exposure(), autoGain(), gain(), HFlip(), VFlip(), powerLineFrequency(),
-													hueAuto(), whiteBalanceTemperature(), sharpness(), backlightCompensation()
-		{
-			ComponentLocator locator(m_hRoot);
-			locator.bindComponent( imageWidth, "ImageWidth" );
-			locator.bindComponent( imageHeight, "ImageHeight" );
-			locator.bindComponent( videoStandard, "VideoStandard" );
-			locator.bindComponent( pixelFormat, "PixelFormat" );
-			locator.bindComponent( brightness, "Brightness" );
-			locator.bindComponent( contrast, "Contrast" );
-			locator.bindComponent( saturation, "Saturation" );
-			locator.bindComponent( hue, "Hue" );
-			locator.bindComponent( blackLevel, "BlackLevel" );
-			locator.bindComponent( autoWhiteBalance, "AutoWhiteBalance" );
-			locator.bindComponent( redBalance, "RedBalance" );
-			locator.bindComponent( blueBalance, "BlueBalance" );
-			locator.bindComponent( gamma, "Gamma" );
-			locator.bindComponent( exposure, "Exposure" );
-			locator.bindComponent( autoGain, "AutoGain" );
-			locator.bindComponent( gain, "Gain" );
-			locator.bindComponent( HFlip, "HFlip" );
-			locator.bindComponent( VFlip, "VFlip" );
-			locator.bindComponent( powerLineFrequency, "PowerLineFrequency" );
-			locator.bindComponent( hueAuto, "HueAuto" );
-			locator.bindComponent( whiteBalanceTemperature, "WhiteBalanceTemperature" );
-			locator.bindComponent( sharpness, "Sharpness" );
-			locator.bindComponent( backlightCompensation, "BacklightCompensation" );
-			m_customFeatureIterator = ComponentIterator(pixelFormat.hObj());
-			m_customFeatureIterator = m_customFeatureIterator.firstSibling();
-		}
-		/// \brief Returns an interator to for iterating inside the device specific feature list of the .
-		///
-		/// This can be useful a device offers custom features that are not defined in the V4L2 standard and thus
-		/// can't be known at compile time.
-		///
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// It allows to write code like this:
-		///
-		///\code
-		/// CameraSettingsV4L2Device cs(getDevicePointerFromSomewhere());
-		/// ComponentIterator it(cs.getCustomFeatureIterator());
-		/// std::map<std::string, std::string> m;
-		/// while( it.isValid() )
-		/// {
-		///   // collect all entries that are properties and store their current name and value in a map
-		///   if( it.isProp() && it.isVisible() )
-		///   {
-		///     Property prop(it);
-		///     m.insert( std::make_pair( prop.name(), prop.readS() );
-		///   }
-		///   ++it;
-		/// }
-		///\endcode
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		ComponentIterator getCustomFeatureIterator( void ) const { return m_customFeatureIterator; }
-		PYTHON_ONLY(%immutable;)
-		/// \brief An integer property defining the width of the image supplied by the V4L2 device.
-		///
-		/// \sa V4L2 API at http://v4l2spec.bytesex.org/spec-single/v4l2.html
-		PropertyI imageWidth;
-		/// \brief An integer property defining the height of the image supplied by the V4L2 device.
-		///
-		/// \sa V4L2 API at http://v4l2spec.bytesex.org/spec-single/v4l2.html
-		PropertyI imageHeight;
-		/// \brief An integer property defining the video standard
-		///
-		/// Use this property to configure the V4L2-device corresponding to connectes video source.
-		/// Availabale video standards depend on the V4L2-device and conform to <b>v4l2_std_id</b>
-		/// \sa V4L2 API at http://v4l2spec.bytesex.org/spec-single/v4l2.html
-		PropertyI videoStandard;
-		/// \brief An integer property defining the pixelformat of captured frames.
-		///
-		/// Use this property to set the pixelformat within the image buffer supplied by the V4L2-device.
-		/// Available pixelformats depend on the V4L2-device and conform to <b>v4l2_fourcc()</b>
-		/// \sa V4L2 API at http://v4l2spec.bytesex.org/spec-single/v4l2.html
-		PropertyI pixelFormat;
-		/// \brief An integer property to adjust the brightness.
-		///
-		/// This property represents a V4L2-control ID.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
-		/// values too large or too small will raise an exception.
-		PropertyI brightness;
-		/// \brief An integer property to adjust the contrast.
-		///
-		/// This property represents a V4L2-control ID.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
-		/// values too large or too small will raise an exception.
-		PropertyI contrast;
-		/// \brief An integer property to adjust the saturation.
-		///
-		/// This property represents a V4L2-control ID.
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
-		/// values too large or too small will raise an exception.
-		PropertyI saturation;
-		/// \brief An integer property to adjust the hue.
-		///
-		/// This property represents a V4L2-control ID.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
-		/// values too large or too small will raise an exception.
-		PropertyI hue;
-		/// \brief An integer property to adjust the black level.
-		///
-		/// This property represents a V4L2-control ID.
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
-		/// values too large or too small will raise an exception.
-		PropertyI blackLevel;
-		/// \brief An enumerated integer property to switch on/off the auto white balance function of the V4L2-device
-		///
-		/// This property represents a boolean-valued V4L2-control ID. Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		PropertyIBoolean autoWhiteBalance;
-		/// \brief An integer property to adjust the red balance.
-		///
-		/// This property represents a V4L2-control ID.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
-		/// values too large or too small will raise an exception.
-		PropertyI redBalance;
-		/// \brief An integer property to adjust the blue balance.
-		///
-		/// This property represents a V4L2-control ID.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
-		/// values too large or too small will raise an exception.
-		PropertyI blueBalance;
-		/// \brief An integer property to adjust the gamma.
-		///
-		/// This property represents a V4L2-control ID
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		/// If supported, a min-value, a max-value and step-width are defined. Thus, invalid values may be tuned after writing to fit within the limits.
-		PropertyI gamma;
-		/// \brief An integer property to adjust the exposure.
-		///
-		/// This property represents a V4L2-control ID.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
-		/// values too large or too small will raise an exception.
-		PropertyI exposure;
-		/// \brief An enumerated integer property to switch on/off the auto gain.
-		///
-		/// This property represents a boolean-valued V4L2-control ID. Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		PropertyIBoolean autoGain;
-		/// \brief An integer property to adjust the gain.
-		///
-		/// This property represents a V4L2-control ID.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
-		/// values too large or too small will raise an exception.
-		PropertyI gain;
-		/// \brief An enumerated integer property to mirror the frames horizontally
-		///
-		/// This property represents a boolean-valued V4L2-control ID. Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		PropertyIBoolean HFlip;
-		/// \brief An integer property to mirror the frames vertically.
-		///
-		/// This property represents a boolean-valued V4L2-control ID. Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		PropertyIBoolean VFlip;
-		/// \brief An enumerated integer property to enable power line frequency filter.
-		///
-		/// This property represents a V4L2-control ID.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		///
-		/// If supported, possible values conform to V4L2 API:
-		/// <table>
-		/// <tr><td class="header">string representation</td><td class="header">numerical representation</td></tr>
-		/// <tr><td class="indexvalue">V4L2_CID_POWER_LINE_FREQUENCY_DISABLED</td><td class="indexvalue">0</td></tr>
-		/// <tr><td class="indexvalue">V4L2_CID_POWER_LINE_FREQUENCY_50HZ</td><td class="indexvalue">1</td></tr>
-		/// <tr><td class="indexvalue">V4L2_CID_POWER_LINE_FREQUENCY_60HZ</td><td class="indexvalue">2</td></tr>
-		/// </table>
-		PropertyI powerLineFrequency;
-		/// \brief An enumerated integer property to switch on/off auto hue.
-		///
-		/// This property represents a boolean-valued V4L2-control ID. Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		PropertyIBoolean hueAuto;
-		/// \brief An integer property to adjust white balnace temperature.
-		///
-		/// This property represents a V4L2-control ID.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
-		/// values too large or too small will raise an exception.
-		PropertyI whiteBalanceTemperature;
-		/// \brief An integer property to adjust the sharpness.
-		///
-		/// This property represents a V4L2-control ID.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
-		/// values too large or too small will raise an exception.
-		PropertyI sharpness;
-		/// \brief An integer property to adjust the backlight compensation.
-		///
-		/// This property represents a V4L2-control ID.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		/// If supported, a min-value, a max-value and step-width are defined. Thus, invalid values may be tuned after writing to fit within the limits.
-		PropertyI backlightCompensation;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyI getImageWidth( void ) const { return imageWidth; }
-		PropertyI getImageHeight( void ) const { return imageHeight; }
-		PropertyI getVideoStandard( void ) const { return videoStandard; }
-		PropertyI getPixelFormat( void ) const { return pixelFormat; }
-		PropertyI getBrightness( void ) const { return brightness; }
-		PropertyI getContrast( void ) const { return contrast; }
-		PropertyI getSaturation( void ) const { return saturation; }
-		PropertyI getHue( void ) const { return hue; }
-		PropertyI getBlackLevel( void ) const { return blackLevel; }
-		PropertyIBoolean getAutoWhiteBalance( void ) const { return autoWhiteBalance; }
-		PropertyI getRedBalance( void ) const { return redBalance; }
-		PropertyI getBlueBalance( void ) const { return blueBalance; }
-		PropertyI getGamma( void ) const { return gamma; }
-		PropertyI getExposure( void ) const { return exposure; }
-		PropertyIBoolean getAutoGain( void ) const { return autoGain; }
-		PropertyI getGain( void ) const { return gain; }
-		PropertyIBoolean getHFlip( void ) const { return HFlip; }
-		PropertyIBoolean getVFlip( void ) const { return VFlip; }
-		PropertyI getPowerLineFrequency( void ) const { return powerLineFrequency; }
-		PropertyIBoolean getHueAuto( void ) const { return hueAuto; }
-		PropertyI getWhiteBalanceTemperature( void ) const { return whiteBalanceTemperature; }
-		PropertyI getSharpness( void ) const { return sharpness; }
-		PropertyI getBacklightCompensation( void ) const { return backlightCompensation; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-#endif // #ifndef IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
-
-#if !defined(IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION)
-	//-----------------------------------------------------------------------------
-	/// \brief A class to control the automatic control parameters of a device.
-	///
-	/// Currently this class provides access to the properties, which control the way the
-	/// AGC(<b>A</b>utomatic <b>G</b>ain <b>C</b>ontrol) and the AEC
-	/// (<b>A</b>utomatic <b>E</b>xpose <b>C</b>ontrol) operates.
-	///
-	/// The values used to capture the image, which are directly influenced by this properties
-	/// (e.g. the gain or the exposure time) will be returned as part of the result of the
-	/// image request.
-	///
-	/// \note
-	/// Not every device will offer the features provided in this class. Before accessing any members
-	/// and/or properties call the function <b>mvIMPACT::acquire::AutoControlParameters::isAvailable</b>.
-	/// If this function returns false, no other member or function call in this class will return valid
-	/// results.
-	///
-	/// \note
-	/// Instances of these class can't be constructed directly. It's parameters can
-	/// be accessed via an instance of the class <b>mvIMPACT::acquire::CameraSettingsBlueDevice</b>.
-	///
-	/// \sa
-	/// <b>mvIMPACT::acquire::RequestInfo, <br>mvIMPACT::acquire::Request::getInfo</b>
-	class AutoControlParameters : public ComponentCollection
-	//-----------------------------------------------------------------------------
-	{
-		friend class CameraSettingsBlueDevice;
-		bool m_boAvailable;
-		explicit AutoControlParameters( HOBJ hObj ): m_boAvailable(false), aoiHeight(),
-		  aoiStartX(), aoiStartY(), aoiWidth(), aoiMode(), desiredAverageGreyValue(),
-		  controllerSpeed(), controllerGain(), controllerIntegralTime_ms(), controllerDerivativeTime_ms(),
-		  controllerDelay_Images(), gainLowerLimit_dB(),
-		  gainUpperLimit_dB(), exposeLowerLimit_us(), exposeUpperLimit_us()
-		{
-			ComponentLocator locator(hObj);
-			HOBJ hRoot = locator.findComponent( "AutoControlParameters" );
-			if( hRoot != INVALID_ID )
-			{
-				m_hRoot = hRoot;
-				locator.bindSearchBase( locator.searchbase_id(), "AutoControlParameters" );
-				locator.bindComponent( aoiMode, "AoiMode" );
-				locator.bindComponent( desiredAverageGreyValue, "DesiredAverageGreyValue" );
-				locator.bindComponent( controllerSpeed, "ControllerSpeed" );
-				locator.bindComponent( controllerDelay_Images, "ControllerDelay_Images" );
-				locator.bindComponent( gainLowerLimit_dB, "GainLowerLimit_dB" );
-				locator.bindComponent( gainUpperLimit_dB, "GainUpperLimit_dB" );
-				locator.bindComponent( exposeLowerLimit_us, "ExposeLowerLimit_us" );
-				locator.bindComponent( exposeUpperLimit_us, "ExposeUpperLimit_us" );
-				if( locator.findComponent( "ControllerParameter" ) != INVALID_ID )
-				{
-					locator.bindSearchBase( hRoot, "ControllerParameter" );
-					locator.bindComponent( controllerGain, "ControllerGain" );
-					locator.bindComponent( controllerIntegralTime_ms, "IntegralTime_ms" );
-					locator.bindComponent( controllerDerivativeTime_ms, "DerivativeTime_ms" );
-				}
-				locator.bindSearchBase( hRoot );
-				if( locator.findComponent( "Aoi" ) != INVALID_ID )
-				{
-					locator.bindSearchBase( hRoot, "Aoi" );
-					locator.bindComponent( aoiHeight, "H" );
-					locator.bindComponent( aoiStartX, "X" );
-					locator.bindComponent( aoiStartY, "Y" );
-					locator.bindComponent( aoiWidth, "W" );
-				}
-				m_boAvailable = true;
-			}
-		}
-	public:
-		/// \brief This function should be called to check if this device offers auto control parameters.
-		/// \return
-		/// - true if the device offers the features defined by this object.
-		/// - false otherwise
-		bool isAvailable( void ) const { return m_boAvailable; }
-		PYTHON_ONLY(%immutable;)
-		/// \brief An integer property defining the height of the rectangle used for
-		/// the parameter calculation.
-		PropertyI aoiHeight;
-		/// \brief An integer property defining the X-offset of the rectangle used for
-		/// the parameter calculation.
-		///
-		/// Example: When setting this property to 5 the first pixel in each line of
-		/// the resulting rectangle used for the calculation will be pixel number 5
-		/// of each line transmitted by the camera.
-		PropertyI aoiStartX;
-		/// \brief An integer property defining the Y-offset of the rectangle used for the
-		/// parameter calculation.
-		///
-		/// Example: When setting this property to 5 the first line of
-		/// the resulting rectangle used for the calculation will be line number 5 of the
-		/// image transmitted by the camera.
-		PropertyI aoiStartY;
-		/// \brief An integer property defining the width of the rectangle.
-		PropertyI aoiWidth;
-		/// \brief An enumerated integer property defining the which area of the image is used
-		/// for the calculation of the parameters.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAoiMode</b>.
-		PropertyIAoiMode aoiMode;
-		/// \brief An integer property defining the average grey value to be reached within
-		/// the AOI in the image by the control circuit.
-		///
-		/// For multi-byte pixel formats like e.g. <b>mvIMPACT::acquire::ibpfMono10</b> this value will refer to
-		/// the 8 most significant bits of the pixel data, thus e.g a value of 128 for this property will result
-		/// it the controller trying reach an average grey value of 512 (0x200).
-		PropertyI desiredAverageGreyValue;
-		/// \brief An enumerated integer property defining the speed the control ciruit will
-		/// be operated in.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAutoControlSpeed</b>.
-		///
-		/// Once the controller started to react and adapt itself to a new situation, this property will
-		/// define how long this adaption will take, while <b>AutoControlParameters::controllerDelay_Images</b>
-		/// defines the the number of images to wait from a detected change to the actual start of the 
-		/// adaption to this new situation.
-		PropertyIAutoControlSpeed controllerSpeed;
-		/// \brief The <b>P</b> fraction of the controller.
-		///
-		/// This feature will only be visible when <b>mvIMPACT::acquire::AutoControlParameters::controllerSpeed</b>
-		/// is set to <b>mvIMPACT::acquire::acsUserDefined</b>.
-		PropertyF controllerGain;
-		/// \brief The <b>I</b> fraction of the controller.
-		///
-		/// This feature will only be visible when <b>mvIMPACT::acquire::AutoControlParameters::controllerSpeed</b>
-		/// is set to <b>mvIMPACT::acquire::acsUserDefined</b>.
-		PropertyF controllerIntegralTime_ms;
-		/// \brief The <b>D</b> fraction of the controller.
-		///
-		/// This feature will only be visible when <b>mvIMPACT::acquire::AutoControlParameters::controllerSpeed</b>
-		/// is set to <b>mvIMPACT::acquire::acsUserDefined</b>.
-		PropertyF controllerDerivativeTime_ms;
-		/// \brief An integer property to influence the speed the AGC and/or AEC control circuit will react and adapt
-		/// to changes.
-		///
-		/// While <b>AutoControlParameters::controllerSpeed</b> influences the overall time
-		/// needed to adjust the controller to a new situation, this property can be used to define a
-		/// delay when the controller shall start to adapt to a changed situation.
-		PropertyI controllerDelay_Images;
-		/// \brief A float property defining the lower limit for the cameras gain(in dB).
-		///
-		/// When the AGC is active this value defines the minimum value for the cameras gain.
-		/// Even if the controller can reach the desired average grey value, the gain will
-		/// never fall below this value.
-		PropertyF gainLowerLimit_dB;
-		/// \brief A float property defining the upper limit for the cameras gain(in dB).
-		///
-		/// When the AGC is active this value defines the maximum value for the cameras gain.
-		/// Even if the controller can reach the desired average grey value, the gain will
-		/// never exceed this value.
-		PropertyF gainUpperLimit_dB;
-		/// \brief A float property defining the lower limit for the sensors expose time(in us).
-		///
-		/// When the AEC is active this value defines the minimum value for the sensors expose time(in us).
-		/// Even if the controller can reach the desired average grey value, the expose time will
-		/// never fall below this value.
-		PropertyI exposeLowerLimit_us;
-		/// \brief An integer property defining the upper limit for the sensors expose time in us.
-		///
-		/// When the AEC is active this value defines the maximum value for the sensors expose time(in us).
-		/// Even if the controller can reach the desired average grey value, the expose time will
-		/// never exceed this value.
-		PropertyI exposeUpperLimit_us;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyI getAoiHeight( void ) const { return aoiHeight; }
-		PropertyI getAoiStartX( void ) const { return aoiStartX; }
-		PropertyI getAoiStartY( void ) const { return aoiStartY; }
-		PropertyI getAoiWidth( void ) const { return aoiWidth; }
-		PropertyIAoiMode getAoiMode( void ) const { return aoiMode; }
-		PropertyI getDesiredAverageGreyValue( void ) const { return desiredAverageGreyValue; }
-		PropertyIAutoControlSpeed getControllerSpeed( void ) const { return controllerSpeed; }
-		PropertyF getControllerGain( void ) const { return controllerGain; }
-		PropertyF getControllerIntegralTime_ms( void ) const { return controllerIntegralTime_ms; }
-		PropertyF getControllerDerivativeTime_ms( void ) const { return controllerDerivativeTime_ms; }
-		PropertyI getControllerDelay_Images( void ) const { return controllerDelay_Images; }
-		PropertyF getGainLowerLimit_dB( void ) const { return gainLowerLimit_dB; }
-		PropertyF getGainUpperLimit_dB( void ) const { return gainUpperLimit_dB; }
-		PropertyI getExposeLowerLimit_us( void ) const { return exposeLowerLimit_us; }
-		PropertyI getExposeUpperLimit_us( void ) const { return exposeUpperLimit_us; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-
-	/// \brief A base class for camera related settings belonging to the mvBlueXXX-series.
-	class CameraSettingsBlueDevice : public CameraSettingsBase
-	//-----------------------------------------------------------------------------
-	{
-	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::CameraSettingsBlueDevice</b> object
-		explicit CameraSettingsBlueDevice(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-											Device* pDev,
-											/// The name of the driver internal setting to access with this instance.
-											/// A list of valid setting names can be obtained by a call to
-											/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
-											/// settings can be created with the function
-											/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
-											const std::string& settingName = "Base" ) : CameraSettingsBase(pDev, settingName),
-											  autoControlMode(), autoGainControl(), autoExposeControl(), gain_dB(), offset_pc(), pixelClock_KHz(),
-											  exposeMode(), expose_us(), binningMode(), testMode(), triggerMode(), frameDelay_us(),
-											  autoControlParameters(m_hRoot)
-		{
-			ComponentLocator locator(m_hRoot);
-			locator.bindComponent( autoControlMode, "AutoControlMode" );
-			locator.bindComponent( autoGainControl, "AutoGainControl" );
-			locator.bindComponent( autoExposeControl, "AutoExposeControl" );
-			locator.bindComponent( gain_dB, "Gain_dB" );
-			locator.bindComponent( offset_pc, "Offset_pc" );
-			locator.bindComponent( pixelClock_KHz, "PixelClock_KHz" );
-			locator.bindComponent( exposeMode, "ExposeMode" );
-			locator.bindComponent( expose_us, "Expose_us" );
-			locator.bindComponent( binningMode, "BinningMode" );
-			locator.bindComponent( testMode, "TestMode" );
-			locator.bindComponent( triggerMode, "TriggerMode", 0, 0 );
-			locator.bindComponent( frameDelay_us, "FrameDelay_us" );
-		}
-		PYTHON_ONLY(%immutable;)
-		/// \brief An enumerated integer property defining the auto control mode the device is operated in.
-		///
-		/// This property can be used to control the overall behaviour of the algorithms used for performing AEC
-		/// (<b>A</b>utomatic <b>E</b>xpose <b>C</b>ontrol) or AGC (<b>A</b>utomatic <b>G</b>ain <b>C</b>ontrol).
-		/// This could be done by the device itself thus e.g. even in the analog domain or e.g. by a software 
-		/// process in the driver. Each method will offer certain advantages and disadvantages and depending on the
-		/// application the correct method can be selected.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAutoControlMode</b>.
-		///
-		/// Every device or even different models belonging to the same device family may support different auto control modes,
-		/// thus it's crucial to query the valid modes for each device by reading the properties translation dictionary BEFORE trying
-		/// to assign a certain value to this property.
-		PropertyIAutoControlMode autoControlMode;
-		/// \brief An enumerated integer property, which represents the current mode the AGC
-		/// (<b>A</b>utomatic <b>G</b>ain <b>C</b>ontrol) is operated in.
-		///
-		/// The values used to capture the image, which are directly influenced by an activated AGC or AEC
-		/// (e.g. the gain or the exposure time) will be returned as part of the result of the
-		/// image request.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAutoGainControl</b>.
-		///
-		/// \note
-		/// This property is not supported by every device. Therefore always call the function 
-		/// <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		///
-		/// \sa
-		/// <b>mvIMPACT::acquire::RequestInfo, <br>mvIMPACT::acquire::Request::getInfo</b>
-		PropertyIAutoGainControl autoGainControl;
-		/// \brief An enumerated integer property, which represents the current mode the AEC
-		/// (<b>A</b>utomatic <b>E</b>xpose <b>C</b>ontrol) is operated in.
-		///
-		/// The values used to capture the image, which are directly influenced by an activated AGC or AEC
-		/// (e.g. the gain or the exposure time) will be returned as part of the result of the
-		/// image request.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAutoExposureControl</b>.
-		///
-		/// \note
-		/// This property might not be supported by every device. Therefore always call the function 
-		/// <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		///
-		/// \sa
-		/// <b>mvIMPACT::acquire::RequestInfo, <br>mvIMPACT::acquire::Request::getInfo</b>
-		PropertyIAutoExposureControl autoExposeControl;
-		/// \brief A float property defining the gain in dB.
-		PropertyF gain_dB;
-		/// \brief A float property defining the analogue sensor offset in percent of the
-		/// allowed range (sensor specific).
-		///
-		/// This property influences the average grey level when no light reaches the sensor.
-		///
-#	ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
-		/// Changing its value will have no effect if <b>mvIMPACT::acquire::CameraSettingsBlueFOX::offsetAutoCalibration</b> is set to
-		/// <b>mvIMPACT::acquire::aocOn</b>.
-		///
-		/// By default
-		/// this value will be around 10 (if <b>mvIMPACT::acquire::CameraSettingsBlueFOX::offsetAutoCalibration</b> if set
-		/// to <b>mvIMPACT::acquire::aocOn</b>). This means the average grey value for an image
-		/// taken in a completely dark environment will be around 10. When setting
-		/// <b>mvIMPACT::acquire::CameraSettingsBlueFOX::offsetAutoCalibration</b> to <b>mvIMPACT::acquire::aocOff</b>
-		/// <b>mvIMPACT::acquire::CameraSettingsBlueFOX::offset_pc</b> can be used to modify this value.
-#	endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
-#	ifndef IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION
-		/// Changing its value will have no effect if <b>mvIMPACT::acquire::CameraSettingsBlueLYNX::offsetAutoCalibration</b> is set to
-		/// <b>mvIMPACT::acquire::aocOn</b>.
-#	endif // #ifndef IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION
-		///
-		/// \image html Offset_pc.png
-		/// The valid range for this property lies between -100% and +100%, whereas negative values
-		/// will shifts the black level towards 0 and positive values to 255.
-		///
-		/// \note
-		/// This property might not be supported by every device. Therefore always call the function 
-		/// <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		PropertyF offset_pc;
-		/// \brief An enumerated integer property defining the pixel clock of the camera sensor in KHz.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraPixelClock</b>.
-		///
-		/// \note
-		/// Changing the pixel clock at runtime will have major impact on the overall behaviour of the
-		/// camera. The pixel clock should therefore not be modified constantly during the execution
-		/// of the application code. Whenever this property is changed, the next images caputured should
-		/// be skipped if a device works with an active auto offset calibration controller circuit as then the
-		/// control circuits on the camera might need one to three images until all control loops are
-		/// locked again.
-		///
-		/// Every device or even different models belonging to the same device family may support different pixel clocks,
-		/// thus it's crucial to query the valid clock modes for each sensor by reading the properties translation dictionary.
-		PropertyICameraPixelClock pixelClock_KHz;
-		/// \brief An enumerated integer property defining the exposure mode the camera sensor
-		/// is operated in.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraExposeMode</b>.
-		///
-		/// \note
-		/// Not every device will offer the same options.
-		/// Check for valid modes by reading the properties translation dictionary with
-		/// the functions <b>mvIMPACT::acquire::PropertyICameraExposeMode::getTranslationDictString</b> and
-		/// <b>mvIMPACT::acquire::PropertyICameraExposeMode::getTranslationDictValue</b>.
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyICameraExposeMode::getTranslationDict</b>
-		/// in addition to the functions mentioned above.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		PropertyICameraExposeMode exposeMode;
-		/// \brief An integer property which defines the exposure time for an
-		/// image in us.
-		///
-		/// \image html Expose_us.png
-		///
-		PropertyI expose_us;
-		/// \brief An enumerated integer property defining the binning mode the camera is operated in.
-		///
-		/// By default the no binning will be performed.
-		/// \note
-		/// Not every camera will support every binning mode. To find out which binning modes
-		/// are supported by your camera you can query the properties translation table with
-		/// the functions <b>mvIMPACT::acquire::PropertyICameraBinningMode::getTranslationDictString</b> and
-		/// <b>mvIMPACT::acquire::PropertyICameraBinningMode::getTranslationDictValue</b>
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyICameraBinningMode::getTranslationDict</b>
-		/// in addition to the functions mentioned above.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraBinningMode</b>.
-		PropertyICameraBinningMode binningMode;
-		/// \brief An enumerated integer property defining the image transmission mode of the camera.
-		///
-		/// If this property is set to <b>mvIMPACT::acquire::ctmOff</b> the 'normal' image
-		/// captured by the cameras sensor will be transmitted. This is the default.
-		/// To ensure correct operation the camera might define several test modes where
-		/// some kind of well defined pattern will be transmitted.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraTestMode</b>. No every
-		/// testmode will be supported by every device.
-		PropertyICameraTestMode testMode;
-		/// \brief An enumerated integer property which defines what kind of trigger mode
-		/// shall be used for an image acquisition.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraTriggerMode</b>.
-		///
-		/// \note
-		/// Not every device will support every trigger mode. To find out which trigger modes are supported by a specific
-		/// device at runtime the properties translation dictionary should be queried.
-		///
-		/// \note
-		/// Also the sensor specific part of this manual will contain a list of trigger modes, that are available for
-		/// this specific image sensor.
-		PropertyICameraTriggerMode triggerMode;
-		/// \brief An integer property defining the delay in us between an external trigger
-		/// event an the begin of the sensor exposure.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		PropertyI frameDelay_us;
-		/// \brief Provides access to the control parameters for AGC and AEC.
-		///
-		/// \note
-		/// These settings will only affect the image if <b>mvIMPACT::acquire::CameraSettingsBlueDevice::autoGainControl</b>,
-		/// <b>mvIMPACT::acquire::CameraSettingsBlueDevice::autoExposeControl</b> or both are set to active.
-		AutoControlParameters autoControlParameters;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyIAutoControlMode getAutoControlMode( void ) const { return autoControlMode; }
-		PropertyIAutoGainControl getAutoGainControl( void ) const { return autoGainControl; }
-		PropertyIAutoExposureControl getAutoExposeControl( void ) const { return autoExposeControl; }
-		PropertyF getGain_dB( void ) const { return gain_dB; }
-		PropertyF getOffset_pc( void ) const { return offset_pc; }
-		PropertyICameraPixelClock getPixelClock_KHz( void ) const { return pixelClock_KHz; }
-		PropertyICameraExposeMode getExposeMode( void ) const { return exposeMode; }
-		PropertyI getExpose_us( void ) const { return expose_us; }
-		PropertyICameraBinningMode getBinningMode( void ) const { return binningMode; }
-		PropertyICameraTestMode getTestMode( void ) const { return testMode; }
-		PropertyICameraTriggerMode getTriggerMode( void ) const { return triggerMode; }
-		PropertyI getFrameDelay_us( void ) const { return frameDelay_us; }
-		AutoControlParameters& getAutoControlParameters( void ) { return autoControlParameters; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-#endif // #if !defined(IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION)
-
-#ifndef IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION
-	//-----------------------------------------------------------------------------
-	/// \brief <b>mvBlueLYNX</b> related camera settings.
-	///
-	/// This class contains properties to control the way the image sensor of the
-	/// <b>mvBlueLYNX</b> behaves.
-	class CameraSettingsBlueLYNX : public CameraSettingsBlueDevice
-	//-----------------------------------------------------------------------------
-	{
-	public:
-		/// \brief Constructs a new instance of <b>mvIMPACT::acquire::CameraSettingsBlueLYNX</b>.
-		explicit CameraSettingsBlueLYNX( /// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-									Device* pDev,
-									/// The name of the driver internal setting to access with this instance.
-									/// A list of valid setting names can be obtained by a call to
-									/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
-									/// settings can be created with the function
-									/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
-									const std::string& settingName = "Base" ) : CameraSettingsBlueDevice(pDev, settingName),
-									  offsetAutoCalibration(), lineDelay_clk(),
-									  flashMode(), flashOutputMask(), dataClipMode(), preFlashMode(), flashTime_lines(),
-									  preExposeErase(), inputThreshold_mV()
-		{
-			ComponentLocator locator( m_hRoot );
-			locator.bindComponent( offsetAutoCalibration, "OffsetAutoCalibration" );
-			locator.bindComponent( lineDelay_clk, "LineDelay_clk" );
-			locator.bindComponent( flashMode, "Flash" );
-			locator.bindComponent( flashOutputMask, "FlashOutputMask" );
-			locator.bindComponent( dataClipMode, "DataClipMode" );
-			locator.bindComponent( preFlashMode, "PreFlashMode" );
-			locator.bindComponent( flashTime_lines, "FlashTime_lines" );
-			locator.bindComponent( preExposeErase, "PreExposeErase" );
-			locator.bindComponent( inputThreshold_mV, "InputThreshold_mV" );
-		}
-		PYTHON_ONLY(%immutable;)
-		/// \brief An enumerated integer property defining the offset calibration mode.
-		///
-		/// If this property is set to <b>mvIMPACT::acquire::aocOff</b>
-		/// the offset can be adjusted manually by modifying the <b>mvIMPACT::acquire::CameraSettingsBlueLYNX::offset_pc</b> property.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAutoOffsetCalibration</b>.
-		PropertyIAutoOffsetCalibration offsetAutoCalibration;
-		/// \brief An integer property defining the delay in clocks between two lines.
-		///
-		/// Can be used to slow down the image readout the reduce the peak bandwidth required
-		/// for the transfer.
-		PropertyI lineDelay_clk;
-		/// \brief An enumerated integer property defining the behaviour of the flash output
-		/// of the camera (if available).
-		///
-		/// If this property is set the cameras flash output (if available) will be pulsed
-		/// during the exposure period of the sensor. In that case the pulse width will be equal
-		/// to the exposure time.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBlueLYNXCameraFlashMode</b>.
-		PropertyIBlueLYNXCameraFlashMode flashMode;
-		/// \brief An integer property defining flash output mask.
-		///
-		/// If this property can be set specified for <b>mvIMPACT::acquire::blcfmSoftware</b>.
-		PropertyI flashOutputMask;
-		/// \brief An enumerated integer property defining the behaviour of the sensor video data.
-		///
-		/// If this property is set to <b>TBlueLYNXCameraDataClipMode::blcdcmOn</b> the video data
-		/// will be clipped to <b>247</b>, leaves room to draw overlay with color information.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBlueLYNXCameraDataClipMode</b>.
-		PropertyIBlueLYNXCameraDataClipMode dataClipMode;
-		/// \brief An integer property defining the delay if the flash to exposure.
-		///
-		/// If this property is <b>0</b> (<i>e.g. set to n</i>) the flash starts <b>n</b> lines prior to exposure.
-		PropertyI preFlashMode;
-		/// \brief An integer property defining the flash time in lines.
-		///
-		/// If this property is <b>0</b> (<i>auto mode</i>) the flash signal is on during the pre-flash
-		/// and exposure of sensor. By setting the property to a value <b>>0 == n</b> the flash signal is on
-		/// for <b>n lines</b> while the pre-flash is active.
-		PropertyI flashTime_lines;
-		/// \brief An integer property defining a pre exposure erasure.
-		///
-		/// If this property is <b>0</b> no erase takes place between trigger signal and the expose.
-		/// For a value <b>>0 == n</b> the sensor performs <b>n</b> erase cycles.
-		PropertyI preExposeErase;
-		/// \brief An integer property defining the input switching threshold for the digital inputs in <b>mV</b> resolution.
-		///
-		/// The range is <i>(1..16V)</i>, if the threshold is outside this range it will be clipped silently
-		/// to legal values. This level determines at which voltage a logical <b>1</b> or <b>0</b> is recognised.
-		/// \note There is an hysteresis of <b>+/-0.5V</b> at the digital inputs.
-		PropertyI inputThreshold_mV;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyIAutoOffsetCalibration getOffsetAutoCalibration( void ) const { return offsetAutoCalibration; }
-		PropertyI getLineDelay_clk( void ) const { return lineDelay_clk; }
-		PropertyIBlueLYNXCameraFlashMode getFlashMode( void ) const { return flashMode; }
-		PropertyI getFlashOutputMask( void ) const { return flashOutputMask; }
-		PropertyIBlueLYNXCameraDataClipMode getDataClipMode( void ) const { return dataClipMode; }
-		PropertyI getPreFlashMode( void ) const { return preFlashMode; }
-		PropertyI getFlashTime_lines( void ) const { return flashTime_lines; }
-		PropertyI getPreExposeErase( void ) const { return preExposeErase; }
-		PropertyI getInputThreshold_mV( void ) const { return inputThreshold_mV; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-#endif // #ifndef IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION
-
-#if !defined(IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION)
-	//-----------------------------------------------------------------------------
-	/// \brief A class to configure a HDR(<b>H</b>igh <b>D</b>ynamic <b>R</b>ange knee point.
-	///
-	/// \note
-	/// Not every device will offer the features provided in this class. Before accessing properties call
-	/// the function <b>mvIMPACT::acquire::Component::isValid</b>. Right now only the mvBlueFOX-x00wx types
-	/// will support the features defined by this class.
-	///
-	/// \note
-	/// Instances of these class can't be constructed directly. It's parameters can
-	/// be accessed via an instance of the class <b>mvIMPACT::acquire::CameraSettingsBlueFOX</b>.
-	class HDRKneePoint : public ComponentCollection
-	//-----------------------------------------------------------------------------
-	{
-		friend class HDRControl;
-		explicit HDRKneePoint( HOBJ hObj ): ComponentCollection(hObj)
-		{
-			ComponentLocator locator(m_hRoot);
-			locator.bindComponent( HDRControlVoltage_mV, "HDRControlVoltage_mV" );
-			locator.bindComponent( HDRExposure_ppm, "HDRExposure_ppm" );
-		}
-	public:
-		PYTHON_ONLY(%immutable;)
-		/// \brief An enumerated integer property that can be used to define the control voltage in mV for
-		/// this knee point.
-		PropertyI HDRControlVoltage_mV;
-		/// \brief An enumerated integer property that can be used to define the exposure time in ppm of the overall exposure time for
-		/// this knee point.
-		PropertyI HDRExposure_ppm;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyI getHDRControlVoltage_mV( void ) const { return HDRControlVoltage_mV; }
-		PropertyI getHDRExposure_ppm( void ) const { return HDRExposure_ppm; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-
-	//-----------------------------------------------------------------------------
-	/// \brief A class to control the HDR(<b>H</b>igh <b>D</b>ynamic <b>R</b>ange) parameters of a device.
-	///
-	/// \note
-	/// Not every device will offer the features provided in this class. Before accessing properties call
-	/// the function <b>mvIMPACT::acquire::Component::isValid</b>. Right now only the mvBlueFOX-x00wx types
-	/// will support the features defined by this class.
-	///
-	/// \note
-	/// Instances of these class can't be constructed directly. It's parameters can
-	/// be accessed via an instance of the class <b>mvIMPACT::acquire::CameraSettingsBlueFOX</b>.
-	class HDRControl : public ComponentCollection
-	//-----------------------------------------------------------------------------
-	{
-		friend class CameraSettingsBlueCOUGAR;
-		friend class CameraSettingsBlueFOX;
-		typedef std::vector<HDRKneePoint*> HDRKneePointContainer;
-		#ifndef DOXYGEN_SHOULD_SKIP_THIS
-		//-----------------------------------------------------------------------------
-		struct ReferenceCountedData
-		//-----------------------------------------------------------------------------
-		{
-			HDRKneePointContainer            m_KneePoints;
-			HOBJ                             m_HDRControlRoot;
-			unsigned int                     m_refCnt;
-			ReferenceCountedData() : m_KneePoints(), m_HDRControlRoot(INVALID_ID), m_refCnt(1) {}
-			~ReferenceCountedData()
-			{
-				const HDRKneePointContainer::size_type HDRKneePointCnt = m_KneePoints.size();
-				for( HDRKneePointContainer::size_type h=0; h<HDRKneePointCnt; h++ )
-				{
-					delete m_KneePoints[h];
-				}
-			}
-		} *m_pRefData;
-		#endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
-		//-----------------------------------------------------------------------------
-		void dealloc( void )
-		//-----------------------------------------------------------------------------
-		{
-			--(m_pRefData->m_refCnt);
-			if( m_pRefData->m_refCnt == 0 )
-			{
-				delete m_pRefData;
-			}
-		}
-		//-----------------------------------------------------------------------------
-		void bindPublicProperties( void )
-		//-----------------------------------------------------------------------------
-		{
-			if( m_pRefData->m_HDRControlRoot != INVALID_ID )
-			{
-				ComponentLocator locator(m_pRefData->m_HDRControlRoot);
-				locator.bindComponent( HDREnable, "HDREnable" );
-				locator.bindComponent( HDRMode, "HDRMode" );
-				locator.bindComponent( HDRKneePointCount, "HDRKneePointCount" );
-			}
-		}
-		//-----------------------------------------------------------------------------
-		explicit HDRControl( HOBJ hObj ): ComponentCollection(hObj), m_pRefData(new ReferenceCountedData())
-		//-----------------------------------------------------------------------------
-		{
-			ComponentLocator locator(m_hRoot);
-			HOBJ hRoot = locator.findComponent( "HDRControl" );
-			if( hRoot != INVALID_ID )
-			{
-				m_hRoot = hRoot;
-				m_pRefData->m_HDRControlRoot = m_hRoot;
-				bindPublicProperties();
-				locator.bindSearchBase( locator.searchbase_id(), "HDRControl" );
-				// create the HDR knee point objects for this setting
-				ComponentIterator it;
-				locator.bindComponent( it, "HDRKneePoints" );
-				if( it.isValid() )
-				{
-					it = it.firstChild();
-					while( it.isValid() )
-					{
-						m_pRefData->m_KneePoints.push_back( new HDRKneePoint(it.hObj()) );
-						++it;
-					}
-				}
-			}
-		}
-	public:
-		/// \brief Copy constructor
-		///
-		/// Creates a new object from an existing device object. Keep in mind that this new object 
-		/// will provide access to the very same hardware and therefore you might as well use the original
-		/// reference. This constructor is only provided for internal reference counting to guarantee correct operation of the 
-		/// objects of this class under all platforms and languages.
-		explicit HDRControl( const HDRControl& src ) : ComponentCollection(src), m_pRefData(src.m_pRefData), HDREnable(src.HDREnable),
-			HDRMode(src.HDRMode), HDRKneePointCount(src.HDRKneePointCount)
-		{
-			++(m_pRefData->m_refCnt);
-		}
-		~HDRControl() { dealloc(); }
-#ifndef WRAP_PYTHON
-		/// \brief Allows assignments of <b>mvIMPACT::acquire::HDRControl</b> objects
-		HDRControl& operator=( const HDRControl& rhs )
-		{
-			if( this != &rhs )
-			{
-				dealloc();
-				m_pRefData = rhs.m_pRefData;
-				// inc. the NEW reference count
-				++(m_pRefData->m_refCnt);
-				bindPublicProperties();
-			}
-			return *this;
-		}
-#endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
-		PYTHON_ONLY(%immutable;)
-		/// \brief An enumerated integer property which can be used to enable/disable HDR(<b>H</b>igh <b>D</b>ynamic <b>R</b>ange) mode.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
-		PropertyIBoolean HDREnable;
-		/// \brief An enumerated integer property which can be used to configure the HDR(<b>H</b>igh <b>D</b>ynamic <b>R</b>ange) mode to work with.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraHDRMode</b>.
-		PropertyICameraHDRMode HDRMode;
-		/// \brief An integer property to define the number of knee points to work with when <b>mvIMPACT::acquire::HDRControl::HDRMode</b> is set
-		/// to <b>mvIMPACT::acquire::cHDRmUser</b>.
-		PropertyI HDRKneePointCount;
-		PYTHON_ONLY(%mutable;)
-		/// \brief Returns a reference to a set of user definable parameters to configure a HDR(<b>H</b>igh <b>D</b>ynamic <b>R</b>ange knee point.
-		///
-		/// Use the property <b>mvIMPACT::acquire::HDRControl::HDRKneePointCount</b> to find out how many knee points are available
-		/// or to change the number of knee points.
-		///
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// If \a nr is invalid(too large) a STL out_of_range exception
-		/// will be thrown.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///
-		/// \return A reference to a set of user definable parameters to configure a HDR(<b>H</b>igh <b>D</b>ynamic <b>R</b>ange knee point.
-		HDRKneePoint& getHDRKneePoint(	/// The number of the knee point to be returned
-										unsigned int nr ) const { return *(m_pRefData->m_KneePoints.at( nr )); }
-	#ifdef DOTNET_ONLY_CODE
-		PropertyIBoolean getHDREnable( void ) const { return HDREnable; }
-		PropertyICameraHDRMode getHDRMode( void ) const { return HDRMode; }
-		PropertyI getHDRKneePointCount( void ) const { return HDRKneePointCount; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-#endif // #if !defined(IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION)
-
-#ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
-	//-----------------------------------------------------------------------------
-	/// \brief <b>mvBlueFOX</b> related camera settings.
-	///
-	/// This class contains properties to control the way the image sensor of the
-	/// <b>mvBlueFOX</b> behaves.
-	class CameraSettingsBlueFOX : public CameraSettingsBlueDevice
-	//-----------------------------------------------------------------------------
-	{
-		HDRControl HDRControl_;
-	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::CameraSettingsBlueFOX</b> object
-		explicit CameraSettingsBlueFOX( /// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-										Device* pDev,
-										/// The name of the driver internal setting to access with this instance.
-										/// A list of valid setting names can be obtained by a call to
-										/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
-										/// settings can be created with the function
-										/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
-										const std::string& settingName = "Base" ) : CameraSettingsBlueDevice(pDev, settingName), HDRControl_(m_hRoot),
-										  offsetAutoCalibration(), offsetAutoBlackLevel(),
-										  offsetAutoBlackSpeed(), lineDelay_clk(), advancedOptions(),
-										  flashToExposeDelay_us(), flashMode(), flashType(), shutterMode(),
-										  triggerSource(), sensorTimingMode()
-		{
-			ComponentLocator locator(m_hRoot);
-			locator.bindComponent( offsetAutoCalibration, "OffsetAutoCalibration" );
-			locator.bindComponent( offsetAutoBlackLevel, "OffsetAutoBlackLevel" );
-			locator.bindComponent( offsetAutoBlackSpeed, "OffsetAutoBlackSpeed" );
-			locator.bindComponent( lineDelay_clk, "LineDelay_clk" );
-			locator.bindComponent( advancedOptions, "AdvancedOptions" );
-			locator.bindComponent( flashToExposeDelay_us, "FlashToExposeDelay_us" );
-			locator.bindComponent( flashMode, "FlashMode" );
-			locator.bindComponent( flashType, "FlashType" );
-			locator.bindComponent( shutterMode, "ShutterMode" );
-			locator.bindComponent( triggerSource, "TriggerSource" );
-			locator.bindComponent( sensorTimingMode, "SensorTimingMode" );
-		}
-		PYTHON_ONLY(%immutable;)
-		/// \brief An enumerated integer property defining the offset calibration mode.
-		///
-		/// If this property is set to <b>mvIMPACT::acquire::aocOff</b>
-		/// the offset can be adjusted manually by modifying the <b>mvIMPACT::acquire::CameraSettingsBlueFOX::offset_pc</b> property.
-		///
-		/// If set to <b>mvIMPACT::acquire::aocOn</b> the offset is approx. 10. That means,
-		/// that the medium pixel count is 10, in case no light is falling on the sensor.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAutoOffsetCalibration</b>.
-		PropertyIAutoOffsetCalibration offsetAutoCalibration;
-		/// \brief An integer property defining the digital value assumed as black.
-		///
-		/// Modifying this property in rare cases might be useful to achieve a higher dynamic range for noise close to the black
-		/// level.
-		///
-		/// \note
-		/// As the <b>mvBlueFOX</b> internally works with a 10 bit analog to digital conversion increasing this
-		/// value by 4 will result in a black level increased by about 1 in the resulting 8 bit raw image 
-		/// delivered from the camera.
-		PropertyI offsetAutoBlackLevel;
-		/// \brief An enumerated integer property defining the speed of the auto offset calibration circuit.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBlueFOXOffsetAutoBlackSpeed</b>.
-		PropertyIBlueFOXOffsetAutoBlackSpeed offsetAutoBlackSpeed;
-		/// \brief An integer property defining the delay in clocks between two lines.
-		///
-		/// Can be used to slow down the image readout the reduce the peak bandwidth required
-		/// for the transfer.
-		PropertyI lineDelay_clk;
-		/// \brief An enumerated integer property defining a collection of advanced options that can be enabled or disabled.
-		///
-		/// This property is highly sensor dependent. Each sensor might offer a different sub set of the options offered.
-		/// Only experienced users should work with this feature.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDeviceAdvancedOptions</b>.
-		PropertyIDeviceAdvancedOptions advancedOptions;
-		/// \brief An integer property defining the delay in us betwenn the start of the flash signal output
-		/// and the beginning of the expose period of the image sensor.
-		///
-		/// \note
-		/// This property is mainly provided for compatibility reasons. Previous versions of the 
-		/// <b>mvBlueFOX</b> driver produced a fixed delay of about 300 us between the beginning of the
-		/// flash signal creation and the beginning of the sensors expose period. Newer versions of the
-		/// driver do <b>NOT</b> produce this delay anymore which might cause a different illumination
-		/// for applications using very intensive, short flash and expose times. Applications relying on
-		/// the delay introduced in older driver versions should set this property to
-		/// '300' by calling <b>mvIMPACT::acquire::PropertyI::write</b>.
-		///
-		/// \sa
-		/// <b>mvIMPACT::acquire::CameraSettingsBlueDevice::expose_us</b>
-		PropertyI flashToExposeDelay_us;
-		/// \brief An enumerated integer property defining the behaviour of the flash output
-		/// of the camera (if available).
-		///
-		/// If this property is set the cameras flash output (if available) will be pulsed
-		/// during the exposure period of the sensor. In that case the pulse width will be equal
-		/// to the exposure time.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraFlashMode</b>.
-		///
-		/// \sa
-		/// <b>mvIMPACT::acquire::CameraSettingsBlueFOX::flashToExposeDelay_us</b>
-		PropertyICameraFlashMode flashMode;
-		/// \brief An enumerated integer property defining the type of the flash output
-		/// of the camera (if available).
-		///
-		/// Depending of the camera sensor type (\a rolling shutter or \a frame \a shutter 
-		/// there well be different modes available
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraFlashType</b>.
-		PropertyICameraFlashType flashType;
-		/// \brief An enumerated integer property defining the shutter mode to use.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraShutterMode</b>.
-		PropertyICameraShutterMode shutterMode;
-		/// \brief An enumerated integer property defining where the trigger signal is
-		/// expected to occur.
-		///
-		/// When working with hardware generated signals via <b>mvIMPACT::acquire::RTCtrProgram</b> objects
-		/// this property should be set to <b>mvIMPACT::acquire::ctsRTCtrl</b> as otherwise
-		/// the program will not affect the behaviour of the camera.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraTriggerSource</b>.
-		PropertyICameraTriggerSource triggerSource;
-		/// \brief An enumerated integer property defining the current image sensor timing mode.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBlueFOXSensorTiming</b>.
-		PropertyIBlueFOXSensorTiming sensorTimingMode;
-		PYTHON_ONLY(%mutable;)
-		HDRControl& getHDRControl( void ) { return HDRControl_; }
-	#ifdef DOTNET_ONLY_CODE
-		PropertyIAutoOffsetCalibration getOffsetAutoCalibration( void ) const { return offsetAutoCalibration; }
-		PropertyI getOffsetAutoBlackLevel( void ) const { return offsetAutoBlackLevel; }
-		PropertyIBlueFOXOffsetAutoBlackSpeed getOffsetAutoBlackSpeed( void ) const { return offsetAutoBlackSpeed; }
-		PropertyI getLineDelay_clk( void ) const { return lineDelay_clk; }
-		PropertyIDeviceAdvancedOptions getAdvancedOptions( void ) const { return advancedOptions; }
-		PropertyI getFlashToExposeDelay_us( void ) const { return flashToExposeDelay_us; }
-		PropertyICameraFlashMode getFlashMode( void ) const { return flashMode; }
-		PropertyICameraFlashType getFlashType( void ) const { return flashType; }
-		PropertyICameraShutterMode getShutterMode( void ) const { return shutterMode; }
-		PropertyICameraTriggerSource getTriggerSource( void ) const { return triggerSource; }
-		PropertyIBlueFOXSensorTiming getSensorTimingMode( void ) const { return sensorTimingMode; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-#endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
-
-#ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
-	//-----------------------------------------------------------------------------
-	/// \brief <b>mvBlueCOUGAR</b> and <b>mvBlueLYNX-M7</b> related camera settings.
-	///
-	/// This class contains properties to control the way the image sensor(s) of the
-	/// <b>mvBlueCOUGAR</b> or <b>mvBlueLYNX-M7</b> behaves.
-	class CameraSettingsBlueCOUGAR : public CameraSettingsBlueDevice
-	//-----------------------------------------------------------------------------
-	{
-		typedef std::vector<TriggerControl*> TriggerControlVector;
-		TriggerControlVector m_triggerControls;
-		HDRControl HDRControl_;
-	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::CameraSettingsBlueCOUGAR</b> object
-		explicit CameraSettingsBlueCOUGAR( /// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-										Device* pDev,
-										/// The name of the driver internal setting to access with this instance.
-										/// A list of valid setting names can be obtained by a call to
-										/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
-										/// settings can be created with the function
-										/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
-										const std::string& settingName = "Base" ) : CameraSettingsBlueDevice(pDev, settingName),
-										m_triggerControls(), HDRControl_(m_hRoot),
-										triggerInterface(), triggerSource()
-		{
-			ComponentLocator locator(m_hRoot);
-			locator.bindComponent( frameRate_Hz, "FrameRate_Hz" );
-			locator.bindComponent( partialScanMode, "PartialScanMode" );
-			locator.bindComponent( triggerInterface, "TriggerInterface" );
-			locator.bindComponent( triggerSource, "TriggerSource" );
-			if( locator.findComponent( "TriggerControls" ) != INVALID_ID )
-			{
-				locator.bindSearchBase( locator.searchbase_id(), "TriggerControls" );
-				ComponentIterator it(locator.searchbase_id());
-				it = it.firstChild();
-				while( it.isValid() )
-				{
-					m_triggerControls.push_back( new TriggerControl(it) );
-					++it;
-				}
-			}
-		}
-		virtual ~CameraSettingsBlueCOUGAR()
-		{
-			TriggerControlVector::size_type vSize = m_triggerControls.size();
-			for( TriggerControlVector::size_type i=0; i<vSize; i++ )
-			{
-				delete m_triggerControls[i];
-			}
-		}
-		/// \brief Returns the number of <b>mvIMPACT::acquire::TriggerControl</b>s available for this device.
-		///
-		/// This might be 0 if the device either does not support this feature.
-		unsigned int getTriggerControlCount( void ) const { return static_cast<unsigned int>(m_triggerControls.size()); }
-		/// \brief Returns a const pointer to a <b>mvIMPACT::acquire::TriggerControl</b> object.
-		///
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// If \a nr references an invalid pin a STL out_of_range exception
-		/// will be thrown.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///
-		/// \note
-		/// The features of each <b>mvIMPACT::acquire::TriggerControl</b> will only be visibile and thus available,
-		/// when <b>mvIMPACT::acquire::CameraSettingsBlueCOUGAR::triggerInterface</b>
-		/// is set to <b>mvIMPACT::acquire::dtiAdvanced</b>.
-		const TriggerControl* triggerControl(	/// The number of the trigger control
-												unsigned int nr ) const { return m_triggerControls.at( nr ); }
-		/// \brief Returns a const pointer to a <b>mvIMPACT::acquire::TriggerControl</b> object or NULL if the name passed to the function
-		/// does not specify a valid trigger control.
-		const TriggerControl* triggerControl(	/// The name of the trigger control
-												const std::string& name ) const
-		{
-			const TriggerControlVector::size_type cnt = m_triggerControls.size();
-			for( TriggerControlVector::size_type i=0; i<cnt; i++ )
-			{
-				const TriggerControl* p = triggerControl( static_cast<unsigned int>(i) );
-				if( p->getDescription() == name )
-				{
-					return p;
-				}
-			}
-			return 0;
-		}
-		PYTHON_ONLY(%immutable;)
-		/// \brief A float property defining the frame rate (in Hz) this device shall use to transfer images.
-		///
-		/// Depending on other parameters the desired frame rate might not be achievable (e.g. if the exposure time
-		/// is higher than the frame period. In that case the device will automatically reduce the frame rate.
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		PropertyF frameRate_Hz;
-		/// \brief An enumerated integer property defining whether partial scan mode shall be used or not.
-		///
-		/// This property currently is only available for mvBlueCOUGAR-S devices. When partial scan mode is active, the
-		/// frame rate can no longer be controlled be the property <b>mvIMPACT::acquire::CameraSettingsBlueCOUGAR::frameRate_Hz</b>.
-		/// The device will always transmit frames as fast as possible instead.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
-		PropertyIBoolean partialScanMode;
-		/// \brief An enumerated integer property defining which view of the trigger interface to use.
-		///
-		/// This property mainly switches the visibility of trigger the different trigger interfaces. After applying changes to
-		/// this property all trigger related features might have a different visibility. However the documentation will state
-		/// what features are available in which mode.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDeviceTriggerInterface</b>.
-		PropertyIDeviceTriggerInterface triggerInterface;
-		/// \brief An enumerated integer property defining where the trigger signal is
-		/// expected to occur.
-		///
-		/// When working with hardware generated signals via <b>mvIMPACT::acquire::RTCtrProgram</b> objects
-		/// this property should be set to <b>mvIMPACT::acquire::ctsRTCtrl</b> as otherwise
-		/// the program will not affect the behaviour of the camera.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraTriggerSource</b>.
-		///
-		/// \note
-		/// This feature will only be visibile and thus available, when <b>mvIMPACT::acquire::CameraSettingsBlueCOUGAR::triggerInterface</b>
-		/// is set to <b>mvIMPACT::acquire::dtiStandard</b>.
-		PropertyICameraTriggerSource triggerSource;
-		PYTHON_ONLY(%mutable;)
-		HDRControl& getHDRControl( void ) { return HDRControl_; }
-	#ifdef DOTNET_ONLY_CODE
-		PropertyF getFrameRate_Hz( void ) const { return frameRate_Hz; }
-		PropertyIBoolean getPartialScanMode( void ) const { return partialScanMode; }
-		PropertyIDeviceTriggerInterface getTriggerInterface( void ) const { return triggerInterface; }
-		PropertyICameraTriggerSource getTriggerSource( void ) const { return triggerSource; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-#endif // #ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
-
-#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-	//-----------------------------------------------------------------------------
-	/// \brief A class to access frame grabber related camera settings.
-	///
-	/// This class contains properties to control the way the a frame grabber
-	/// behaves in connection with the connected camera.
-	///
-	/// \note
-	/// Not every frame grabber will support every property defined in this class. Please
-	/// refer to the description of the individual properties and make heavy use of the
-	/// function <b>mvIMPACT::acquire::Component::isValid</b> in order to check whether
-	/// a property is available for the device.
-	class CameraSettingsFrameGrabber : public CameraSettingsBase
-	//-----------------------------------------------------------------------------
-	{
-		typedef std::vector<TriggerControl*> TriggerControlVector;
-		TriggerControlVector m_triggerControls;
-	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::CameraSettingsFrameGrabber</b> object
-		explicit CameraSettingsFrameGrabber(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-												Device* pDev,
-												/// The name of the driver internal setting to access with this instance.
-												/// A list of valid setting names can be obtained by a call to
-												/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
-												/// settings can be created with the function
-												/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
-												const std::string& settingName = "Base" ) : CameraSettingsBase(pDev, settingName),
-												  type(), aoiMode(), gain_dB(), offset_mV(), scanClock(), triggerMode(), softwareTriggerPeriod_ms(),
-												  serialPortBaudrate(), interlacedMode(), acquisitionField(), scanRateMode(), scanRate_kHz(),
-												  luminance_pc(), saturation_pc(), hue_pc(), contrast_pc(), lineCounter()
-		{
-			ComponentLocator locator( m_hRoot );
-			locator.bindComponent( type, "Type" );
-			locator.bindComponent( aoiMode, "AoiMode" );
-			locator.bindComponent( gain_dB, "Gain_dB" );
-			locator.bindComponent( offset_mV, "Offset_mV" );
-			locator.bindComponent( scanClock, "ScanClock" );
-			locator.bindComponent( triggerMode, "TriggerMode", 0, 0 );
-			locator.bindComponent( softwareTriggerPeriod_ms, "SoftwareTriggerPeriod_ms" );
-			locator.bindComponent( serialPortBaudrate, "SerialPortBaudRate" );
-			locator.bindComponent( interlacedMode, "InterlacedMode" );
-			locator.bindComponent( acquisitionField, "AcquisitionField" );
-			locator.bindComponent( scanRateMode, "ScanRateMode" );
-			locator.bindComponent( scanRate_kHz, "ScanRate_kHz" );
-			locator.bindComponent( luminance_pc, "Luminance_pc" );
-			locator.bindComponent( saturation_pc, "Saturation_pc" );
-			locator.bindComponent( hue_pc, "Hue_pc" );
-			locator.bindComponent( contrast_pc, "Contrast_pc" );
-			locator.bindComponent( lineCounter, "LineCounter" );
-			if( locator.findComponent( "TriggerControls" ) != INVALID_ID )
-			{
-				locator.bindSearchBase( locator.searchbase_id(), "TriggerControls" );
-				ComponentIterator it(locator.searchbase_id());
-				if( it.isValid() )
-				{
-					it = it.firstChild();
-					while( it.isValid() )
-					{
-						m_triggerControls.push_back( new TriggerControl(it) );
-						++it;
-					}
-				}
-			}
-		}
-		virtual ~CameraSettingsFrameGrabber()
-		{
-			TriggerControlVector::size_type vSize = m_triggerControls.size();
-			for( TriggerControlVector::size_type i=0; i<vSize; i++ )
-			{
-				delete m_triggerControls[i];
-			}
-		}
-		/// \brief Returns the number of <b>mvIMPACT::acquire::TriggerControl</b>s available for this device.
-		///
-		/// This might be 0 if the device either does not support this feature.
-		unsigned int getTriggerControlCount( void ) const { return static_cast<unsigned int>(m_triggerControls.size()); }
-		/// \brief Returns a const pointer to a <b>mvIMPACT::acquire::TriggerControl</b> object.
-		///
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// If \a nr references an invalid pin a STL out_of_range exception
-		/// will be thrown.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		const TriggerControl* triggerControl(	/// The number of the trigger control
-												unsigned int nr ) const { return m_triggerControls.at( nr ); }
-		/// \brief Returns a const pointer to a <b>mvIMPACT::acquire::TriggerControl</b> object or NULL if the name passed to the function
-		/// does not specify a valid trigger control.
-		const TriggerControl* triggerControl(	/// The name of the trigger control
-												const std::string& name ) const
-		{
-			const TriggerControlVector::size_type cnt = m_triggerControls.size();
-			for( TriggerControlVector::size_type i=0; i<cnt; i++ )
-			{
-				const TriggerControl* p = triggerControl( static_cast<unsigned int>(i) );
-				if( p->getDescription() == name )
-				{
-					return p;
-				}
-			}
-			return 0;
-		}
-		PYTHON_ONLY(%immutable;)
-		/// \brief An enumerated integer property defining the camera description used for the 
-		/// image acquisition.
-		///
-		/// This property <b>ALWAYS</b> defines a translation dictionary containing a string representation
-		/// and a numerical value for the camera descriptions available for the device. The string
-		/// representation of the camera description will be build from the property name of the class this
-		/// camera description belongs to (e.g. \a 'Standard', \a 'NonStandard' or \a 'CameraLink') and
-		/// the name of the camera description itself. Assuming a the device can handle standard
-		/// video cameras and a description for a camera named \a 'MyCCIRCamera' will therefore
-		/// add \a 'Standard_MyCCIRCamera' and a unique numerical representation to the properties
-		/// translation dictionary.
-		PropertyI type;
-		/// \brief An enumerated integer property defining the used AOI mode for the image capture.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraAoiMode</b>.
-		PropertyICameraAoiMode aoiMode;
-		/// \brief A float property defining the gain in dB.
-		///
-		/// This is the gain applied during the analogue to digital conversion inside the frame
-		/// grabber, not applied inside the camera.
-		/// 
-		/// \note
-		/// This property will not be available for every frame grabber, so before using it, check
-		/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
-		/// an invalid property will raise an exception!
-		PropertyF gain_dB;
-		/// \brief An integer property defining the offset in milli-Volt.
-		///
-		/// This is the analogue offset applied during the analogue to digital conversion inside the frame
-		/// grabber, not applied inside the camera.
-		/// 
-		/// \note
-		/// This property will not be available for every frame grabber, so before using it, check
-		/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
-		/// an invalid property will raise an exception!
-		PropertyI offset_mV;
-		/// \brief An enumerated integer property defining the scan clock mode used for the current acquisition.
-		///
-		/// Valid modes are defined by the enumeration <b>mvIMPACT::acquire::TScanClock</b>.
-		///
-		/// \note
-		/// This property will not be available for every frame grabber, so before using it, check
-		/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
-		/// an invalid property will raise an exception! Digital frame grabbers will however <b>NOT</b> support
-		/// this property.
-		PropertyIScanClock scanClock;
-		/// \brief An enumerated integer property defining the behaviour of the frame grabbers trigger input.
-		///
-		/// \note 
-		/// All trigger modes are defined by <b>mvIMPACT::acquire::TDeviceTriggerMode</b>. However
-		/// not every device will offer all these trigger modes but a subset of them. Valid trigger modes therefore 
-		/// can be found by reading the properties translation dictionary.
-		///
-		/// \note
-		/// This property will not be available for every frame grabber, so before using it, check
-		/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
-		/// an invalid property will raise an exception!
-		PropertyIDeviceTriggerMode triggerMode;
-		/// \brief An integer property defining the software simulated trigger period.
-		///
-		/// When <b>mvIMPACT::acquire::CameraSettingsFrameGrabber::triggerMode</b> is set to
-		/// <b>mvIMPACT::acquire::dtmPeriodically</b> this property defines the
-		/// interval between two consecutive external trigger events simulated by the driver.
-		///
-		/// Currently this property is only available for <b>mvTITAN</b> and <b>mvGAMMA</b> frame grabbers.
-		///
-		/// \note
-		/// This property will not be available for every frame grabber, so before using it, check
-		/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
-		/// an invalid property will raise an exception!
-		PropertyI softwareTriggerPeriod_ms;
-		/// \brief An enumerated integer property defining the baud rate of the serial communication port
-		/// between frame grabber and camera.
-		///
-		/// Currently this property is only available for CameraLink&reg; frame grabbers.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraSerialPortBaudRate</b>.
-		///
-		/// \note
-		/// This property will not be available for every frame grabber, so before using it, check
-		/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
-		/// an invalid property will raise an exception!
-		PropertyICameraSerialPortBaudRate serialPortBaudrate;
-		/// \brief An enumerated integer property defining how the image from the camera shall be captured.
-		///
-		/// If a video signal is transmitted to the capture device in an interlaced format, the device
-		/// can either capture each individual frame, or merge two frames together into a complete image.
-		///
-		/// This property will be invisible when the camera description selected by the property
-		/// <b>mvIMPACT::acquire::CameraSettingsFrameGrabber::type</b> does define it property 
-		/// <b>mvIMPACT::acquire::CameraDescriptionBase::interlacedType</b> to be <b>mvIMPACT::acquire::citNone</b>
-		/// as the decision whether an interlaced image shall be reconstructed from frames or left 
-		/// as individual frame is redundant if the video source transmitts full frames only.
-		///
-		/// The visibility of a property can be checked by calling <b>mvIMPACT::acquire::Component::isVisible</b>
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TInterlacedMode</b>.
-		///
-		/// \note
-		/// This property will not be available for every frame grabber, so before using it, check
-		/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
-		/// an invalid property will raise an exception!
-		PropertyIInterlacedMode interlacedMode;
-		/// \brief An enumerated integer property defining which frame(s) of an interlaced video signal 
-		/// will be digitised or triggers the start of the acquisition.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAcquisitionField</b>.
-		///
-		/// \note
-		/// This property will not be available for every frame grabber, so before using it, check
-		/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
-		/// an invalid property will raise an exception!
-		PropertyIAcquisitionField acquisitionField;
-		/// \brief An enumerated integer property defining the scan rate mode for this setting.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDeviceScanRateMode</b>.
-		///
-		/// \note
-		/// This property will not be available for every frame grabber, so before using it, check
-		/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
-		/// an invalid property will raise an exception!
-		PropertyIDeviceScanRateMode scanRateMode;
-		/// \brief An integer property defining the current scan frequency of the capture device.
-		///
-		/// This property is only visible if the <b>mvIMPACT::acquire::CameraSettingsFrameGrabber::scanRateMode</b>
-		/// property is <b>NOT</b> in an auto mode.
-		/// \note
-		/// This property will not be available for every frame grabber, so before using it, check
-		/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
-		/// an invalid property will raise an exception!
-		PropertyI scanRate_kHz;
-		/// \brief An integer property defining the luminance value to be applied to the image data by the
-		/// frame grabber in per cent.
-		///
-		/// \note
-		/// This property will not be available for every frame grabber, so before using it, check
-		/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
-		/// an invalid property will raise an exception!
-		PropertyI luminance_pc;
-		/// \brief An integer property defining the saturation value to be applied to the image data by the
-		/// frame grabber in per cent.
-		///
-		/// \note
-		/// This property will not be available for every frame grabber, so before using it, check
-		/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
-		/// an invalid property will raise an exception!
-		PropertyI saturation_pc;
-		/// \brief An integer property defining the hue value to be applied to the image data by the
-		/// frame grabber in per cent.
-		///
-		/// \note
-		/// This property will not be available for every frame grabber, so before using it, check
-		/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
-		/// an invalid property will raise an exception!
-		PropertyI hue_pc;
-		/// \brief An integer property defining the contrast value to be applied to the image data by the
-		/// frame grabber in per cent.
-		///
-		/// \note
-		/// This property will not be available for every frame grabber, so before using it, check
-		/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
-		/// an invalid property will raise an exception!
-		PropertyI contrast_pc;
-		/// \brief An enumerated integer property defining the way line counter information is handled by the 
-		/// device.
-		///
-		/// This is interessting for line scan camera applications. More information can be found a the documentation
-		/// of the enumeration <b>mvIMPACT::acquire::TLineCounter</b>.
-		///
-		/// \note
-		/// This property will not be available for every frame grabber, so before using it, check
-		/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
-		/// an invalid property will raise an exception!
-		PropertyILineCounter lineCounter;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyI getType( void ) const { return type; }
-		PropertyICameraAoiMode getAoiMode( void ) const { return aoiMode; }
-		PropertyF getGain_dB( void ) const { return gain_dB; }
-		PropertyI getOffset_mV( void ) const { return offset_mV; }
-		PropertyIScanClock getScanClock( void ) const { return scanClock; }
-		PropertyIDeviceTriggerMode getTriggerMode( void ) const { return triggerMode; }
-		PropertyI getSoftwareTriggerPeriod_ms( void ) const { return softwareTriggerPeriod_ms; }
-		PropertyICameraSerialPortBaudRate getSerialPortBaudRate( void ) const { return serialPortBaudrate; }
-		PropertyIInterlacedMode getInterlacedMode( void ) const { return interlacedMode; }
-		PropertyIAcquisitionField getAcquisitionField( void ) const { return acquisitionField; }
-		PropertyIDeviceScanRateMode getScanRateMode( void ) const { return scanRateMode; }
-		PropertyI getScanRate_kHz( void ) const { return scanRate_kHz; }
-		PropertyI getLuminance_pc( void ) const { return luminance_pc; }
-		PropertyI getSaturation_pc( void ) const { return saturation_pc; }
-		PropertyI getHue_pc( void ) const { return hue_pc; }
-		PropertyI getContrast_pc( void ) const { return contrast_pc; }
-		PropertyILineCounter getLineCounter( void ) const { return lineCounter; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-
-	//-----------------------------------------------------------------------------
-	/// \brief A base class to describe a camera.
-	///
-	/// A camera description object provides an abstract way to prepare the capture 
-	/// device (e.g. a frame grabber) for the connected imaging device (e.g. a camera).
-	/// 
-	/// By selecting one of the available camera descriptions the underlying hardware 
-	/// will use the information provided in the camera description to prepare the
-	/// image capture. Therefore it is crucial to select a camera description
-	/// that matches the connected video signal as close as possible. If no description
-	/// for the camera or imaging device connected is available a new description
-	/// should be generated from one of the existing ones. This can be achieved by calling
-	/// the function <b>mvIMPACT::acquire::CameraDescriptionBase::copyDescription</b>. A new
-	/// camera description with the name that is passed to the function will be created.
-	///
-	/// \note
-	/// The name must be unique. There can't be two descriptions with the same name
-	/// belonging to the same generic class (i.e. \a 'Standard' or \a 'CameraLink'&reg;). However
-	/// it's perfectly legal to have a camera description for standard analogue video signals
-	/// and one for e.g. CameraLink&reg; signals with the same name.
-	///
-	/// This new description will be an exact copy of the one the copy function has been 
-	/// executed for. After creation this description can be selected e.g. by setting the
-	/// property <b>mvIMPACT::acquire::CameraSettingsFrameGrabber::type</b> to the name of the
-	/// new description.
-	///
-	/// \note
-	/// Please note that the name passed to the property <b>mvIMPACT::acquire::CameraSettingsFrameGrabber::type</b>
-	/// does <b>NOT</b> exactly correspond to the name assigned to the new camera description.
-	/// It is a combination of the class the camera is belonging to (e.g. \a 'Standard') and the actual name.
-	/// So to select a camera description the name must be build from teh return value of a call to
-	/// <b>mvIMPACT::acquire::CameraDescriptionBase::getClassName</b>, an underscore ('_') and the
-	/// actual name of the description: &lt;class name&gt;_&lt;desc. name&gt;
-	///
-	/// Example: For a standard description with the name \a 'MyCam' the full name would be \a 'Standard_MyCam'.
-	/// 
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	///
-	/// <b>EXAMPLE:</b>
-	///
-	///\code
-	/// #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
-	/// #include <iostream>
-	///
-	/// using namespace std;
-	///
-	/// //-----------------------------------------------------------------------------
-	/// int main(int argc, char* argv[])
-	/// //-----------------------------------------------------------------------------
-	/// {
-	///   mvIMPACT::acquire::DeviceManager devMgr;
-	///   mvIMPACT::acquire::Device* pDev = devMgr[0];
-	///   if( !pDev )
-	///   {
-	///     cout << "No device found" << endl;
-	///     return 0;
-	///   }
-	/// 
-	///   try
-	///   {
-	///     // the next line will raise an exception if this device does not
-	///     // support camera descriptions (e.g. if it is a USB camera rather than a frame grabber)
-	///     mvIMPACT::acquire::CameraDescriptionManager cdm(pDev);
-	///     mvIMPACT::acquire::CameraDescriptionStandard* pCam = cdm.cameraDescriptionStandard( "Generic" );
-	///     pCam->copyDescription( "MyCam" );
-	///     // Get access to the newly created description
-	///     mvIMPACT::acquire::CameraDescriptionStandard* pMyCam = cdm.cameraDescriptionStandard( "MyCam" );
-	///     // Modify something
-	///     pMyCam->videoStandard.write( vsRS170 );
-	///     pMyCam->scanStandard.write( ssITU601 );
-	///     // now save the description to make it available in all future sessions
-	///     pMyCam->exportDescription();
-	///     // select the newly created description
-	///     mvIMPACT::acquire::CameraSettingsFrameGrabber cs(pDev);
-	///     // the name for this property is always a combination of the class the camera
-	///     // description is belonging to and the actual name:
-	///     cs.type.writeS( pMyCam->getClassName() + "_" + pMyCam->name.read() );
-	///   }
-	///   catch( const ImpactAcquireException& e )
-	///   {
-	///     cout << "An exception occurred: " << e.getErrorString() << endl;
-	///   }
-	///   return 0;
-	/// }
-	///\endcode
-	///\htmlinclude code_fragment_end.html
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///
-	class CameraDescriptionBase : public ComponentCollection
-	//-----------------------------------------------------------------------------
-	{
-		HDRV m_hDrv;
-	protected:
-		explicit CameraDescriptionBase( HDRV hDrv, HLIST hList ) : ComponentCollection(hList), m_hDrv(hDrv), name(), 
-		  videoOutput(), interlacedType(), aoiHeight(), aoiStartX(), aoiStartY(), aoiWidth()
-		{
-			ComponentLocator locator(m_hRoot);
-			locator.bindComponent( name, "Name" );
-			locator.bindComponent( videoOutput, "VideoOutput" );
-			locator.bindComponent( interlacedType, "InterlacedType" );
-			locator.bindSearchBase( locator.searchbase_id(), "ActiveVideoAoi" );
-			locator.bindComponent( aoiHeight, "H" );
-			locator.bindComponent( aoiStartX, "X" );
-			locator.bindComponent( aoiStartY, "Y" );
-			locator.bindComponent( aoiWidth, "W" );
-		}
-	public:
-		/// \brief Returns the class this description is belonging to.
-		/// \return The class this description is belonging to.
-		std::string getClassName( void ) const { return ComponentList(m_hRoot).contentDescriptor(); }
-		PYTHON_ONLY(%immutable;)
-		/// \brief A string property containing the name of this camera description list.
-		PropertyS name;
-		/// \brief An enumerated integer property defining the type of video outputs this camera offers
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraOutput</b>.
-		PropertyICameraOutput videoOutput;
-		/// \brief An enumerated integer property defining how the camera transmits image data.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraInterlacedType</b>.
-		PropertyICameraInterlacedType interlacedType;
-		/// \brief An integer property defining the number of active lines to capture from the camera.
-		PropertyI aoiHeight;
-		/// \brief An integer property defining the X-offset in pixels to the first active pixel to capture.
-		PropertyI aoiStartX;
-		/// \brief An integer property defining the Y-offset.
-		PropertyI aoiStartY;
-		/// \brief An integer property defining the number of active pixels to capture per line.
-		PropertyI aoiWidth;
-		PYTHON_ONLY(%mutable;)
-		/// \brief Creates a new camera description list as a copy of the current one.
-		///
-		/// This function can be used to create a new camera description list. It will create
-		/// a deep copy of the list referenced by \a hCameraDescList and will append it
-		/// to the list of camera descriptions.
-		///
-		/// \note
-		/// This will <b>NOT</b> store the new description permanently. After the driver has been 
-		/// closed, this data will be lost. To store the new list in a way, that it will be available
-		/// the next time the driver/device is opened again <b>mvIMPACT::acquire::CameraDescriptionBase::exportDescription</b> must
-		/// be called with the handle of the newly created description after this function.
-		/// \sa
-		/// <b>mvIMPACT::acquire::CameraDescriptionBase::exportDescription,<br>
-		///    mvIMPACT::acquire::CameraDescriptionBase::importDescription</b>
-		/// \return
-		/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
-		/// - <b>mvIMPACT::acquire::DEV_INPUT_PARAM_INVALID</b> if new name matches a description that is already
-		/// existing.
-		/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> or <b>mvIMPACT::acquire::TPROPHANDLING_ERROR</b> otherwise.
-		int copyDescription(	/// The name for the newly created camera description. This name
-								/// <b>MUST NOT</b> match a description already existing.
-								const std::string& newName ) const { return DMR_CopyCameraDescription( m_hDrv, m_hRoot, newName.c_str() ); }
-		/// \brief Stores the current camera description on disc.
-		///
-		/// This function can be used to store the current settings of a camera description
-		/// permanently so that the next time the driver is initialised these settings are restored.
-		///
-		/// When exporting a camera description a file in XML format will be written to disc. Under 
-		/// Windows&reg; camera descriptions will be stored under 
-		/// <b>%ALLUSERS%\\Documents\\MATRIX VISION\\mvIMPACT acquire\\CameraFiles</b>, under Linux&reg;
-		/// this directory will be <b>/etc/matrix-vision/mvimpact-acquire/camerafiles</b> while under
-		/// other platforms these files will end up in the current working directory. This behaviour can be modified
-		/// by writing the the property <b>mvIMPACT::acquire::Device::customDataDirectory</b> before initialising the
-		/// device.
-		///
-		/// \sa
-		/// <b>mvIMPACT::acquire::CameraDescriptionBase::copyDescription,<br>
-		///    mvIMPACT::acquire::CameraDescriptionBase::importDescription</b>
-		/// \return
-		/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
-		/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> or <b>mvIMPACT::acquire::TPROPHANDLING_ERROR</b> otherwise.
-		int exportDescription( void ) const { return DMR_ExportCameraDescription( m_hDrv, m_hRoot ); }
-		/// \brief Updates a camera description with the data stored in a previous session or
-		/// with the original default data.
-		///
-		/// When importing a camera description the device driver will try to retrieve the parameters
-		/// needed from a XML file. Under Windows&reg; camera descriptions MUST be stored under 
-		/// <b>%ALLUSERS%\\Documents\\MATRIX VISION\\mvIMPACT acquire\\CameraFiles</b>, under Linux&reg;
-		/// this directory will be <b>/etc/matrix-vision/mvimpact-acquire/camerafiles</b> while under
-		/// other platforms these files MUST be located in the current working directory.
-		/// This behaviour can be modified by writing the the property <b>mvIMPACT::acquire::Device::customDataDirectory</b> before initialising the device.
-		/// To get access to a XML description file within the application, these file must be copied to
-		/// this directory <b>BEFORE</b> the device is initialised. During the init process the
-		/// device driver will process every file located under this location and will add them to
-		/// the internal list of descriptions. Every camera located during this process and also descriptions
-		/// created later on during the program operation can be selected via the property
-		/// <b>mvIMPACT::acquire::CameraSettingsFrameGrabber::type</b>.
-		///
-		/// \note
-		/// In order not to bloat the device driver with redundant data it's wise only to store the
-		/// descripitions needed for the application to run under this location.
-		///
-		/// \note
-		/// Only camera descripitions supported by the capture device will be added to the device
-		/// drivers internal list and will therefore be accessible via the
-		/// <b>mvIMPACT::acquire::CameraDescriptionManager</b>.
-		///
-		/// To restore the default values valid during the driver was initialised the function 
-		/// <b>mvIMPACT::acquire::ComponentCollection::restoreDefault</b> can be used as well.
-		///
-		/// \sa
-		/// <b>mvIMPACT::acquire::CameraDescriptionBase::exportDescription,<br>
-		///    mvIMPACT::acquire::CameraDescriptionBase::copyDescription</b>
-		/// \return
-		/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
-		/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> or <b>mvIMPACT::acquire::TPROPHANDLING_ERROR</b> otherwise.
-		int importDescription( void ) const { return DMR_ImportCameraDescription( m_hDrv, m_hRoot ); }
-	#ifdef DOTNET_ONLY_CODE
-		PropertyS getName( void ) const { return name; }
-		PropertyICameraOutput getVideoOutput( void ) const { return videoOutput; }
-		PropertyICameraInterlacedType getInterlacedType( void ) const { return interlacedType; }
-		PropertyI getAoiHeight( void ) const { return aoiHeight; }
-		PropertyI getAoiStartX( void ) const { return aoiStartX; }
-		PropertyI getAoiStartY( void ) const { return aoiStartY; }
-		PropertyI getAoiWidth( void ) const { return aoiWidth; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-
-	//-----------------------------------------------------------------------------
-	/// \brief A base class to describe an arbitrary digital camera signal.
-	///
-	/// This class provides access to all settings specific for digital video signals.
-	class CameraDescriptionDigitalBase : public CameraDescriptionBase
-	//-----------------------------------------------------------------------------
-	{
-	protected:
-		explicit CameraDescriptionDigitalBase( HDRV hDrv, HLIST hList ) : CameraDescriptionBase(hDrv, hList), bitsPerPixel(),
-		  format(), bayerParity()
-		{
-			ComponentLocator locator(m_hRoot);
-			locator.bindComponent( bitsPerPixel, "BitsPerPixel" );
-			locator.bindComponent( format, "Format" );
-			locator.bindComponent( bayerParity, "BayerParity" );
-		}
-	public:
-		PYTHON_ONLY(%immutable;)
-		/// \brief An integer property defining the number of bits per pixel currently transmitted by this camera.
-		PropertyI bitsPerPixel;
-		/// \brief An enumerated integer property defining the data format the camera is sending image data.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraDataFormat</b>.
-		PropertyICameraDataFormat format;
-		/// \brief An enumerated integer property defining the start pixel for a camera delivering an unconverted
-		/// bayer image.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBayerMosaicParity</b>.
-		PropertyIBayerMosaicParity bayerParity;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyI getBitsPerPixel( void ) const { return bitsPerPixel; }
-		PropertyICameraDataFormat getFormat( void ) const { return format; }
-		PropertyIBayerMosaicParity getBayerParity( void ) const { return bayerParity; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-
-	//-----------------------------------------------------------------------------
-	/// \brief A base class to describe a SDI(Serial Digital Interface) camera signal.
-	///
-	/// This class provides access to all settings specific for SDI video signals.
-	class CameraDescriptionSDI : public CameraDescriptionDigitalBase
-	//-----------------------------------------------------------------------------
-	{
-		friend class CameraDescriptionManager;
-		explicit CameraDescriptionSDI( HDRV hDrv, HLIST hList ) : CameraDescriptionDigitalBase(hDrv, hList), videoStandard()
-		{
-			ComponentLocator locator(m_hRoot);
-			locator.bindComponent( videoStandard, "VideoStandard" );
-		}
-	public:
-		PYTHON_ONLY(%immutable;)
-		/// \brief An enumerated integer property for defining the video standard this camera
-		/// is compliant with.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TVideoStandard</b>.
-		PropertyIVideoStandard videoStandard;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyIVideoStandard getVideoStandard( void ) const { return videoStandard; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-
-	//-----------------------------------------------------------------------------
-	/// \brief A base class to describe an arbitrary digital camera signal.
-	///
-	/// This class provides access to all settings specific for digital video signals.
-	class CameraDescriptionDigitalBase2 : public CameraDescriptionDigitalBase
-	//-----------------------------------------------------------------------------
-	{
-	protected:
-		explicit CameraDescriptionDigitalBase2( HDRV hDrv, HLIST hList ) : CameraDescriptionDigitalBase(hDrv, hList),
-		  pixelsPerCycle(), scanMode()
-		{
-			ComponentLocator locator(m_hRoot);
-			locator.bindComponent( pixelsPerCycle, "PixelsPerCycle" );
-			locator.bindComponent( scanMode, "ScanMode" );
-		}
-	public:
-		PYTHON_ONLY(%immutable;)
-		/// \brief An integer property defining the number of pixels per clock cycle transmitted by this camera.
-		///
-		/// This corresponds the number of taps used by the camera in the described configuration.
-		PropertyI pixelsPerCycle;
-		/// \brief An enumerated integer property providing information about the sensor of this camera.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraScanMode</b>.
-		PropertyICameraScanMode scanMode;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyI getPixelsPerCycle( void ) const { return pixelsPerCycle; }
-		PropertyICameraScanMode getScanMode( void ) const { return scanMode; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-
-	//-----------------------------------------------------------------------------
-	/// \brief A class to describe a CameraLink&reg; compliant camera.
-	///
-	/// This class provides access to all settings specific for CameraLink&reg; compliant cameras.
-	class CameraDescriptionCameraLink : public CameraDescriptionDigitalBase2
-	//-----------------------------------------------------------------------------
-	{
-		friend class CameraDescriptionManager;
-		explicit CameraDescriptionCameraLink( HDRV hDrv, HLIST hList ) : CameraDescriptionDigitalBase2(hDrv, hList), dataValid(),
-			tapsXGeometry(), tapsYGeometry()
-		{
-			ComponentLocator locator(m_hRoot);
-			locator.bindComponent( dataValid, "DataValid" );
-			locator.bindComponent( tapsXGeometry, "TapsXGeometry" );
-			locator.bindComponent( tapsYGeometry, "TapsYGeometry" );
-		}
-	public:
-		PYTHON_ONLY(%immutable;)
-		/// \brief An enumerated integer property defining the way this camera transmits the data valid (<b>DVAL</b>)
-		/// signal.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraLinkDataValidMode</b>.
-		PropertyICameraLinkDataValidMode dataValid;
-		/// \brief An enumerated integer property defining the way this camera transmits the pixel data in X direction.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraTapsXGeometry</b>.
-		PropertyICameraTapsXGeometry tapsXGeometry;
-		/// \brief An enumerated integer property defining the way this camera transmits the pixel data in Y direction.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraTapsYGeometry</b>.
-		PropertyICameraTapsYGeometry tapsYGeometry;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyICameraLinkDataValidMode getDataValid( void ) const { return dataValid; }
-		PropertyICameraTapsXGeometry getTapsXGeometry( void ) const { return tapsXGeometry; }
-		PropertyICameraTapsYGeometry getTapsYGeometry( void ) const { return tapsYGeometry; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-
-	//-----------------------------------------------------------------------------
-	/// \brief A class to describe a non-standard digital video signal.
-	///
-	/// This class provides access to all settings specific for non-standard digital video signals.
-	class CameraDescriptionDigital : public CameraDescriptionDigitalBase2
-	//-----------------------------------------------------------------------------
-	{
-		friend class CameraDescriptionManager;
-		explicit CameraDescriptionDigital( HDRV hDrv, HLIST hList ) : CameraDescriptionDigitalBase2(hDrv, hList),
-		  frameSync(), lineSync(), pixelClk()
-		{
-			ComponentLocator locator(m_hRoot);
-			locator.bindComponent( frameSync, "FrameSync" );
-			locator.bindComponent( lineSync, "LineSync" );
-			locator.bindComponent( pixelClk, "PixelClk" );
-		}
-	public:
-		PYTHON_ONLY(%immutable;)
-		/// \brief An enumerated integer property defining the edge valid for the frame sync signal of this camera.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraExternalSyncEdge</b>.
-		///
-		/// \note
-		/// Not every value defined by this enumeration will be supported by this property. Check which values
-		/// are available by reading the properties translation dictionary with
-		/// the functions <b>mvIMPACT::acquire::PropertyICameraExternalSyncEdge::getTranslationDictString</b> and
-		/// <b>mvIMPACT::acquire::PropertyICameraExternalSyncEdge::getTranslationDictValue</b>
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyICameraExternalSyncEdge::getTranslationDict</b>
-		/// in addition to the functions mentioned above.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		PropertyICameraExternalSyncEdge frameSync;
-		/// \brief An enumerated integer property defining the edge valid for the line sync. of this camera.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraExternalSyncEdge</b>.
-		///
-		/// \note
-		/// Not every value defined by this enumeration will be supported by this property. Check which values
-		/// are available by reading the properties translation dictionary with
-		/// the functions <b>mvIMPACT::acquire::PropertyICameraExternalSyncEdge::getTranslationDictString</b> and
-		/// <b>mvIMPACT::acquire::PropertyICameraExternalSyncEdge::getTranslationDictValue</b>
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyICameraExternalSyncEdge::getTranslationDict</b>
-		/// in addition to the functions mentioned above.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		PropertyICameraExternalSyncEdge lineSync;
-		/// \brief An enumerated integer property defining the edge valid for the pixel clock of this camera.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraExternalSyncEdge</b>.
-		///
-		/// \note
-		/// Not every value defined by this enumeration will be supported by this property. Check which values
-		/// are available by reading the properties translation dictionary with
-		/// the functions <b>mvIMPACT::acquire::PropertyICameraExternalSyncEdge::getTranslationDictString</b> and
-		/// <b>mvIMPACT::acquire::PropertyICameraExternalSyncEdge::getTranslationDictValue</b>
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyICameraExternalSyncEdge::getTranslationDict</b>
-		/// in addition to the functions mentioned above.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		PropertyICameraExternalSyncEdge pixelClk;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyICameraExternalSyncEdge	getFrameSync( void ) const { return frameSync; }
-		PropertyICameraExternalSyncEdge	getLineSync( void ) const { return lineSync; }
-		PropertyICameraExternalSyncEdge	getPixelClk( void ) const { return pixelClk; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-
-	//-----------------------------------------------------------------------------
-	/// \brief An internal base class to describe standard analogue video cameras.
-	///
-	/// Instances of this class can't be constructed directly. Use one of the derived types.
-	class CameraDescriptionStandardBase : public CameraDescriptionBase
-	//-----------------------------------------------------------------------------
-	{
-	protected:
-		explicit CameraDescriptionStandardBase( HDRV hDrv, HLIST hList ) : CameraDescriptionBase(hDrv, hList), videoStandard(),
-		  scanStandard(), scanRate_kHz(), startField()
-		{
-			ComponentLocator locator(m_hRoot);
-			locator.bindComponent( videoStandard, "VideoStandard" );
-			locator.bindComponent( scanStandard, "ScanStandard" );
-			locator.bindComponent( scanRate_kHz, "ScanRate_kHz" );
-			locator.bindComponent( startField, "StartField" );
-		}
-	public:
-		PYTHON_ONLY(%immutable;)
-		/// \brief An enumerated integer property for defining the video standard this camera
-		/// is compliant with.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TVideoStandard</b>.
-		PropertyIVideoStandard videoStandard;
-		/// \brief An enumerated integer property defining the scan standard this camera is compliant with.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TScanStandard</b>.
-		PropertyIScanStandard scanStandard;
-		/// \brief An integer property containing the scan rate in kHz needed to driver the AD converter 
-		/// of the capture device with to convert the video signal properly.
-		PropertyI scanRate_kHz;
-		/// \brief An enumerated integer property containing information about the first field transmitted
-		/// by a camera.
-		///
-		/// A camera might transmit either the odd or the even field of an interlaced video signal first.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAcquisitionField</b>.
-		PropertyIAcquisitionField startField;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyIVideoStandard getVideoStandard( void ) const { return videoStandard; }
-		PropertyIScanStandard getScanStandard( void ) const { return scanStandard; }
-		PropertyI getScanRate_kHz( void ) const { return scanRate_kHz; }
-		PropertyIAcquisitionField getStartField( void ) const { return startField; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-
-	//-----------------------------------------------------------------------------
-	/// \brief A class describing analogue standard compliant video cameras.
-	class CameraDescriptionStandard : public CameraDescriptionStandardBase
-	//-----------------------------------------------------------------------------
-	{
-		friend class CameraDescriptionManager;
-		explicit CameraDescriptionStandard( HDRV hDrv, HLIST hList ) : CameraDescriptionStandardBase(hDrv, hList) {}
-	};
-
-	//-----------------------------------------------------------------------------
-	/// \brief A class describing non-standard video cameras
-	///
-	/// This class can be used to describe a non-standard analogue video camera. A camera
-	/// considered as non-standard when it is not compliant with one of the defined 
-	/// video standards like e.g. CCIR.
-	class CameraDescriptionNonStandard : public CameraDescriptionStandardBase
-	//-----------------------------------------------------------------------------
-	{
-		friend class CameraDescriptionManager;
-		explicit CameraDescriptionNonStandard( HDRV hDrv, HLIST hList ) : CameraDescriptionStandardBase(hDrv, hList), lineFrequency_Hz(),
-		  VDOutput(), HDOutput(), syncOutput(), pixelClockOutput(), fieldGateMode(), fieldGateStart(), fieldGateWidth(),
-		  clampMode(), clampStart_us()
-		{
-			ComponentLocator locator(m_hRoot);
-			locator.bindComponent( lineFrequency_Hz, "LineFrequency_Hz" );
-			locator.bindComponent( VDOutput, "VDOutput" );
-			locator.bindComponent( HDOutput, "HDOutput" );
-			locator.bindComponent( syncOutput, "SyncOutput" );
-			locator.bindComponent( pixelClockOutput, "PixelClockOutput" );
-			locator.bindComponent( fieldGateMode, "FieldGateMode" );
-			locator.bindComponent( fieldGateStart, "FieldGateStart" );
-			locator.bindComponent( fieldGateWidth, "FieldGateWidth" );
-			locator.bindComponent( clampMode, "ClampMode" );
-			locator.bindComponent( clampStart_us, "ClampStart_us" );
-		}
-	public:
-		PYTHON_ONLY(%immutable;)
-		/// \brief An integer property containing the line frequency of this camera in Hertz.
-		PropertyI lineFrequency_Hz;
-		/// \brief An enumerated integer property defining whether the vertical sync. information is part of the 
-		/// video signal or transmitted via a separate wire.
-		/// 
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraExternalSyncEdge</b>.
-		PropertyICameraExternalSyncEdge VDOutput;
-		/// \brief An enumerated integer property defining whether the horizontal sync. information is part of the 
-		/// video signal or transmitted via a separate wire.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraExternalSyncEdge</b>.
-		PropertyICameraExternalSyncEdge HDOutput;
-		/// \brief An enumerated integer property for RGB cameras containing information where the sync. information is transmitted.
-		///
-		/// This can either be within one of the three color components or on a separate wire.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraExternalSyncOutput</b>.
-		PropertyICameraExternalSyncOutput syncOutput;
-		/// \brief An enumerated integer property containing information whether the pixel clock is part of the video signal or
-		/// not.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraExternalSyncEdge</b>.
-		PropertyICameraExternalSyncEdge pixelClockOutput;
-		/// \brief An enumerated integer property defining the clamp mode for this camera description.
-		///
-		/// This defines how the field detection(ODD/EVEN) is done.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TFieldGateMode</b>.
-		PropertyIFieldGateMode fieldGateMode;
-		/// \brief An integer property defining the start position (in pixel clocks) of the field gate detection
-		/// area.
-		/// 
-		/// This will only need modification in very rare cases.
-		PropertyI fieldGateStart;
-		/// \brief An integer property defining the width (in pixel clocks) of the field gate detection
-		/// area.
-		/// 
-		/// This will only need modification in very rare cases.
-		PropertyI fieldGateWidth;
-		/// \brief An enumerated integer property defining the clamp mode for this camera description.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TClampMode</b>.
-		PropertyIClampMode clampMode;
-		/// \brief The clamp start position defines where in each line of the video signal the frame grabber
-		/// assumes the black level position.
-		///
-		/// This will only need modification in very rare cases.
-		PropertyI clampStart_us;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyI							getLineFrequency_Hz( void ) const { return lineFrequency_Hz; }
-		PropertyICameraExternalSyncEdge		getVDOutput( void ) const { return VDOutput; }
-		PropertyICameraExternalSyncEdge		getHDOutput( void ) const { return HDOutput; }
-		PropertyICameraExternalSyncOutput	getSyncOutput( void ) const { return syncOutput; }
-		PropertyICameraExternalSyncEdge		getPixelClockOutput( void ) const { return pixelClockOutput; }
-		PropertyIFieldGateMode				getFieldGateMode( void ) const { return fieldGateMode; }
-		PropertyI							getFieldGateStart( void ) const { return fieldGateStart; }
-		PropertyI							getFieldGateWidth( void ) const { return fieldGateWidth; }
-		PropertyIClampMode					getClampMode( void ) const { return clampMode; }
-		PropertyI							getClampStart_us( void ) const { return clampStart_us; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-
-	//-----------------------------------------------------------------------------
-	/// \brief Grants access to camera description objects.
-	///
-	/// This class provides access to the various camera description objects. Each
-	/// device recognizes a different set of camera descriptions. E.g. a digital
-	/// frame grabber will not be able to work with analogue cameras. Each camera description
-	/// class will be derived from <b>mvIMPACT::acquire::CameraDescriptionBase</b>.
-	///
-	/// \note
-	/// Please note that instances of this class will <b>ONLY</b> list camera descriptions
-	/// that have once been selected by the property <b>mvIMPACT::acquire::CameraSettingsFrameGrabber::type</b>
-	/// at runtime. This is to save memory. A complete list of camera descriptions
-	/// available for the current device therefore can only be queried by reading the
-	/// the translation dictionary of the property <b>mvIMPACT::acquire::CameraSettingsFrameGrabber::type</b>.
-	///
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	///
-	/// <b>EXAMPLE</b>(lists all available camera descriptions for a certain device):
-	///\code
-	/// #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
-	/// #include <algorithm>
-	/// #include <iostream>
-	///
-	/// using namespace std;
-	/// using namespace mvIMPACT::acquire;
-	///
-	/// //-----------------------------------------------------------------------------
-	/// template<class T>
-	/// class DisplayDictEntry : public unary_function<pair<string, T>, void>
-	/// //-----------------------------------------------------------------------------
-	/// {
-	/// public:
-	///   void operator()( const pair<string, T>& data ) const
-	///   {
-	///     cout << "  [" << data.second << "]: " << data.first << endl;
-	///   }
-	/// };
-	///
-	/// //-----------------------------------------------------------------------------
-	/// int main(int argc, char* argv[])
-	/// //-----------------------------------------------------------------------------
-	/// {
-	///   DeviceManager devMgr;
-	///   Device* pDev = devMgr[0];
-	///   if( !pDev )
-	///   {
-	///     cout << "No device found" << endl;
-	///     return 0;
-	///   }
-	///
-	///   // display the name of every camera descripiton available for this device.
-	///   // this might be less then the number of camera descriptions available on the system as e.g.
-	///   // an analog frame grabber can't use descriptions for digital cameras
-	///   IntDict vAvailableDescriptions;
-	///   cs.type.getTranslationDict( vAvailableDescriptions );
-	///   cout << endl << "Available camera descriptions: " << vAvailableDescriptions.size() << endl
-	///        << "----------------------------------" << endl;
-	///   for_each( vAvailableDescriptions.begin(), vAvailableDescriptions.end(), DisplayDictEntry<int>() )
-	///
-	///   // list all descriptions that already have been selected at least once
-	///   CameraDescriptionManager camMgr(pDev);
-	///   unsigned int camCnt = camMgr.getCLCameraDescriptionCount();
-	///   cout << "Available CL descriptions: " << camCnt << endl;
-	///   for( unsigned int a=0; a<camCnt; a++ )
-	///   {
-	///     cout << "  " << camMgr.cameraDescriptionCameraLink(a)->name.read() << endl;
-	///   }
-	///   camCnt = camMgr.getStandardCameraDescriptionCount();
-	///   cout << "Available Std descriptions: " << camCnt << endl;
-	///   for( unsigned int b=0; b<camCnt; b++ )
-	///   {
-	///     cout << "  " << camMgr.cameraDescriptionStandard(b)->name.read() << endl;
-	///   }
-	///   camCnt = camMgr.getNonStandardCameraDescriptionCount();
-	///   cout << "Available NonStd descriptions: " << camCnt << endl;
-	///   for( unsigned int c=0; c<camCnt; c++ )
-	///   {
-	///     cout << "  " << camMgr.cameraDescriptionNonStandard(c)->name.read() << endl;
-	///   }
-	///   return 0;
-	/// }
-	///\endcode
-	///\htmlinclude code_fragment_end.html
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///
-	/// \note
-	/// This class will only be available for frame grabber devices. For other devices
-	/// the class constructor will raise an exception.
-	class CameraDescriptionManager
-	//-----------------------------------------------------------------------------
-	{
-		typedef std::map<std::string, unsigned int> StringUIntMap;
-		#ifndef DOXYGEN_SHOULD_SKIP_THIS
-		//-----------------------------------------------------------------------------
-		struct ReferenceCountedData
-		//-----------------------------------------------------------------------------
-		{
-			HDRV                                               m_hDrv;
-			HLIST                                              m_hListCameraDescriptions;
-			mutable unsigned int                               m_lastListSize;
-			mutable std::vector<CameraDescriptionStandard*>    m_vStdDescriptions;
-			mutable std::vector<CameraDescriptionNonStandard*> m_vNonStdDescriptions;
-			mutable std::vector<CameraDescriptionSDI*>         m_vSDIDescriptions;
-			mutable std::vector<CameraDescriptionCameraLink*>  m_vCLDescriptions;
-			mutable std::vector<CameraDescriptionDigital*>     m_vDigitalDescriptions;
-			mutable StringUIntMap                              m_mListNameToDescription;
-			mutable StringUIntMap                              m_mStdNameToDescription;
-			mutable StringUIntMap                              m_mNonStdNameToDescription;
-			mutable StringUIntMap                              m_mSDINameToDescription;
-			mutable StringUIntMap                              m_mCLNameToDescription;
-			mutable StringUIntMap                              m_mDigitalNameToDescription;
-			unsigned int                                       m_refCnt;
-			ReferenceCountedData( HDRV hDrv, HLIST hList ) : m_hDrv(hDrv), m_hListCameraDescriptions(hList),
-				m_lastListSize(0),m_vStdDescriptions(), m_vNonStdDescriptions(), m_vSDIDescriptions(), m_vCLDescriptions(),
-				m_vDigitalDescriptions(), m_mListNameToDescription(), m_mStdNameToDescription(),
-				m_mNonStdNameToDescription(), m_mCLNameToDescription(), m_mDigitalNameToDescription(),
-				m_refCnt(1) {}
-			~ReferenceCountedData()
-			{
-				std::vector<CameraDescriptionStandard*>::size_type vStdSize = m_vStdDescriptions.size();
-				for( std::vector<CameraDescriptionStandard*>::size_type a=0; a<vStdSize; a++ )
-				{
-					delete m_vStdDescriptions[a];
-				}
-				std::vector<CameraDescriptionStandard*>::size_type vNonStdSize = m_vNonStdDescriptions.size();
-				for( std::vector<CameraDescriptionStandard*>::size_type b=0; b<vNonStdSize; b++ )
-				{
-					delete m_vNonStdDescriptions[b];
-				}
-				std::vector<CameraDescriptionSDI*>::size_type vSDISize = m_vSDIDescriptions.size();
-				for( std::vector<CameraDescriptionSDI*>::size_type c=0; c<vSDISize; c++ )
-				{
-					delete m_vSDIDescriptions[c];
-				}
-				std::vector<CameraDescriptionStandard*>::size_type vCLSize = m_vCLDescriptions.size();
-				for( std::vector<CameraDescriptionStandard*>::size_type d=0; d<vCLSize; d++ )
-				{
-					delete m_vCLDescriptions[d];
-				}
-				std::vector<CameraDescriptionStandard*>::size_type vDigSize = m_vDigitalDescriptions.size();
-				for( std::vector<CameraDescriptionStandard*>::size_type e=0; e<vDigSize; e++ )
-				{
-					delete m_vDigitalDescriptions[e];
-				}
-			}
-		} *m_pRefData;
-		#endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
-		//-----------------------------------------------------------------------------
-		void dealloc( void )
-		//-----------------------------------------------------------------------------
-		{
-			--(m_pRefData->m_refCnt);
-			if( m_pRefData->m_refCnt == 0 )
-			{
-				delete m_pRefData;
-			}
-		}
-		//-----------------------------------------------------------------------------
-		bool locateDescription( const StringUIntMap& m, const std::string& name, unsigned int& index ) const
-		//-----------------------------------------------------------------------------
-		{
-			update();
-			StringUIntMap::const_iterator it = m_pRefData->m_mListNameToDescription.find( name );
-			if( it != m_pRefData->m_mListNameToDescription.end() )
-			{
-				index = it->second;
-				return true;
-			}
-			else
-			{
-				it = m.find( name );
-				if( it != m.end() )
-				{
-					index = it->second;
-					return true;
-				}
-			}
-			return false;
-		}
-		//-----------------------------------------------------------------------------	
-		void update( void ) const
-		//-----------------------------------------------------------------------------
-		{
-			ComponentList camDescList(m_pRefData->m_hListCameraDescriptions);
-			unsigned int curSize = camDescList.size();
-			if( m_pRefData->m_lastListSize != curSize )
-			{
-				// new cameras at runtime can only appear at the end of the list
-				ComponentIterator it(m_pRefData->m_hListCameraDescriptions);
-				it = it.firstChild();
-				// move to the old end
-				for( unsigned int i=0; ( i<m_pRefData->m_lastListSize ) && it.isValid(); i++ )
-				{
-					++it;
-				}
-				// start to add new descriptions
-				while( it.isValid() )
-				{
-					ComponentList list(it);
-					if( list.contentDescriptor() == "CameraLink" )
-					{
-						CameraDescriptionCameraLink* p = new CameraDescriptionCameraLink(m_pRefData->m_hDrv, list);
-						unsigned int index = static_cast<unsigned int>(m_pRefData->m_vCLDescriptions.size()); // do not change order of this and the next line!
-						m_pRefData->m_vCLDescriptions.push_back( p );
-						m_pRefData->m_mListNameToDescription.insert( std::make_pair( list.name(), index ) );
-						m_pRefData->m_mCLNameToDescription.insert( std::make_pair( p->name.read(), index ) );
-					}
-					else if( list.contentDescriptor() == "SDI" )
-					{
-						CameraDescriptionSDI* p = new CameraDescriptionSDI(m_pRefData->m_hDrv, list);
-						unsigned int index = static_cast<unsigned int>(m_pRefData->m_vCLDescriptions.size()); // do not change order of this and the next line!
-						m_pRefData->m_vSDIDescriptions.push_back( p );
-						m_pRefData->m_mListNameToDescription.insert( std::make_pair( list.name(), index ) );
-						m_pRefData->m_mSDINameToDescription.insert( std::make_pair( p->name.read(), index ) );
-					}
-					else if( list.contentDescriptor() == "Digital" )
-					{
-						CameraDescriptionDigital* p = new CameraDescriptionDigital(m_pRefData->m_hDrv, list);
-						unsigned int index = static_cast<unsigned int>(m_pRefData->m_vDigitalDescriptions.size()); // do not change order of this and the next line!
-						m_pRefData->m_vDigitalDescriptions.push_back( p );
-						m_pRefData->m_mListNameToDescription.insert( std::make_pair( list.name(), index ) );
-						m_pRefData->m_mDigitalNameToDescription.insert( std::make_pair( p->name.read(), index ) );
-					}
-					else if( list.contentDescriptor() == "Standard" )
-					{
-						CameraDescriptionStandard* p = new CameraDescriptionStandard(m_pRefData->m_hDrv, list);
-						unsigned int index = static_cast<unsigned int>(m_pRefData->m_vStdDescriptions.size()); // do not change order of this and the next line!
-						m_pRefData->m_vStdDescriptions.push_back( p );
-						m_pRefData->m_mListNameToDescription.insert( std::make_pair( list.name(), index ) );
-						m_pRefData->m_mStdNameToDescription.insert( std::make_pair( p->name.read(), index ) );
-					}
-					else if( list.contentDescriptor() == "NonStandard" )
-					{
-						CameraDescriptionNonStandard* p = new CameraDescriptionNonStandard(m_pRefData->m_hDrv, list);
-						unsigned int index = static_cast<unsigned int>(m_pRefData->m_vNonStdDescriptions.size()); // do not change order of this and the next line!
-						m_pRefData->m_vNonStdDescriptions.push_back( p );
-						m_pRefData->m_mListNameToDescription.insert( std::make_pair( list.name(), index ) );
-						m_pRefData->m_mNonStdNameToDescription.insert( std::make_pair( p->name.read(), index ) );
-					}
-					else
-					{
-						; // NOT recognized....
-					}
-					++it;
-				}
-				m_pRefData->m_lastListSize = curSize;
-			}
-		}
-	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::CameraDescriptionManager</b> object.
-		explicit CameraDescriptionManager(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::>DeviceManager</b> object.
-											Device* pDev ) : m_pRefData(0)
-		{
-			if( !pDev->isOpen() )
-			{
-				pDev->open();
-			}
-
-			TDMR_ERROR result;
-			HLIST hList;
-			if( ( result = DMR_FindList( pDev->hDrv(), 0, dmltCameraDescriptions, 0, &hList ) ) != DMR_NO_ERROR )
-			{
-				ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, INVALID_ID, "Couldn't find camera description list (is this a frame grabber?)" );
-			}
-			m_pRefData = new ReferenceCountedData(pDev->hDrv(), hList);
-		}
-		/// \brief Constructs a new <b>mvIMPACT::acquire::CameraDescriptionManager</b> from
-		/// and exisiting one.
-		explicit CameraDescriptionManager(	/// A constant reference to the <b>mvIMPACT::acquire::CameraDescriptionManager</b> object, this object shall be created from
-											const CameraDescriptionManager& src ) : m_pRefData(src.m_pRefData)
-		{
-			++(m_pRefData->m_refCnt);
-		}
-		/// \brief Class destructor
-		~CameraDescriptionManager()
-		{
-			dealloc();
-		}
-#ifndef WRAP_PYTHON
-	/// \brief Allows assignments of <b>mvIMPACT::acquire::CameraDescriptionManager</b> objects
-	CameraDescriptionManager& operator=( const CameraDescriptionManager& rhs )
-	{
-		if( this != &rhs )
-		{
-			dealloc();
-			m_pRefData = rhs.m_pRefData;
-			// inc. the NEW reference count
-			++m_pRefData->m_refCnt;
-		}
-		return *this;
-	}
-#endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
-		/// \brief Returns the number of CameraLink&reg; camera descriptions currently available for the device
-		/// that constructed this instance of the class.
-		unsigned int getCLCameraDescriptionCount( void ) const
-		{
-			update();
-			return static_cast<unsigned int>(m_pRefData->m_vCLDescriptions.size());
-		}
-		/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionCameraLink</b> object specifying the camera
-		/// description found at the given index in the camera description managers internal list.
-		///
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// If the index is either equal or higher than the number of CameraLink&reg; camera descriptions<br>
-		/// detected for this device a STL out_of_range exception will be thrown.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		CameraDescriptionCameraLink* cameraDescriptionCameraLink(	/// The index of the camera description to return
-																	unsigned int index ) const
-		{
-			update();
-			return m_pRefData->m_vCLDescriptions.at( index );
-		}
-		/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionCameraLink</b> object specifying the camera
-		/// description with the given name in the camera description managers internal list.
-		///
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// If \a nr is invalid(too large) a STL out_of_range exception
-		/// will be thrown.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///
-		/// \return
-		/// - a pointer to a <b>mvIMPACT::acquire::CameraDescriptionCameraLink</b> object specifying the camera
-		/// description with the given name in the camera description managers internal list if a camera
-		/// description with \a name is available.
-		/// - an invalid pointer or reference otherwise.
-		CameraDescriptionCameraLink* cameraDescriptionCameraLink(	/// The name of the camera description. This can either be 
-																	/// the name of the list like e.g. 'CameraLink_Generic' or the 
-																	/// value of the property 'name' of this description like
-																	/// e.g. 'Generic'.
-																	const std::string& name ) const
-		{
-			unsigned int index = 0;
-			return ( ( locateDescription( m_pRefData->m_mCLNameToDescription, name, index ) == true ) ? m_pRefData->m_vCLDescriptions.at( index ) : 0 );
-		}
-		/// \brief Returns the number of SDI camera descriptions currently available for the device
-		/// that constructed this instance of the class.
-		unsigned int getSDICameraDescriptionCount( void ) const
-		{
-			update();
-			return static_cast<unsigned int>(m_pRefData->m_vSDIDescriptions.size());
-		}
-		/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionSDI</b> object specifying the camera
-		/// description found at the given index in the camera description managers internal list.
-		///
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// If the index is either equal or higher than the number of SDI camera descriptions<br>
-		/// detected for this device a STL out_of_range exception will be thrown.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		CameraDescriptionSDI* cameraDescriptionSDI(	/// The index of the camera description to return
-													unsigned int index ) const
-		{
-			update();
-			return m_pRefData->m_vSDIDescriptions.at( index );
-		}
-		/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionSDI</b> object specifying the camera
-		/// description with the given name in the camera description managers internal list.
-		///
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// If \a nr is invalid(too large) a STL out_of_range exception
-		/// will be thrown.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///
-		/// \return
-		/// - a pointer to a <b>mvIMPACT::acquire::CameraDescriptionSDI</b> object specifying the camera
-		/// description with the given name in the camera description managers internal list if a camera
-		/// description with \a name is available.
-		/// - an invalid pointer or reference otherwise.
-		CameraDescriptionSDI* cameraDescriptionSDI(	/// The name of the camera description. This can either be 
-													/// the name of the list like e.g. 'CameraLink_Generic' or the 
-													/// value of the property 'name' of this description like
-													/// e.g. 'Generic'.
-													const std::string& name ) const
-		{
-			unsigned int index = 0;
-			return ( ( locateDescription( m_pRefData->m_mSDINameToDescription, name, index ) == true ) ? m_pRefData->m_vSDIDescriptions.at( index ) : 0 );
-		}
-		/// \brief Returns the number of non-standard digital camera descriptions currently available for the device
-		/// that constructed this instance of the class.
-		unsigned int getDigitalCameraDescriptionCount( void ) const 
-		{
-			update();
-			return static_cast<unsigned int>(m_pRefData->m_vDigitalDescriptions.size());
-		}
-		/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionDigital</b> object specifying the camera
-		/// description found at the given index in the camera description managers internal list.
-		///
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// If the index is either equal or higher than the number of non-standard digital camera descriptions<br>
-		/// detected for this device a STL out_of_range exception will be thrown.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		CameraDescriptionDigital* cameraDescriptionDigital(	/// \brief The index of the camera description to return
-															unsigned int index ) const
-		{
-			update();
-			return m_pRefData->m_vDigitalDescriptions.at( index );
-		}
-		/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionDigital</b> object specifying the camera
-		/// description with the given name in the camera description managers internal list.
-		///
-		/// \return
-		/// - a pointer to a <b>mvIMPACT::acquire::CameraDescriptionDigital</b> object specifying the camera
-		/// description with the given name in the camera description managers internal list if a camera
-		/// description with \a name is available.
-		/// - an invalid pointer or reference otherwise.
-		CameraDescriptionDigital* cameraDescriptionDigital(	/// The name of the camera description. This can either be 
-															/// the name of the list like e.g. 'Digital_Generic' or the 
-															/// value of the property 'name' of this description like
-															/// e.g. 'Generic'.
-															const std::string& name ) const
-		{
-			unsigned int index = 0;
-			return ( ( locateDescription( m_pRefData->m_mDigitalNameToDescription, name, index ) == true ) ? m_pRefData->m_vDigitalDescriptions.at( index ) : 0 );
-		}
-		/// \brief Returns the number of standard camera descriptions currently available for the device
-		/// that constructed this instance of the class.
-		unsigned int getStandardCameraDescriptionCount( void ) const 
-		{
-			update();
-			return static_cast<unsigned int>(m_pRefData->m_vStdDescriptions.size());
-		}
-		/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionStandard</b> object specifying the camera
-		/// description found at the given index in the camera description managers internal list.
-		///
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// If the index is either equal or higher than the number of standard camera descriptions<br>
-		/// detected for this device a STL out_of_range exception will be thrown.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		CameraDescriptionStandard* cameraDescriptionStandard(	/// \brief The index of the camera description to return
-																unsigned int index ) const
-		{
-			update();
-			return m_pRefData->m_vStdDescriptions.at( index );
-		}
-		/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionStandard</b> object specifying the camera
-		/// description with the given name in the camera description managers internal list.
-		///
-		/// \return
-		/// - a pointer to a <b>mvIMPACT::acquire::CameraDescriptionStandard</b> object specifying the camera
-		/// description with the given name in the camera description managers internal list if a camera
-		/// description with \a name is available.
-		/// - an invalid pointer or reference otherwise.
-		CameraDescriptionStandard* cameraDescriptionStandard(	/// The name of the camera description. This can either be 
-																/// the name of the list like e.g. 'Standard_Generic' or the 
-																/// value of the property 'name' of this description like
-																/// e.g. 'Generic'.
-																const std::string& name ) const
-		{
-			unsigned int index = 0;
-			return ( ( locateDescription( m_pRefData->m_mStdNameToDescription, name, index ) == true ) ? m_pRefData->m_vStdDescriptions.at( index ) : 0 );
-		}
-		/// \brief Returns the number of non-standard camera descriptions currently available for the device
-		/// that constructed this instance of the class.
-		unsigned int getNonStandardCameraDescriptionCount( void ) const 
-		{
-			update();
-			return static_cast<unsigned int>(m_pRefData->m_vNonStdDescriptions.size());
-		}
-		/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionNonStandard</b> object specifying the camera
-		/// description found at the given index in the camera description managers internal list.
-		///
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-		///\endxmlonly
-		///\htmlinclude code_fragment_start_cpp.html
-		/// If the index is either equal or higher than the number of non-standard camera descriptions<br>
-		/// detected for this device a STL out_of_range exception will be thrown.
-		///\htmlinclude code_fragment_end.html
-		///\xmlonly
-		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-		///\endxmlonly
-		CameraDescriptionNonStandard* cameraDescriptionNonStandard(	/// \brief The index of the camera description to return
-																	unsigned int index ) const
-		{
-			update();
-			return m_pRefData->m_vNonStdDescriptions.at( index );
-		}
-		/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionNonStandard</b> object specifying the camera
-		/// description with the given name in the camera description managers internal list.
-		///
-		/// \return
-		/// - a pointer to a <b>mvIMPACT::acquire::CameraDescriptionNonStandard</b> object specifying the camera
-		/// description with the given name in the camera description managers internal list if a camera
-		/// description with \a name is available.
-		/// - an invalid pointer or reference otherwise.
-		CameraDescriptionNonStandard* cameraDescriptionNonStandard(	/// The name of the camera description. This can either be 
-																	/// the name of the list like e.g. 'NonStandard_Generic' or the 
-																	/// value of the property 'name' of this description like
-																	/// e.g. 'Generic'.
-																	const std::string& name ) const
-		{
-			unsigned int index = 0;
-			return ( ( locateDescription( m_pRefData->m_mNonStdNameToDescription, name, index ) == true ) ? m_pRefData->m_vNonStdDescriptions.at( index ) : 0 );
-		}
-	};
-#endif // #ifndef #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
 //-----------------------------------------------------------------------------
 /// \brief Properties to define the result images format.
@@ -14591,7 +8787,7 @@ public:
 		locator.bindComponent( imageWidth, "ImageWidth" );
 		locator.bindComponent( imageHeight, "ImageHeight" );
 	}
-	PYTHON_ONLY(%immutable;)
+PYTHON_ONLY(%immutable;)
 	/// \brief An enumerated integer property defining the pixel format of the resulting image.
 	///
 	/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TImageDestinationPixelFormat</b>.
@@ -14638,13 +8834,13 @@ public:
 	/// \note
 	/// Please see remarks under <b>mvIMPACT::acquire::ImageDestination::scalerMode</b>.
 	PropertyI imageHeight;
-	PYTHON_ONLY(%mutable;)
+PYTHON_ONLY(%mutable;)
 #ifdef DOTNET_ONLY_CODE
-	PropertyIImageDestinationPixelFormat	getPixelFormat( void ) const { return pixelFormat; }
-	PropertyIScalerMode						getScalerMode( void ) const { return scalerMode; }
-	PropertyIScalerInterpolationMode		getScalerInterpolationMode( void ) const { return scalerInterpolationMode; }
-	PropertyI								getImageWidth( void ) const { return imageWidth; }
-	PropertyI								getImageHeight( void ) const { return imageHeight; }
+	PropertyIImageDestinationPixelFormat getPixelFormat( void ) const { return pixelFormat; }
+	PropertyIScalerMode getScalerMode( void ) const { return scalerMode; }
+	PropertyIScalerInterpolationMode getScalerInterpolationMode( void ) const { return scalerInterpolationMode; }
+	PropertyI getImageWidth( void ) const { return imageWidth; }
+	PropertyI getImageHeight( void ) const { return imageHeight; }
 #endif // #ifdef DOTNET_ONLY_CODE
 };
 
@@ -14664,7 +8860,7 @@ class WhiteBalanceSettings : public ComponentCollection
 	// fixed parts of that class.
 	friend class ImageProcessing;
 	explicit WhiteBalanceSettings( HOBJ hObj ): ComponentCollection(hObj), WBAoiMode(), aoiHeight(), aoiStartX(), aoiStartY(),
-		aoiWidth(), totalGain(), redGain(), greenGain(), blueGain(),  WBresult()
+		aoiWidth(), totalGain(), redGain(), greenGain(), blueGain(),  WBResult()
 	{
 		ComponentLocator locator(hObj);
 		locator.bindComponent( WBAoiMode, "WBAoiMode" );
@@ -14672,7 +8868,7 @@ class WhiteBalanceSettings : public ComponentCollection
 		locator.bindComponent( redGain, "RedGain" );
 		locator.bindComponent( greenGain, "GreenGain" );
 		locator.bindComponent( blueGain, "BlueGain" );
-		locator.bindComponent( WBresult, "WBResult" );
+		locator.bindComponent( WBResult, "WBResult" );
 		locator.bindSearchBase( locator.searchbase_id(), "WBAoi" );
 		locator.bindComponent( aoiHeight, "H" );
 		locator.bindComponent( aoiStartX, "X" );
@@ -14680,7 +8876,7 @@ class WhiteBalanceSettings : public ComponentCollection
 		locator.bindComponent( aoiWidth, "W" );
 	}
 public:
-	PYTHON_ONLY(%immutable;)
+PYTHON_ONLY(%immutable;)
 	/// \brief An enumerated integer property defining the which area of the image is used
 	/// for the calculation of the parameters.
 	///
@@ -14725,8 +8921,8 @@ public:
 	/// <b>mvIMPACT::acquire::bwbrUnknown</b>.
 	///
 	/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBayerWhiteBalanceResult</b>.
-	PropertyIBayerWhiteBalanceResult WBresult;
-	PYTHON_ONLY(%mutable;)
+	PropertyIBayerWhiteBalanceResult WBResult;
+PYTHON_ONLY(%mutable;)
 #ifdef DOTNET_ONLY_CODE
 	PropertyIAoiMode getWBAoiMode( void ) const { return WBAoiMode; }
 	PropertyI getAoiHeight( void ) const { return aoiHeight; }
@@ -14737,7 +8933,7 @@ public:
 	PropertyF getRedGain( void ) const { return redGain; }
 	PropertyF getGreenGain( void ) const { return greenGain; }
 	PropertyF getBlueGain( void ) const { return blueGain; }
-	PropertyIBayerWhiteBalanceResult getWBresult( void ) const { return WBresult; }
+	PropertyIBayerWhiteBalanceResult getWBresult( void ) const { return WBResult; }
 #endif // #ifdef DOTNET_ONLY_CODE
 };
 
@@ -14767,7 +8963,7 @@ class GainOffsetKneeChannelParameters : public ComponentCollection
 		locator.bindComponent( offset_pc, "Offset_pc" );
 	}
 public:
-	PYTHON_ONLY(%immutable;)
+PYTHON_ONLY(%immutable;)
 	/// \brief A float property that contains the channel specific gain to be applied to the selected
 	/// channel of the image.
 	///
@@ -14778,7 +8974,7 @@ public:
 	///
 	/// This offset will be applied after the channel specific gain.
 	PropertyF offset_pc;
-	PYTHON_ONLY(%mutable;)
+PYTHON_ONLY(%mutable;)
 #ifdef DOTNET_ONLY_CODE
 	PropertyF getGain( void ) const { return gain; }
 	PropertyF getOffset_pc( void ) const { return offset_pc; }
@@ -14812,7 +9008,7 @@ class LUTParameters : public ComponentCollection
 		locator.bindComponent( directValues, "DirectValues" );
 	}
 public:
-	PYTHON_ONLY(%immutable;)
+PYTHON_ONLY(%immutable;)
 	/// \brief A float property which can be used to set the gamma value.
 	///
 	/// Gamma correction is explained e.g. in this Wikipedia articla: http://en.wikipedia.org/wiki/Gamma_correction.
@@ -14982,7 +9178,7 @@ public:
 	/// This property will provide a complete LUT thus e.g. in a LUT mapping to a 10 bit output this property will store 2^10 (1024)
 	/// values, that can be accessed and modified by the user.
 	PropertyI directValues;
-	PYTHON_ONLY(%mutable;)
+PYTHON_ONLY(%mutable;)
 #ifdef DOTNET_ONLY_CODE
 	PropertyF getGamma( void ) const { return gamma; }
 	PropertyF getGammaAlpha( void ) const { return gammaAlpha; }
@@ -15017,357 +9213,16 @@ class MirrorParameters : public ComponentCollection
 		locator.bindComponent( mirrorMode, "MirrorMode" );
 	}
 public:
-	PYTHON_ONLY(%immutable;)
+PYTHON_ONLY(%immutable;)
 	/// \brief An enumerated integer property defining the mirror mode to be applied to this channel of the image.
 	///
 	/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TMirrorMode</b>.
 	PropertyIMirrorMode mirrorMode;
-	PYTHON_ONLY(%mutable;)
+PYTHON_ONLY(%mutable;)
 #ifdef DOTNET_ONLY_CODE
 	PropertyIMirrorMode getMirrorMode( void ) const { return mirrorMode; }
 #endif // #ifdef DOTNET_ONLY_CODE
 };
-
-//-----------------------------------------------------------------------------
-/// \brief Properties for accessing features belonging to the I2C control.
-///
-/// Properties in this class will only be available if a device has a local I2C
-/// bus and this is configured for access from an application.
-///
-///\xmlonly
-/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-///\endxmlonly
-///\htmlinclude code_fragment_start_cpp.html
-/// <b>EXAMPLE:</b>
-///
-///\code
-/// I2CControl i2cc(pBF);
-/// if( i2cc.I2COperationMode.isValid() )
-/// {
-///   // direct property access
-///   i2cc.I2CBufferLength.write( 0 );
-///   i2cc.I2COperationMode.write( I2ComRead );
-///   assert( ( i2cc.I2COperationExecute.call() == DMR_INVALID_PARAMETER ) && "Unexpected driver behaviour" );
-///   assert( ( i2cc.I2COperationStatus.read() == I2CosNotEnoughData ) && "Unexpected driver behaviour" );
-///   i2cc.I2COperationMode.write( I2ComWrite );
-///   i2cc.I2CBuffer.writeBinary( string() );
-///   assert( ( i2cc.I2COperationExecute.call() == DMR_INVALID_PARAMETER ) && "Unexpected driver behaviour" );
-///   assert( ( i2cc.I2COperationStatus.read() == I2CosNotEnoughData ) && "Unexpected driver behaviour" );
-///   // Write some data. This will only work if serveral conditions are met:
-///   // - there is a device that can be written to at address 0xA6
-///   // - the sub-address 0x04 is valid
-///   // - the device is designed to work with 8 bit sub-addresses
-///   // - the device can deal with 9 bytes in a single command
-///   i2cc.I2CDeviceAddress.write( 0xA6 );
-///   i2cc.I2CDeviceSubAddress.write( 0x04 );
-///   i2cc.I2CDeviceSubAddressWidth.write( 8 );
-///   char binData[9] = { 'D', 'E', 'A', 'D', ' ', 'B', 'E', 'E', 'F' };
-///   i2cc.I2CBuffer.writeBinary( string(binData, sizeof(binData)) );
-///   i2cc.I2COperationMode.write( I2ComWrite );
-///   int I2COperationExecuteResult = i2cc.I2COperationExecute.call();
-///   if( I2COperationExecuteResult != DMR_NO_ERROR )
-///   {
-///     printf( "'I2COperationExecute' write failed. Return value: %s(%d).\n", ImpactAcquireException::getErrorCodeAsString( I2COperationExecuteResult ).c_str(), I2COperationExecuteResult );
-///   }
-///   printf( "'I2COperationStatus' after write: %s.\n", i2cc.I2COperationStatus.readS().c_str() );
-///   // Read some data. Similar condition as for write apply
-///   const int bytesToRead = 4;
-///   i2cc.I2CDeviceAddress.write( 0xA8 );
-///   i2cc.I2CDeviceSubAddress.write( 0x00 );
-///   i2cc.I2CDeviceSubAddressWidth.write( 8 );
-///   i2cc.I2CBufferLength.write( bytesToRead ); // read 'bytesToRead' bytes
-///   i2cc.I2COperationMode.write( I2ComRead );
-///   i2cc.I2COperationExecute.call();
-///   I2COperationExecuteResult = i2cc.I2COperationExecute.call();
-///   if( I2COperationExecuteResult != DMR_NO_ERROR )
-///   {
-///     printf( "'I2COperationExecute' read failed. Return value: %s(%d).\n", ImpactAcquireException::getErrorCodeAsString( I2COperationExecuteResult ).c_str(), I2COperationExecuteResult );
-///   }
-///   printf( "'I2COperationStatus' after read: %s.\n", i2cc.I2COperationStatus.readS().c_str() );
-///   if( i2cc.I2CBuffer.binaryDataBufferSize() != bytesToRead )
-///   {
-///     printf( "'I2CBuffer' reports %d bytes of data while %d bytes where expected.\n", i2cc.I2CBuffer.binaryDataBufferSize(), bytesToRead );
-///   }
-///   // usage of the convenience functions
-///   i2cc.I2CWrite( 0xA4, 0x00, 8, string("TEST") );
-///   const string i2cReadBuffer = i2cc.I2CRead( 0xA4, 0x00, 8, 4 );
-/// }
-/// else
-/// {
-///   printf( "I2CControl not available.\n" );
-/// }
-///\endcode
-///\htmlinclude code_fragment_end.html
-///\xmlonly
-/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-///\endxmlonly
-class I2CControl : public ComponentCollection
-//-----------------------------------------------------------------------------
-{
-private:
-	void prepareI2CAccess( int deviceAddress, int deviceSubAddress, int deviceSubAddressWidth, TI2COperationMode mode )
-	{
-		I2CDeviceAddress.write( deviceAddress );
-		I2CDeviceSubAddress.write( deviceSubAddress );
-		I2CDeviceSubAddressWidth.write( deviceSubAddressWidth );
-		I2COperationMode.write( mode );
-	}
-public:
-	/// brief Constructs a new <b>mvIMPACT::acquire::I2CControl</b> object.
-	explicit I2CControl(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-							Device* pDev ): ComponentCollection(pDev), I2COperationMode(), I2COperationExecute(), I2COperationStatus(),
-							  I2CDeviceAddress(), I2CDeviceSubAddress(), I2CDeviceSubAddressWidth(), I2CBuffer(), I2CBufferLength()
-	{
-		DeviceComponentLocator locator(pDev, dltIOSubSystem);
-		HLIST hList = locator.findComponent( "I2CControl" );
-		if( hList != INVALID_ID )
-		{
-			locator.bindSearchBase( locator.searchbase_id(), "I2CControl" );
-			m_hRoot = locator.searchbase_id();
-			locator.bindComponent( I2COperationMode, "I2COperationMode" );
-			locator.bindComponent( I2COperationExecute, "I2COperationExecute@i" );
-			locator.bindComponent( I2COperationStatus, "I2COperationStatus" );
-			locator.bindComponent( I2CDeviceAddress, "I2CDeviceAddress" );
-			locator.bindComponent( I2CDeviceSubAddress, "I2CDeviceSubAddress" );
-			locator.bindComponent( I2CDeviceSubAddressWidth, "I2CDeviceSubAddressWidth" );
-			locator.bindComponent( I2CBuffer, "I2CBuffer" );
-			locator.bindComponent( I2CBufferLength, "I2CBufferLength" );
-		}
-	}
-	PYTHON_ONLY(%immutable;)
-	/// \brief An enumerated integer property to select the I2C operation.
-	///
-	/// The selected operation is executed when <b>mvIMPACT::acquire::I2CControl::I2COperationExecute</b> is called.
-	///
-	/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TI2COperationMode</b>.
-	PropertyII2COperationMode I2COperationMode;
-	/// \brief Calling this function will execute the operation selected by <b>mvIMPACT::acquire::I2CControl::I2COperationMode</b>.
-	Method I2COperationExecute;
-	/// \brief Represents the I2C operation execution status.
-	///
-	/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TI2COperationStatus</b>.
-	PropertyII2COperationStatus I2COperationStatus;
-	/// \brief An integer property storing the address of the I2C device to communicate with.
-	PropertyI I2CDeviceAddress;
-	/// \brief An integer property storing the sub-address of the I2C device to communicate with.
-	PropertyI I2CDeviceSubAddress;
-	/// \brief An enumerated integer property storing the sub-address width(in bits) of the I2C device to communicate with.
-	///
-	/// Valid values for this property are:
-	///
-	/// - 8
-	/// - 16
-	PropertyI I2CDeviceSubAddressWidth;
-	/// \brief Defines the intermediate access buffer that allows the exchange of data between the I2C device and the application.
-	///
-	/// This property can store binary data.
-	PropertyS I2CBuffer;
-	/// \brief An integer property controlling the length of the mapping between the I2C device and the <b>mvIMPACT::acquire::I2CControl::I2CBuffer</b> property.
-	PropertyI I2CBufferLength;
-	PYTHON_ONLY(%mutable;)
-	/// \brief Read data from an I2C device.
-	///
-	/// This is a convenience function that wraps the property access a little.
-	/// In order to find out if the command has been executed successfully
-	/// <b>mvIMPACT::acquire::I2CControl::I2COperationStatus</b> should be checked afterwards.
-	std::string I2CRead(	/// The address of the I2C device to communicate with.
-							int deviceAddress,
-							/// The sub-address of the I2C device to communicate with.
-							int deviceSubAddress,
-							/// The sub-address width(in bits) of the I2C device to communicate with.
-							int deviceSubAddressWidth,
-							/// The amount of bytes to read.
-							int byteCnt )
-	{
-		prepareI2CAccess( deviceAddress, deviceSubAddress, deviceSubAddressWidth, I2ComRead );
-		I2CBufferLength.write( byteCnt );
-		I2COperationExecute.call();
-		return I2CBuffer.readBinary();
-	}
-	/// \brief Write data to a I2C device.
-	///
-	/// This is a convenience function that wraps the property access a little.
-	/// In order to find out if the command has been executed successfully
-	/// <b>mvIMPACT::acquire::I2CControl::I2COperationStatus</b> should be checked afterwards.
-	void I2CWrite(	/// The address of the I2C device to communicate with.
-					int deviceAddress,
-					/// The sub-address of the I2C device to communicate with.
-					int deviceSubAddress,
-					/// The sub-address width(in bits) of the I2C device to communicate with.
-					int deviceSubAddressWidth,
-					/// The data to write to the I2C device.
-					const std::string& data )
-	{
-		prepareI2CAccess( deviceAddress, deviceSubAddress, deviceSubAddressWidth, I2ComWrite );
-		I2CBuffer.writeBinary( data );
-		I2COperationExecute.call();
-	}
-#ifdef DOTNET_ONLY_CODE
-	PropertyII2COperationMode getI2COperationMode( void ) const { return I2COperationMode; }
-	Method getI2COperationExecute( void ) const { return I2COperationExecute; }
-	PropertyII2COperationStatus getI2COperationStatus( void ) const { return I2COperationStatus; }
-	PropertyI getI2CDeviceAddress( void ) const { return I2CDeviceAddress; }
-	PropertyI getI2CDeviceSubAddress( void ) const { return I2CDeviceSubAddress; }
-	PropertyI getI2CDeviceSubAddressWidth( void ) const { return I2CDeviceSubAddressWidth; }
-	PropertyS getI2CBuffer( void ) const { return I2CBuffer; }
-	PropertyI getI2CBufferLength( void ) const { return I2CBufferLength; }
-#endif // #ifdef DOTNET_ONLY_CODE
-};
-
-//-----------------------------------------------------------------------------
-/// \brief Properties for configuring settings belonging to the motor focus control.
-///
-/// Properties in this class will only be available if a device is fitted with
-/// a focus motor.
-class MotorFocusControl : public ComponentCollection
-//-----------------------------------------------------------------------------
-{
-public:
-	/// brief Constructs a new <b>mvIMPACT::acquire::MotorFocusControl</b> object.
-	explicit MotorFocusControl(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-								Device* pDev ): ComponentCollection(pDev), motorFocusSendBuffer(), motorFocusReceiveBuffer(), motorFocusSend(),
-								  motorFocusIncrement(), motorFocusNear(), motorFocusFar(), motorFocusAbsolutePositionCurrent(),
-								  motorFocusAbsolutePositionDesired(), motorFocusMoveToAbsolutePositionDesired()
-	{
-		DeviceComponentLocator locator(pDev, dltIOSubSystem);
-		HLIST hList = locator.findComponent( "MotorFocusControl" );
-		if( hList != INVALID_ID )
-		{
-			locator.bindSearchBase( locator.searchbase_id(), "MotorFocusControl" );
-			m_hRoot = locator.searchbase_id();
-			locator.bindComponent( motorFocusSendBuffer, "MotorFocusSendBuffer" );
-			locator.bindComponent( motorFocusReceiveBuffer, "MotorFocusReceiveBuffer" );
-			locator.bindComponent( motorFocusSend, "MotorFocusSend@i" );
-			locator.bindComponent( motorFocusIncrement, "MotorFocusIncrement" );
-			locator.bindComponent( motorFocusNear, "MotorFocusNear@i" );
-			locator.bindComponent( motorFocusFar, "MotorFocusFar@i" );
-			locator.bindComponent( motorFocusAbsolutePositionCurrent, "MotorFocusAbsolutePositionCurrent" );
-			locator.bindComponent( motorFocusAbsolutePositionDesired, "MotorFocusAbsolutePositionDesired" );
-			locator.bindComponent( motorFocusMoveToAbsolutePositionDesired, "MotorFocusMoveToAbsolutePositionDesired@i" );
-		}
-	}
-	PYTHON_ONLY(%immutable;)
-	/// \brief A string property storing a command to be send to the motor focus.
-	///
-	/// To actually send the command, the function <b>mvIMPACT::acquire::MotorFocusControl::motorFocusSend</b> must be executed.
-	PropertyS motorFocusSendBuffer;
-	/// \brief A string property <b>(read-only)</b> that will contain answers sent by the motor focus controller.
-	PropertyS motorFocusReceiveBuffer;
-	/// \brief Calling this function will send the value of <b>mvIMPACT::acquire::MotorFocusControl::motorFocusSendBuffer</b> to the hardware.
-	///
-	/// Afterwards <b>mvIMPACT::acquire::MotorFocusControl::motorFocusReceiveBuffer</b> will contain the hardwares answer.
-	Method motorFocusSend;
-	/// \brief An integer property storing an increment(in encoder counts) that will be used by subsequent calls to <b>mvIMPACT::acquire::MotorFocusControl::motorFocusNear</b> and <b>mvIMPACT::acquire::MotorFocusControl::motorFocusFar</b> commands.
-	PropertyI motorFocusIncrement;
-	/// \brief Calling this function will cause the motor focus to move forward by <b>mvIMPACT::acquire::MotorFocusControl::motorFocusIncrement</b> encoder units.
-	Method motorFocusNear;
-	/// \brief Calling this function will cause the motor focus to move backward by <b>mvIMPACT::acquire::MotorFocusControl::motorFocusIncrement</b> encoder units.
-	Method motorFocusFar;
-	/// \brief An integer property <b>(read-only)</b> storing the current absolute position(in encoder counts).
-	PropertyI motorFocusAbsolutePositionCurrent;
-	/// \brief An integer property storing an absolute position(in encoder counts) that will be used by subsequent calls to the <b>mvIMPACT::acquire::MotorFocusControl::motorFocusMoveToAbsolutePositionDesired</b> command.
-	PropertyI motorFocusAbsolutePositionDesired;
-	/// \brief Calling this function will cause the motor focus to move to the position defined by the value of <b>mvIMPACT::acquire::MotorFocusControl::motorFocusAbsolutePositionDesired</b>.
-	Method motorFocusMoveToAbsolutePositionDesired;
-	PYTHON_ONLY(%mutable;)
-#ifdef DOTNET_ONLY_CODE
-	PropertyS getMotorFocusSendBuffer( void ) const { return motorFocusSendBuffer; }
-	PropertyS getMotorFocusReceiveBuffer( void ) const { return motorFocusReceiveBuffer; }
-	Method getMotorFocusSend( void ) const { return motorFocusSend; }
-	PropertyI getMotorFocusIncrement( void ) const { return motorFocusIncrement; }
-	Method getMotorFocusNear( void ) const { return motorFocusNear; }
-	Method getMotorFocusFar( void ) const { return motorFocusFar; }
-	PropertyI getMotorFocusAbsolutePositionCurrent( void ) const { return motorFocusAbsolutePositionCurrent; }
-	PropertyI getMotorFocusAbsolutePositionDesired( void ) const { return motorFocusAbsolutePositionDesired; }
-	Method getMotorFocusMoveToAbsolutePositionDesired( void ) const { return motorFocusMoveToAbsolutePositionDesired; }
-#endif // #ifdef DOTNET_ONLY_CODE
-};
-
-#ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
-	//-----------------------------------------------------------------------------
-	/// \brief Properties for configuring settings belonging to the digital I/O measurement.
-	///
-	/// Properties in this class will only be available if a device offers digital I/O measurement features.
-	///
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
-	///\endxmlonly
-	///\htmlinclude code_fragment_start_cpp.html
-	/// <b>EXAMPLE:</b>
-	///
-	///\code
-	/// // This code fragment will print result of measurement using all modes on all sources
-	/// // to the standard output.
-	/// DigitalIOMeasurementControl iomc(getDevicePointerFromSomewhere());
-	/// if( iomc.digitalIOMeasurementMode.isValid() && iomc.digitalIOMeasurementSource.isValid() )
-	/// {
-	///   vector<pair<string, TDigitalIOMeasurementMode> > modeDict;
-	///   iomc.digitalIOMeasurementMode.getTranslationDict( modeDict );
-	///   const unsigned int modeCnt = iomc.digitalIOMeasurementMode.dictSize();
-	///   vector<pair<string, TDigitalIOMeasurementSource> > srcDict;
-	///   iomc.digitalIOMeasurementSource.getTranslationDict( srcDict );
-	///   const unsigned int srcCnt = iomc.digitalIOMeasurementSource.dictSize();
-	///   for( unsigned int i=0; i<modeCnt; i++ )
-	///   {
-	///     iomc.digitalIOMeasurementMode.write( modeDict[i].second );
-	///     for( unsigned int j=0; j<srcCnt; j++ )
-	///     {
-	///       iomc.digitalIOMeasurementSource.write( srcDict[j].second );
-	///       printf( "Digital I/O measurement result using mode '%s' at source '%s': %s\n", iomc.digitalIOMeasurementMode.readS().c_str(), iomc.digitalIOMeasurementSource.readS().c_str(), iomc.digitalIOMeasurementResult.readS().c_str() );
-	///     }
-	///   }
-	/// }
-	///\endcode
-	///\htmlinclude code_fragment_end.html
-	///\xmlonly
-	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
-	///\endxmlonly
-	class DigitalIOMeasurementControl : public ComponentCollection
-	//-----------------------------------------------------------------------------
-	{
-	public:
-		/// brief Constructs a new <b>mvIMPACT::acquire::DigitalIOMeasurementControl</b> object.
-		explicit DigitalIOMeasurementControl(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-												Device* pDev ): ComponentCollection(pDev), digitalIOMeasurementMode(), digitalIOMeasurementSource(),
-												digitalIOMeasurementResult()
-		{
-			DeviceComponentLocator locator(pDev, dltIOSubSystem);
-			HLIST hList = locator.findComponent( "DigitalIOMeasurementControl" );
-			if( hList != INVALID_ID )
-			{
-				locator.bindSearchBase( locator.searchbase_id(), "DigitalIOMeasurementControl" );
-				m_hRoot = locator.searchbase_id();
-				locator.bindComponent( digitalIOMeasurementMode, "DigitalIOMeasurementMode" );
-				locator.bindComponent( digitalIOMeasurementSource, "DigitalIOMeasurementSource" );
-				locator.bindComponent( digitalIOMeasurementResult, "DigitalIOMeasurementResult" );
-			}
-		}
-		PYTHON_ONLY(%immutable;)
-		/// \brief An enumerated integer property defining the type of measurement to perform.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDigitalIOMeasurementMode</b>.
-		PropertyIDigitalIOMeasurementMode digitalIOMeasurementMode;
-		/// \brief An enumerated integer property defining where the measurement shall be performed.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDigitalIOMeasurementMode</b>.
-		PropertyIDigitalIOMeasurementSource digitalIOMeasurementSource;
-		/// \brief A float property that will contain the result of the measurement.
-		///
-		/// Reading this property will automatically perform a new measurement.
-		///
-		/// \note
-		/// Please note that the signal connected to the digital input must match the selected digital input
-		/// threshold(see <b>mvIMPACT::acquire::IOSubSystemBlueFOX::digitalInputThreshold</b>) in order to
-		/// obtain valid results.
-		PropertyF digitalIOMeasurementResult;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyIDigitalIOMeasurementMode getDigitalIOMeasurementMode( void ) const { return digitalIOMeasurementMode; }
-		PropertyIDigitalIOMeasurementSource getDigitalIOMeasurementSource( void ) const { return digitalIOMeasurementSource; }
-		PropertyF getDigitalIOMeasurementResult( void ) const { return digitalIOMeasurementResult; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-#endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
 
 //-----------------------------------------------------------------------------
 /// \brief Base class for image processing related properties.
@@ -15382,45 +9237,45 @@ class ImageProcessing : public ComponentCollection
 	typedef std::vector<LUTParameters*> LUTParameterContainer;
 	typedef std::vector<MirrorParameters*> MirrorParameterContainer;
 	typedef std::vector<WhiteBalanceSettings*> WBSettingsContainer;
-	#ifndef DOXYGEN_SHOULD_SKIP_THIS
-	//-----------------------------------------------------------------------------
-	struct ReferenceCountedData
-	//-----------------------------------------------------------------------------
-	{
-		HDRV                             m_hDrv;
-		HLIST                            m_hSetting;
-		GainOffsetKneeParameterContainer m_GainOffsetKneeParameters;
-		LUTParameterContainer            m_LUTParameters;
-		MirrorParameterContainer         m_MirrorParameters;
-		WBSettingsContainer              m_WBUserSettings;
-		unsigned int                     m_refCnt;
-		ReferenceCountedData( HDRV hDrv, HLIST hSetting ) : m_hDrv(hDrv), m_hSetting(hSetting),
-			m_GainOffsetKneeParameters(), m_LUTParameters(), m_MirrorParameters(), m_WBUserSettings(), m_refCnt(1) {}
-		~ReferenceCountedData()
+#	ifndef DOXYGEN_SHOULD_SKIP_THIS
+		//-----------------------------------------------------------------------------
+		struct ReferenceCountedData
+		//-----------------------------------------------------------------------------
 		{
-			const GainOffsetKneeParameterContainer::size_type GainOffsetKneeParameterCnt = m_GainOffsetKneeParameters.size();
-			for( GainOffsetKneeParameterContainer::size_type h=0; h<GainOffsetKneeParameterCnt; h++ )
+			HDRV                             m_hDrv;
+			HLIST                            m_hSetting;
+			GainOffsetKneeParameterContainer m_GainOffsetKneeParameters;
+			LUTParameterContainer            m_LUTParameters;
+			MirrorParameterContainer         m_MirrorParameters;
+			WBSettingsContainer              m_WBUserSettings;
+			unsigned int                     m_refCnt;
+			ReferenceCountedData( HDRV hDrv, HLIST hSetting ) : m_hDrv(hDrv), m_hSetting(hSetting),
+				m_GainOffsetKneeParameters(), m_LUTParameters(), m_MirrorParameters(), m_WBUserSettings(), m_refCnt(1) {}
+			~ReferenceCountedData()
 			{
-				delete m_GainOffsetKneeParameters[h];
+				const GainOffsetKneeParameterContainer::size_type GainOffsetKneeParameterCnt = m_GainOffsetKneeParameters.size();
+				for( GainOffsetKneeParameterContainer::size_type h=0; h<GainOffsetKneeParameterCnt; h++ )
+				{
+					delete m_GainOffsetKneeParameters[h];
+				}
+				const LUTParameterContainer::size_type LUTParametersCnt = m_LUTParameters.size();
+				for( LUTParameterContainer::size_type i=0; i<LUTParametersCnt; i++ )
+				{
+					delete m_LUTParameters[i];
+				}
+				const MirrorParameterContainer::size_type MirrorParametersCnt = m_MirrorParameters.size();
+				for( MirrorParameterContainer::size_type j=0; j<MirrorParametersCnt; j++ )
+				{
+					delete m_MirrorParameters[j];
+				}
+				const WBSettingsContainer::size_type WBSettingsCnt = m_WBUserSettings.size();
+				for( WBSettingsContainer::size_type k=0; k<WBSettingsCnt; k++ )
+				{
+					delete m_WBUserSettings[k];
+				}
 			}
-			const LUTParameterContainer::size_type LUTParametersCnt = m_LUTParameters.size();
-			for( LUTParameterContainer::size_type i=0; i<LUTParametersCnt; i++ )
-			{
-				delete m_LUTParameters[i];
-			}
-			const MirrorParameterContainer::size_type MirrorParametersCnt = m_MirrorParameters.size();
-			for( MirrorParameterContainer::size_type j=0; j<MirrorParametersCnt; j++ )
-			{
-				delete m_MirrorParameters[j];
-			}
-			const WBSettingsContainer::size_type WBSettingsCnt = m_WBUserSettings.size();
-			for( WBSettingsContainer::size_type k=0; k<WBSettingsCnt; k++ )
-			{
-				delete m_WBUserSettings[k];
-			}
-		}
-	} *m_pRefData;
-	#endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
+		} *m_pRefData;
+#	endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
 	//-----------------------------------------------------------------------------
 	void bindPublicProperties( void )
 	//-----------------------------------------------------------------------------
@@ -15437,16 +9292,28 @@ class ImageProcessing : public ComponentCollection
 			locator.bindComponent( mirrorOperationMode, "MirrorOperationMode" );
 			locator.bindComponent( mirrorModeGlobal, "MirrorModeGlobal" );
 		}
-		locator.bindSearchBase( m_hRoot, "DefectivePixelsFilter" );
-		locator.bindComponent( defectivePixelsFilterMode, "Mode");
-		locator.bindComponent( defectivePixelsFilterLeakyPixelDeviation_ADCLimit, "LeakyPixelDeviation_ADCLimit" );
-		locator.bindComponent( defectivePixelsFilterColdPixelDeviation_pc, "ColdPixelDeviation_pc" );
-		locator.bindSearchBase( m_hRoot, "FlatFieldFilter" );
-		locator.bindComponent( flatFieldFilterMode, "Mode" );
-		locator.bindComponent( flatFieldFilterCalibrationImageCount, "CalibrationImageCount" );
-		locator.bindSearchBase( m_hRoot, "DarkCurrentFilter" );
-		locator.bindComponent( darkCurrentFilterMode, "Mode" );
-		locator.bindComponent( darkCurrentFilterCalibrationImageCount, "CalibrationImageCount" );
+		locator.bindSearchBase( m_hRoot );
+		if( locator.findComponent( "DefectivePixelsFilter" ) != INVALID_ID )
+		{
+			locator.bindSearchBase( m_hRoot, "DefectivePixelsFilter" );
+			locator.bindComponent( defectivePixelsFilterMode, "Mode");
+			locator.bindComponent( defectivePixelsFilterLeakyPixelDeviation_ADCLimit, "LeakyPixelDeviation_ADCLimit" );
+			locator.bindComponent( defectivePixelsFilterColdPixelDeviation_pc, "ColdPixelDeviation_pc" );
+		}
+		locator.bindSearchBase( m_hRoot );
+		if( locator.findComponent( "FlatFieldFilter" ) != INVALID_ID )
+		{
+			locator.bindSearchBase( m_hRoot, "FlatFieldFilter" );
+			locator.bindComponent( flatFieldFilterMode, "Mode" );
+			locator.bindComponent( flatFieldFilterCalibrationImageCount, "CalibrationImageCount" );
+		}
+		locator.bindSearchBase( m_hRoot );
+		if( locator.findComponent( "DarkCurrentFilter" ) != INVALID_ID )
+		{
+			locator.bindSearchBase( m_hRoot, "DarkCurrentFilter" );
+			locator.bindComponent( darkCurrentFilterMode, "Mode" );
+			locator.bindComponent( darkCurrentFilterCalibrationImageCount, "CalibrationImageCount" );
+		}
 		locator.bindSearchBase( m_hRoot );
 		if( locator.findComponent( "GainOffsetKnee" ) != INVALID_ID )
 		{
@@ -15561,7 +9428,7 @@ public:
 		// create the Mirror parameter objects for this setting
 		if( locator.findComponent( "Mirror" ) != INVALID_ID )
 		{
-			// this driver offers Mirrir support
+			// this driver offers Mirror support
 			locator.bindSearchBase( locator.searchbase_id(), "Mirror" );
 			locator.bindSearchBase( locator.searchbase_id(), "MirrorChannels" );
 			number = 0;
@@ -15624,21 +9491,21 @@ public:
 		dealloc();
 	}
 #ifndef WRAP_PYTHON
-	/// \brief Allows assignments of <b>mvIMPACT::acquire::ImageProcessing</b> objects
-	ImageProcessing& operator=( const ImageProcessing& rhs )
-	{
-		if( this != &rhs )
+		/// \brief Allows assignments of <b>mvIMPACT::acquire::ImageProcessing</b> objects
+		ImageProcessing& operator=( const ImageProcessing& rhs )
 		{
-			ComponentCollection::operator=(rhs);
-			dealloc();
-			m_pRefData = rhs.m_pRefData;
-			++m_pRefData->m_refCnt;
-			bindPublicProperties();
+			if( this != &rhs )
+			{
+				ComponentCollection::operator=(rhs);
+				dealloc();
+				m_pRefData = rhs.m_pRefData;
+				++m_pRefData->m_refCnt;
+				bindPublicProperties();
+			}
+			return *this;
 		}
-		return *this;
-	}
 #endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
-	PYTHON_ONLY(%immutable;)
+PYTHON_ONLY(%immutable;)
 	/// \brief An enumerated integer property defining what kind of color processing shall be applied to the
 	/// raw image data.
 	///
@@ -15818,7 +9685,7 @@ public:
 	/// This property will store 4 values. The first 3 component for the third row of the 3x3 matrix, the last component is the
 	/// offset of this row.
 	PropertyF colorTwistRow2;
-	PYTHON_ONLY(%mutable;)
+PYTHON_ONLY(%mutable;)
 #ifdef DOTNET_ONLY_CODE
 	PropertyIColorProcessingMode getColorProcessing( void ) const { return colorProcessing; }
 	PropertyIBayerConversionMode getBayerConversionMode( void ) const { return bayerConversionMode; }
@@ -15876,15 +9743,15 @@ public:
 		row[0] = 0.299       + 0.701*K;
 		row[1] = 0.587*(1-K);
 		row[2] = 0.114*(1-K);
-		colorTwistRow0.write( row );
+		colorTwistRow0.write( row, true );
 		row[0] = 0.299*(1-K);
 		row[1] = 0.587       + 0.413*K;
 		row[2] = 0.114*(1-K);
-		colorTwistRow1.write( row );
+		colorTwistRow1.write( row, true );
 		row[0] = 0.299*(1-K);
 		row[1] = 0.587*(1-K);
 		row[2] = 0.114       + 0.886*K;
-		colorTwistRow2.write( row );
+		colorTwistRow2.write( row, true );
 	}
 	/// \brief Returns a reference to a set of user definable parameters to configure a certain channel of the GainOffsetKnee filter.
 	///
@@ -15969,112 +9836,6 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-/// \brief A base class that provides access to the most common settings for a
-/// device.
-///
-/// Use one of the class derived from this class to get access to all the available
-/// settings.
-class FullSettingsBase
-//-----------------------------------------------------------------------------
-{
-protected:
-	explicit FullSettingsBase(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-								Device* pDev,
-								/// The name of the driver internal setting to access with this instance.
-								/// A list of valid setting names can be obtained by a call to
-								/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
-								/// settings can be created with the function
-								/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
-								const std::string& name = "Base" ) : imageProcessing(pDev, name), imageDestination(pDev, name), basedOn()
-	{
-		DeviceComponentLocator locator(pDev, dltSetting, name);
-		locator.bindComponent( basedOn, "BasedOn" );
-	}
-public:
-	virtual ~FullSettingsBase() {}
-	PYTHON_ONLY(%immutable;)
-	/// \brief Image processing related properties.
-	ImageProcessing imageProcessing;
-	/// \brief Properties to define the result images format.
-	ImageDestination imageDestination;
-	/// \brief A string property <b>(read-only)</b> containing the name of the setting this setting is based on.
-	PropertyS basedOn;
-	PYTHON_ONLY(%mutable;)
-#ifdef DOTNET_ONLY_CODE
-	ImageDestination& getImageDestination( void ) { return imageDestination; }
-	PropertyS getBasedOn( void ) const { return basedOn; }
-#endif // #ifdef DOTNET_ONLY_CODE
-};
-
-#ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
-	//-----------------------------------------------------------------------------
-	/// \brief This class provides access to general settings as well as to settings
-	/// which are unique for the <b>mvBlueFOX</b>.
-	///
-	/// To see a small code example on how you can work with object of this class see
-	/// the detailed description of the class <b>mvIMPACT::acquire::FunctionInterface</b> as well.
-	/// Statements made for the use of the class <b>mvIMPACT::acquire::FullSettingsBase</b> apply for
-	/// this class as well.
-	class SettingsBlueFOX : public FullSettingsBase
-	//-----------------------------------------------------------------------------
-	{
-	public:
-		explicit SettingsBlueFOX(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-									Device* pDev,
-									/// The name of the driver internal setting to access with this instance.
-									/// A list of valid setting names can be obtained by a call to
-									/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
-									/// settings can be created with the function
-									/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
-									const std::string& name = "Base" ) : FullSettingsBase(pDev, name),
-			cameraSetting(pDev, name) {}
-		PYTHON_ONLY(%immutable;)
-		/// \brief Camera related settings.
-		CameraSettingsBlueFOX cameraSetting;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		CameraSettingsBlueFOX& getCameraSetting( void ) { return cameraSetting; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-#endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
-
-#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-	//-----------------------------------------------------------------------------
-	/// \brief This class provides access to general settings as well as to settings
-	/// which are unique for frame grabber devices.
-	///
-	/// To see a small code example on how you can work with object of this class see
-	/// the detailed description of the class <b>mvIMPACT::acquire::FunctionInterface</b> as well.
-	/// Statements made for the use of the class <b>mvIMPACT::acquire::FullSettingsBase</b> apply for
-	/// this class as well.
-	class SettingsFrameGrabber : public FullSettingsBase
-	//-----------------------------------------------------------------------------
-	{
-	public:
-		explicit SettingsFrameGrabber(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-										Device* pDev,
-										/// The name of the driver internal setting to access with this instance.
-										/// A list of valid setting names can be obtained by a call to
-										/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
-										/// settings can be created with the function
-										/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
-										const std::string& name = "Base" ) : FullSettingsBase(pDev, name), cameraSetting(pDev, name), connector(pDev, name), imageProcessing(pDev, name) {}
-		PYTHON_ONLY(%immutable;)
-		/// \brief Camera related settings.
-		CameraSettingsFrameGrabber cameraSetting;
-		/// \brief Input channel related properties.
-		Connector connector;
-		/// \brief Image processing related properties.
-		ImageProcessing imageProcessing;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		CameraSettingsFrameGrabber& getCameraSetting( void ) { return cameraSetting; }
-		Connector& getConnector( void ) { return connector; }
-		ImageProcessing& getImageProcessing( void ) { return imageProcessing; }
-	#endif // #ifdef DOTNET_ONLY_CODE
-	};
-#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-//-----------------------------------------------------------------------------
 /// \brief Contains basic statistical information
 ///
 /// This class contains basic statistical information about the <b>mvIMPACT::acquire::Device</b> and the
@@ -16088,7 +9849,7 @@ public:
 								/// <b>mvIMPACT::acquire::DeviceManager</b> object.
 								Device* pDev) : ComponentCollection(pDev), m_resetStatistics(), captureTime_s(),
 								  errorCount(), abortedRequestsCount(), timedOutRequestsCount(), framesPerSecond(),
-								  frameCount(), imageProcTime_s(), queueTime_s(), lostImagesCount(),
+								  frameCount(), imageProcTime_s(), formatConvertTime_s(), queueTime_s(), lostImagesCount(),
 								  framesIncompleteCount(), missingDataAverage_pc(), retransmitCount()
 	{
 		DeviceComponentLocator locator(pDev, dltStatistics);
@@ -16101,6 +9862,7 @@ public:
 		locator.bindComponent( framesPerSecond, "FramesPerSecond" );
 		locator.bindComponent( frameCount, "FrameCount" );
 		locator.bindComponent( imageProcTime_s, "ImageProcTime_s" );
+		locator.bindComponent( formatConvertTime_s, "FormatConvertTime_s" );
 		locator.bindComponent( queueTime_s, "QueueTime_s" );
 		locator.bindComponent( lostImagesCount, "LostImagesCount" );
 		locator.bindComponent( framesIncompleteCount, "FramesIncompleteCount" );
@@ -16108,15 +9870,19 @@ public:
 		locator.bindComponent( retransmitCount, "RetransmitCount" );
 	}
 	/// \brief Resets all statistical properties.
-	TDMR_ERROR reset( void ) const
+	///
+	/// \return
+	/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
+	/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
+	int reset( void ) const
 	{
 		if( !m_resetStatistics.isValid() )
 		{
 			return DMR_FEATURE_NOT_AVAILABLE;
 		}
-		return static_cast<TDMR_ERROR>(m_resetStatistics.call());
+		return m_resetStatistics.call();
 	}
-	PYTHON_ONLY(%immutable;)
+PYTHON_ONLY(%immutable;)
 	/// \brief A float property <b>(read-only)</b> containing the average time needed to capture an image.
 	///
 	/// This time is <b>NOT</b> the reciprocal of the frame rate, but usually a longer period of time as it includes the time
@@ -16144,6 +9910,14 @@ public:
 	/// image by the driver (e.g. when working with Bayer mosaic cameras) or if any other processing function is applied to the
 	/// image before it is transferred to the user.
 	PropertyF imageProcTime_s;
+	/// \brief An integer property <b>(read-only)</b> containing the time (in seconds) needed to convert the image data
+	/// delivered by the hardware and/or active internal driver filter nodes to the format specified by <b>mvIMPACT::acquire::ImageDestination::pixelFormat</b>
+	/// internally.
+	///
+	/// This time will be almost 0 when no custom destination pixel format has been specified and if a custom destination format
+	/// was selected and this format differs from the pixel format that is transferred by the hardware this time will be a part
+	/// (or all, but never more) than the time reported by <b>mvIMPACT::acquire::Statistics::imageProcTime_s</b>.
+	PropertyF formatConvertTime_s;
 	/// \brief A float property <b>(read-only)</b> containing the average time (in seconds) a <b>mvIMPACT::acquire::Request</b> object
 	/// spends in the request queue of the device.
 	PropertyF queueTime_s;
@@ -16195,7 +9969,7 @@ public:
 	/// This feature is supported by every device driver. If a device does not seem to support this feature (calling <b>mvIMPACT::acquire::Component::isValid</b> returns false)
 	/// a driver update will fix this.
 	PropertyI64 retransmitCount;
-	PYTHON_ONLY(%mutable;)
+PYTHON_ONLY(%mutable;)
 #ifdef DOTNET_ONLY_CODE
 	PropertyF getCaptureTime_s( void ) const { return captureTime_s; }
 	PropertyI getErrorCount( void ) const { return errorCount; }
@@ -16204,6 +9978,7 @@ public:
 	PropertyF getFramesPerSecond( void ) const { return framesPerSecond; }
 	PropertyI getFrameCount( void ) const { return frameCount; }
 	PropertyF getImageProcTime_s( void ) const { return imageProcTime_s; }
+	PropertyF getFormatConvertTime_s( void ) const { return formatConvertTime_s; }
 	PropertyF getQueueTime_s( void ) const { return queueTime_s; }
 	PropertyI getLostImagesCount( void ) const { return lostImagesCount; }
 	PropertyI getFramesIncompleteCount( void ) const { return framesIncompleteCount; }
@@ -16247,7 +10022,7 @@ protected:
 		locator.bindComponent( acquisitionMode, "AcquisitionMode" );
 	}
 public:
-	PYTHON_ONLY(%immutable;)
+PYTHON_ONLY(%immutable;)
 	/// \brief An integer property defining the number of requests allocated by the driver.
 	///
 	/// Each request object can be used to capture data into. Multiple requests can be processed
@@ -16278,7 +10053,7 @@ public:
 	///
 	/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAcquisitionMode</b>.
 	PropertyIAcquisitionMode acquisitionMode;
-	PYTHON_ONLY(%mutable;)
+PYTHON_ONLY(%mutable;)
 #ifdef DOTNET_ONLY_CODE
 	PropertyI getRequestCount( void ) const { return requestCount; }
 	PropertyIThreadPriority getWorkerPriority( void ) const { return workerPriority; }
@@ -16297,166 +10072,7047 @@ public:
 							 Device* pDev ) : SystemBase(pDev) {}
 };
 
-#ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
-	/// \brief <b>deprecated</b>. Use the class <b>mvIMPACT::acquire::SystemSettings</b> instead.
+/// @}
+
+#ifndef IGNORE_MVDEVICE_SPECIFIC_INTERFACE_DOCUMENTATION
+
+/// \defgroup DeviceSpecificInterface Device specific interface layout
+/// This group contains classes that will be available if the device is used
+/// with the <b>mvIMPACT::acquire::dilDeviceSpecific</b> interface layout.
+///
+/// \ingroup CommonInterface
+///
+/// @{
+
+#	ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+		//-----------------------------------------------------------------------------
+		/// \brief An interface class to access DMA memory related properties(<b>Device specific interface layout only</b>).
+		///
+		/// This class can be used to configure the way the device works with DMA memory.
+		/// This is an advanced feature and shall only be used if neccessary or to
+		/// fine tune an application to achieve optimal performance.
+		/// 
+		/// All frame grabbers belonging to the mvTITAN, mvGAMMA, mvSIGMA and mvDELTA series use a special,
+		/// preallocated block of memory(DMA memory) as target for fast image transfer. The total size of
+		/// this block has to be set during driver installation. The memory is claimed from the operating 
+		/// system during startup and is shared between all installed devices.
+		///
+		/// The memory size needed to achieve optimal performance depends on the image size to grab, the queue depth
+		/// and the mode the memory manager is operated in. Valid modes are defined by the enumeration 
+		/// <b>mvIMPACT::acquire::TMemoryManagerMode</b> and can be selected by modifying the property
+		/// <b>mvIMPACT::acquire::ImageMemoryManager::mode</b>.
+		///
+		/// \note This class is currently available for frame grabber devices only.
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class ImageMemoryManager : public ComponentCollection
+		//-----------------------------------------------------------------------------
+		{
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::InfoBase</b> object.
+			explicit ImageMemoryManager(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from
+											/// a <b>mvIMPACT::acquire::DeviceManager</b> object.
+											Device* pDev ) : ComponentCollection(pDev),
+											  mode(), allocatedDMAMemory_bytes(),
+											  usedDMAMemory_bytes(), usedBlocks(),
+											  poolMode(), poolBlockSize_bytes(),
+											  poolBlockCount()
+			{
+				DeviceComponentLocator locator(pDev, dltImageMemoryManager );
+				m_hRoot = locator.searchbase_id();
+				locator.bindComponent( mode, "Mode" );
+				locator.bindComponent( allocatedDMAMemory_bytes, "AllocatedDMAMemory_bytes" );
+				locator.bindComponent( usedDMAMemory_bytes, "UsedDMAMemory_bytes" );
+				locator.bindComponent( usedBlocks, "UsedBlocks" );
+				locator.bindComponent( poolMode, "PoolMode" );
+				locator.bindComponent( poolBlockSize_bytes, "PoolBlockSize_bytes" );
+				locator.bindComponent( poolBlockCount, "PoolBlockCount" );
+			}
+		PYTHON_ONLY(%immutable;)
+			/// \brief An enumerated integer property containing the mode the memory manager is currently operated in.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TMemoryManagerMode</b>.
+			PropertyIMemoryManagerMode mode;
+			/// \brief An integer property <b>(read-only)</b> containing the size of the allocated DMA memory (in bytes).
+			PropertyI allocatedDMAMemory_bytes;
+			/// \brief An integer property <b>(read-only)</b> containing the size of the DMA memory (in bytes) currently used by the device.
+			PropertyI usedDMAMemory_bytes;
+			/// \brief An integer property <b>(read-only)</b> containing the number of individual blocks of DMA memory currently used by the device.
+			PropertyI usedBlocks;
+			/// \brief An enumerated integer property containing the mode the memory managers memory pool is currently operated in.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TMemoryManagerPoolMode</b>.
+			PropertyIMemoryManagerPoolMode poolMode;
+			/// \brief An integer property defining the size (in bytes) to use for each block of DMA memory.
+			PropertyI poolBlockSize_bytes;
+			/// \brief An integer property <b>(read-only)</b> containing the number of individual blocks of DMA memory currently available when using 
+			/// the current pool block size and pool mode.
+			PropertyI poolBlockCount;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyIMemoryManagerMode getMode( void ) const { return mode; }
+			PropertyI getAllocatedDMAMemory( void ) const { return allocatedDMAMemory_bytes; }
+			PropertyI getUsedDMAMemory( void ) const { return usedDMAMemory_bytes; }
+			PropertyI getUsedBlocks( void ) const { return usedBlocks; }
+			PropertyIMemoryManagerPoolMode getPoolMode( void ) const { return poolMode; }
+			PropertyI getPoolBlockSize( void ) const { return poolBlockSize_bytes; }
+			PropertyI getPoolBlockCount( void ) const { return poolBlockCount; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+#	endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+#	if !defined(IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION)
+		//-----------------------------------------------------------------------------
+		/// \brief A more specific class to query information about a <b>mvBlueDevice</b>
+		/// device and its driver(<b>Device specific interface layout only</b>).
+		///
+		/// This class contains a collection of properties providing various information about
+		/// a <b>mvBlueDevice</b> device and its driver.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class InfoBlueDevice : public InfoBase
+		//-----------------------------------------------------------------------------
+		{
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::InfoBlueDevice</b> object.
+			explicit InfoBlueDevice(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+										Device* pDev ) : InfoBase(pDev),
+										  sensorXRes(), sensorYRes(), sensorColorMode(), sensorType()
+			{
+				ComponentLocator locator(m_hRoot, "Camera" );
+				locator.bindComponent( sensorXRes, "SensorXRes" );
+				locator.bindComponent( sensorYRes, "SensorYRes" );
+				locator.bindComponent( sensorColorMode, "SensorColorMode" );
+				locator.bindComponent( sensorType, "SensorType" );
+			}
+		PYTHON_ONLY(%immutable;)
+			/// \brief An integer property <b>(read-only)</b> containing the horizontal resolution
+			/// of the camera sensor.
+			///
+			/// If the device has more than one sensor head, and all these sensor heads can be accessed using the current interface,
+			/// this property will contain as many values as the devices offers sensor heads.
+			PropertyI sensorXRes;
+			/// \brief An integer property <b>(read-only)</b> containing the vertical resolution
+			/// of the camera sensor.
+			///
+			/// If the device has more than one sensor head, and all these sensor heads can be accessed using the current interface,
+			/// this property will contain as many values as the devices offers sensor heads.
+			PropertyI sensorYRes;
+			/// \brief An enumerated integer property <b>(read-only)</b> containing the type of the sensor
+			/// (color/mono/...)(if known).
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TInfoSensorColorMode</b>.
+			///
+			/// \note
+			/// If nothing is known about this feature, this property will contain <b>mvIMPACT::acquire::iscmUnknown</b>.
+			///
+			/// If the device has more than one sensor head, and all these sensor heads can be accessed using the current interface,
+			/// this property will contain as many values as the devices offers sensor heads.
+			PropertyIInfoSensorColorMode sensorColorMode;
+			/// \brief An enumerated integer property <b>(read-only)</b> containing the type of sensor chip of the
+			/// camera(if known).
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TInfoSensorType</b>.
+			///
+			/// This usually will either be <b>mvIMPACT::acquire::istCCD</b> or <b>mvIMPACT::acquire::istCMOS</b>.
+			///
+			/// If the device has more than one sensor head, and all these sensor heads can be accessed using the current interface,
+			/// this property will contain as many values as the devices offers sensor heads.
+			PropertyIInfoSensorType sensorType;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyI getSensorXRes( void ) const { return sensorXRes; }
+			PropertyI getSensorYRes( void ) const { return sensorYRes; }
+			PropertyIInfoSensorColorMode getSensorColorMode( void ) const { return sensorColorMode; }
+			PropertyIInfoSensorType getSensorType( void ) const { return sensorType; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+#	endif // #if !defined(IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION)
+
+#	ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
+		//-----------------------------------------------------------------------------
+		/// \brief A more specific class to query information about a <b>mvBlueCOUGAR</b>
+		/// or <b>mvBlueLYNX-M7</b> device and its driver(<b>Device specific interface layout only</b>).
+		///
+		/// This class contains a collection of properties providing various information about
+		/// a <b>mvBlueCOUGAR</b> or <b>mvBlueLYNX-M7</b> device and its driver.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class InfoBlueCOUGAR : public InfoBlueDevice
+		//-----------------------------------------------------------------------------
+		{
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::InfoBlueCOUGAR</b> object.
+			explicit InfoBlueCOUGAR(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+										Device* pDev ) : InfoBlueDevice(pDev), deviceBootloaderVersion(), deviceRFSVersion(),
+										deviceKernelVersion(), deviceFPGAVersion(), deviceStatus(), deviceStatusMessage(),
+										deviceSensorRevision(), clientConnectionState()
+			{
+				ComponentLocator locator(m_hRoot, "Camera");
+				locator.bindComponent( deviceBootloaderVersion, "DeviceBootloaderVersion" );
+				locator.bindComponent( deviceRFSVersion, "DeviceRFSVersion" );
+				locator.bindComponent( deviceKernelVersion, "DeviceKernelVersion" );
+				locator.bindComponent( deviceFPGAVersion, "DeviceFPGAVersion" );
+				locator.bindComponent( deviceStatus, "DeviceStatus" );
+				locator.bindComponent( deviceStatusMessage, "DeviceStatusMessage" );
+				locator.bindComponent( deviceSensorRevision, "DeviceSensorRevision" );
+				locator.bindComponent( clientConnectionState, "ClientConnectionState" );
+			}
+		PYTHON_ONLY(%immutable;)
+			/// \brief A 64 bit integer property <b>(read-only)</b> containing the current bootloader version of this device.
+			///
+			/// \note
+			/// This feature is currently not supported by <b>mvBlueCOUGAR-S</b> devices.
+			PropertyI64 deviceBootloaderVersion;
+			/// \brief A 64 bit integer property <b>(read-only)</b> containing the current version of the root file system (RFS) of this device.
+			///
+			/// \note
+			/// This feature is currently not supported by <b>mvBlueCOUGAR-S</b> devices.
+			PropertyI64 deviceRFSVersion;
+			/// \brief A 64 bit integer property <b>(read-only)</b> containing the current kernel version of this device.
+			///
+			/// \note
+			/// This feature is currently not supported by <b>mvBlueCOUGAR-S</b> devices.
+			PropertyI64 deviceKernelVersion;
+			/// \brief A 64 bit integer property <b>(read-only)</b> containing the current FPGA version of this device.
+			///
+			/// \note
+			/// This feature is currently not supported by <b>mvBlueCOUGAR-S</b> devices.
+			PropertyI64 deviceFPGAVersion;
+			/// \brief A 64 bit integer property <b>(read-only)</b> containing the current device status of the sensor head of this device.
+			///
+			/// If the device has more than one sensor head, and all these sensor heads can be accessed using the current interface,
+			/// this property will contain as many values as the devices offers sensor heads.
+			///
+			/// \note
+			/// This feature is currently not supported by <b>mvBlueCOUGAR-S</b> devices.
+			PropertyI64 deviceStatus;
+			/// \brief A string property <b>(read-only)</b> containing the current device status message of the sensor head of this device.
+			///
+			/// If the device has more than one sensor head, and all these sensor heads can be accessed using the current interface,
+			/// this property will contain as many values as the devices offers sensor heads.
+			///
+			/// \note
+			/// This feature is currently not supported by <b>mvBlueCOUGAR-S</b> devices.
+			PropertyS deviceStatusMessage;
+			/// \brief A 64 bit integer property <b>(read-only)</b> containing the current revision of the sensor head of this device.
+			///
+			/// If the device has more than one sensor head, and all these sensor heads can be accessed using the current interface,
+			/// this property will contain as many values as the devices offers sensor heads.
+			///
+			/// \note
+			/// This feature is currently not supported by <b>mvBlueCOUGAR-S</b> devices.
+			PropertyI64 deviceSensorRevision;
+			/// \brief An integer property <b>(read-only)</b> providing information about the current connection state of a remote
+			/// client.
+			///
+			/// A value different from 0 indicates, that at least one client is connected to this device. When <b>NOT</b> working locally
+			/// this property will always contain '1'.
+			PropertyI clientConnectionState;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyI64 getDeviceBootloaderVersion( void ) const { return deviceBootloaderVersion; }
+			PropertyI64 getDeviceRFSVersion( void ) const { return deviceRFSVersion; }
+			PropertyI64 getDeviceKernelVersion( void ) const { return deviceKernelVersion; }
+			PropertyI64 getDeviceFPGAVersion( void ) const { return deviceFPGAVersion; }
+			PropertyI64 getDeviceStatus( void ) const { return deviceStatus; }
+			PropertyS getDeviceStatusMessage( void ) const { return deviceStatusMessage; }
+			PropertyI64 getDeviceSensorRevision( void ) const { return deviceSensorRevision; }
+			PropertyI getClientConnectionState( void ) const { return clientConnectionState; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+#	endif // #ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
+
+#	ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+		//-----------------------------------------------------------------------------
+		/// \brief A more specific class to query information about a <b>mvBlueFOX</b>
+		/// device and its driver(<b>Device specific interface layout only</b>).
+		///
+		/// This class contains a collection of properties providing various information about
+		/// a <b>mvBlueFOX</b> device and its driver.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class InfoBlueFOX : public InfoBlueDevice
+		//-----------------------------------------------------------------------------
+		{
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::InfoBlueFOX</b> object.
+			explicit InfoBlueFOX(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+									Device* pDev ) : InfoBlueDevice(pDev), firmwareVersion(), sensorFPGAVersion(), sensorCaps(),
+									deviceSensorRevision(), userEEPROMSize(), deviceTemperature()
+			{
+				ComponentLocator locator(m_hRoot);
+				locator.bindComponent( firmwareVersion, "FirmwareVersion" );
+				locator.bindSearchBase( locator.searchbase_id(), "Camera" );
+				locator.bindComponent( sensorFPGAVersion, "SensorFPGAVersion" );
+				locator.bindComponent( sensorCaps, "SensorCaps" );
+				locator.bindComponent( deviceSensorRevision, "DeviceSensorRevision" );
+				locator.bindComponent( userEEPROMSize, "UserEEPROMSize" );
+				locator.bindComponent( deviceTemperature, "DeviceTemperature" );
+			}
+		PYTHON_ONLY(%immutable;)
+			/// \brief An integer property <b>(read-only)</b> containing the firmware version of this device.
+			PropertyI firmwareVersion;
+			/// \brief An integer property <b>(read-only)</b> containing the FPGA version of the camera(if known).
+			///
+			/// \note
+			/// If nothing is known about this feature, this property will contain '-1'.
+			PropertyI sensorFPGAVersion;
+			/// \brief An integer property <b>(read-only)</b> containing a bit mask containing information
+			/// about the sensors capabilities(if known).
+			///
+			/// \note
+			/// If nothing is known about this feature, this property will contain '-1'.
+			PropertyIBlueFOXInfoSensorCapabilities sensorCaps;
+			/// \brief A 64 bit integer property <b>(read-only)</b> containing the current revision of the sensor head of this device.
+			///
+			/// \note
+			/// This feature is currently not supported by all sensors. If a sensor can't provide this information, the value
+			/// of this property will remain 0 at all time.
+			PropertyI64 deviceSensorRevision;
+			/// \brief An integer property <b>(read-only)</b> containing the size of the user EEPROM that can be accessed
+			/// using the I2C access features of <b>mvIMPACT::acquire::I2CControl</b>.
+			///
+			/// \note
+			/// The size may vary depending on the product. Even different products with the same sensor might report
+			/// different values here.
+			///
+			/// \note
+			/// The user EEPROM uses a virtual I2C address of 0x1A2 for write access and 0x1A3 for read access.
+			PropertyI userEEPROMSize;
+			/// \brief A float property <b>(read-only)</b> containing the temperature of the selected temperature sensor
+			/// on the device in degrees Celsius.
+			///
+			/// \note
+			/// This property will not be available for every mvBlueFOX. Right now this feature is only implemented for
+			/// 202d version of the mvBlueFOX.
+			PropertyF deviceTemperature;
+		PYTHON_ONLY(%mutable;)
+	#	ifdef DOTNET_ONLY_CODE
+			PropertyI getFirmwareVersion( void ) const { return firmwareVersion; }
+			PropertyI getSensorFPGAVersion( void ) const { return sensorFPGAVersion; }
+			PropertyIBlueFOXInfoSensorCapabilities getSensorCaps( void ) const { return sensorCaps; }
+			PropertyI64 getDeviceSensorRevision( void ) const { return deviceSensorRevision; }
+			PropertyI getUserEEPROMSize( void ) const { return userEEPROMSize; }
+			PropertyF getDeviceTemperature( void ) const { return deviceTemperature; }
+	#	endif // #ifdef DOTNET_ONLY_CODE
+		};
+#	endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+
+	//-----------------------------------------------------------------------------
+	/// \brief A class to represent a digital input pin(<b>Device specific interface layout only</b>).
+	///
+	/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+	/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+	class DigitalInput
+	//-----------------------------------------------------------------------------
+	{
+		friend class	IOSubSystem;
+		HDRV			m_hDrv;
+		PropertyI		m_register;
+		int				m_bitNumber;
+		std::string		m_description;
+		explicit		DigitalInput( HDRV hDrv, PropertyI reg, int bitNumber, const std::string desc ) : m_hDrv(hDrv), m_register(reg), m_bitNumber(bitNumber), m_description(desc) {}
+	public:
+		/// \brief Returns the current state of this input pin.
+		/// \return
+		/// - true if the current state of this pin is considered as 'logic 1'
+		/// - false otherwise
+		bool get( void ) const
+		{
+			DMR_UpdateDigitalInputs( m_hDrv );
+			return m_register.read(m_bitNumber) != 0;
+		}
+		/// \brief Returns a description for this digital input.
+		///
+		/// This might contain connector descriptions or other information like
+		/// e.g. 'Trigger-In(J8.4/J8.5)', which means, this is the trigger input
+		/// of connector \a J8 pins \a 4 and \a 5.
+		std::string getDescription( void ) const { return m_description; }
+	};
+
+	//-----------------------------------------------------------------------------
+	/// \brief A class to represent a digital output pin(<b>Device specific interface layout only</b>).
+	///
+	/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+	/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+	class DigitalOutput
+	//-----------------------------------------------------------------------------
+	{
+		friend class	IOSubSystem;
+		PropertyI		m_register;
+		int				m_bitNumber;
+		std::string		m_description;
+		explicit		DigitalOutput( PropertyI reg, int bitNumber, const std::string desc ) : m_register(reg), m_bitNumber(bitNumber), m_description(desc) {}
+	public:
+		/// \brief Inverts the current state of the digital output and returns the
+		/// previous state.
+		/// \return
+		/// - true if the previous state of this pin was considered as 'logic 1'
+		/// - false otherwise
+		bool flip( void )
+		{
+			bool oldState = get();
+			m_register.write( !oldState, m_bitNumber );
+			return oldState;
+		}
+		/// \brief Returns the current state of this output pin.
+		/// \return
+		/// - true if the current state of this pin is considered as 'logic 1'
+		/// - false otherwise
+		bool get( void ) const { return m_register.read( m_bitNumber ) != 0; }
+		/// \brief Checks if the caller has write/modify access to this digital output.
+		///
+		/// Some devices will offer access to digital outputs, but these outputs can't be switched manually.
+		/// E.g. a device might offer a digital output, that can only be configured to stay either high or
+		/// low during frame exposure but can't be switched to high at a certain user defined moment. For
+		/// such an output, this function will return false.
+		///
+		/// If the user calls a function belonging to this class, that would modify the state of the 
+		/// associated digital output, an exception will be raised.
+		///
+		/// \return
+		/// - true if the caller is allowed to call write/modify operation for this component.
+		/// - false otherwise.
+		bool isWriteable( void ) const { return m_register.isWriteable(); }
+		/// \brief Sets the output pin to 'logic 1'.
+		void set( void ) { m_register.write( 1, m_bitNumber ); }
+		/// \brief Sets the output pin to 'logic 0'.
+		void reset( void ) { m_register.write( 0, m_bitNumber ); }
+		/// \brief Returns a description for this digital output.
+		///
+		/// This might contain connector descriptions or other information like
+		/// e.g. 'CC1(J1)', which means, this is the CameraLink&reg; control 
+		/// channel 1 of connector \a J1.
+		std::string getDescription( void ) const { return m_description; }
+	};
+
+	//-----------------------------------------------------------------------------
+	/// \brief A class to represent a sync. output pin(<b>Device specific interface layout only</b>).
+	///
+	/// Instances of this class can be used to define and generate sync. signals 
+	/// at the corresponding outputs of the device.
 	///
 	/// \note
-	/// This class has been declared <b>deprecated</b> and might not be available in future releases.
-	/// All features of this class are now available in <b>mvIMPACT::acquire::SystemSettings</b> as well, so please use
-	/// this class instead.
-#	ifndef WRAP_PYTHON
-		typedef SystemSettings MVIMPACT_DEPRECATED_CPP(SystemBlueCOUGAR);
-#	endif
-#endif // #ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
-
-#ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
-	//-----------------------------------------------------------------------------
-	/// \brief A class containing <b>mvBlueFOX</b> specific settings to control the overall
-	/// behaviour of the driver.
-	class SystemBlueFOX : public SystemBase
+	/// Instances of this class can't be constructed directly, but must be obtained
+	/// via the device specific class derived from <b>mvIMPACT::acquire::IOSubSystem</b>.
+	/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+	/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+	class SyncOutput : public ComponentCollection
 	//-----------------------------------------------------------------------------
 	{
-	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::SystemBlueFOX</b> object.
-		explicit SystemBlueFOX(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-									Device* pDev ) : SystemBase(pDev), transferSize(), footerMode(), footerCheckEnable(), powerMode()
+		friend class IOSubSystem;
+		explicit SyncOutput( HLIST hList ) : ComponentCollection(hList), frequency_Hz(), lowPart_pc()
 		{
-			DeviceComponentLocator locator(pDev, dltSystemSettings);
-			locator.bindComponent( powerMode, "PowerMode" );
-			locator.bindSearchBase( locator.searchbase_id(), "Camera" );
-			locator.bindComponent( transferSize, "TransferSize" );
-			locator.bindComponent( footerMode, "FooterMode" );
-			locator.bindComponent( footerCheckEnable, "FooterCheckEnable" );
+			ComponentLocator locator(m_hRoot);
+			locator.bindComponent( frequency_Hz, "Frequency_Hz" );
+			locator.bindComponent( lowPart_pc, "LowPart_pc" );
 		}
-		PYTHON_ONLY(%immutable;)
-		/// \brief An enumerated integer property defining the block size of the
-		/// image data blocks transferred from the device.
+	public:
+	PYTHON_ONLY(%immutable;)
+		/// \brief A float property defining the frequency(in Hertz) for the sync. signal
+		/// generated by this pin.
+		PropertyF frequency_Hz;
+		/// \brief A float property defining the width in percent the sync. signal stays
+		/// low during one period. The output signal generated will be a square pulse.
+		PropertyF lowPart_pc;
+	PYTHON_ONLY(%mutable;)
+		/// \brief Returns a description for this sync. output.
 		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBlueFOXTransferSize</b>.
-		PropertyIBlueFOXTransferSize transferSize;
-		/// \brief An enumerated integer property defining the footer mode of the
-		/// device.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBlueFOXFooterMode</b>.
-		PropertyIBlueFOXFooterMode footerMode;
-		/// \brief An enumerated integer property allowing to switch on/off the check of the image footer.
-		///
-		/// The image footer contains certain additional data as e.g. the exposure time as used by the image
-		/// sensor. To debug transfer related problems it sometimes can be useful to disable all internal
-		/// data consistency checks by the driver.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
-		PropertyIBoolean footerCheckEnable;
-		/// \brief An enumerated integer property defining the power mode of the
-		/// device.
-		///
-		/// \note
-		/// This property requires at least firmware version 39! See <b>mvIMPACT::acquire::Device::firmwareVersion</b> to find
-		/// out which firmware is currently running on the device or use <b>mvIMPACT::acquire::Device::updateFirmware()</b>
-		/// to update the firmware to the state compiled into the driver.
-		///
-		/// \note
-		/// Do <b>NOT</b> modify this property when images are acquired in parallel. Switching off or on the power
-		/// for a device that is capturing images at the same time will result in incorrect images! Therefore
-		/// always make sure to stop image acquisition <b>BEFORE</b> modifying this property.
-		///
-		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDevicePowerMode</b>.
-		PropertyIDevicePowerMode powerMode;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyIBlueFOXTransferSize getTransferSize( void ) const { return transferSize; }
-		PropertyIBlueFOXFooterMode getFooterMode( void ) const { return footerMode; }
-		PropertyIDevicePowerMode getPowerMode( void ) const { return powerMode; }
-		PropertyIBoolean getFooterCheckEnable( void ) const { return footerCheckEnable; }
-	#endif // #ifdef DOTNET_ONLY_CODE
+		/// This might contain connector descriptions or other information like
+		/// e.g. 'VD-OUT(J9.24)', which means, this is the VD output at connector J9
+		/// pin 24.
+		std::string getDescription( void ) const { return ComponentList(m_hRoot).name(); }
+#	ifdef DOTNET_ONLY_CODE
+		PropertyF getFrequency_Hz( void ) const { return frequency_Hz; }
+		PropertyF getLowPart_pc( void ) const { return lowPart_pc; }
+#	endif // #ifdef DOTNET_ONLY_CODE
 	};
-#endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
 
-#ifndef IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
 	//-----------------------------------------------------------------------------
-	/// \brief A class containing <b>mvV4L2</b> specific settings to control the overall
-	/// behaviour of the driver.
+	/// \brief A class to represent one step of a real time control(<b>RTCtr</b>) program
+	/// (<b>Device specific interface layout only</b>).
 	///
-	/// \note UNDER CONSTRUCTION! Subject to change.
-	class SystemV4L2 : public SystemBase
+	/// An object of this class represents a single instruction in a program represented
+	/// by an <b>mvIMPACT::acquire::RTCtrProgram</b>. <b>mvIMPACT::acquire::RTCtrProgramStep</b> object can't be constructed
+	/// directly, but must be accessed via the function
+	/// <b>mvIMPACT::acquire::RTCtrProgram::programStep</b> of the program they belong
+	/// to.
+	///
+	/// The instruction this <b>mvIMPACT::acquire::RTCtrProgramStep</b> will executed when the program is
+	/// executed is defined by the property <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b>. Depending
+	/// on the value of this property certain other parameters will influence the
+	/// behaviour of this instruction.
+	///
+	/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+	/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+	class RTCtrProgramStep
+	//-----------------------------------------------------------------------------
+	{
+		friend class RTCtrProgram;
+		explicit RTCtrProgramStep( HOBJ hObj ) : address(), frameID(), clocks_us(),
+		  digitalInputs(), digitalOutputs(), sensorHeads(), opCode(), controllerRegister(),
+		  registerValue()
+		{
+			ComponentLocator locator( hObj );
+			locator.bindComponent( address, "Address" );
+			locator.bindComponent( frameID, "FrameID" );
+			locator.bindComponent( clocks_us, "Clocks_us" );
+			locator.bindComponent( digitalInputs, "DigitalInputs" );
+			locator.bindComponent( digitalOutputs, "DigitalOutputs" );
+			locator.bindComponent( sensorHeads, "SensorHeads" );
+			locator.bindComponent( opCode, "OpCode" );
+			locator.bindComponent( controllerRegister, "ControllerRegister" );
+			locator.bindComponent( registerValue, "RegisterValue" );
+		}
+	public:
+	PYTHON_ONLY(%immutable;)
+		/// \brief An integer property, which defines the absolute jump address within this <b>mvIMPACT::acquire::RTCtrProgram</b>.
+		///
+		/// This property only is taken into account, if <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> is set to <b>mvIMPACT::acquire::rtctrlProgJumpLoc</b>.
+		PropertyI address;
+		/// \brief An integer property, which defines the frame ID of the triggered image <b>mvIMPACT::acquire::RTCtrProgram</b>.
+		///
+		/// This property only is taken into account, if <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> is set to <b>mvIMPACT::acquire::rtctrlProgTriggerSet</b>.
+		PropertyI frameID;
+		/// \brief An integer property, which defines the waiting time <b>mvIMPACT::acquire::RTCtrProgram</b>.
+		///
+		/// This property only is taken into account, if <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> is set to <b>mvIMPACT::acquire::rtctrlProgWaitClocks</b>.
+		PropertyI clocks_us;
+		/// \brief An enumerated integer property to define for which digital input state this program step waits for.
+		///
+		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDigIOState</b>.
+		///
+		/// This property only is taken into account, if <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> is set to <b>mvIMPACT::acquire::rtctrlProgWaitDigin</b>.
+		PropertyIDigIOState digitalInputs;
+		/// \brief An enumerated integer property to define how to set the digital outputs
+		/// of this device.
+		///
+		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDigIOState</b>.
+		///
+		/// This property only is taken into account, if <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> is set to <b>mvIMPACT::acquire::rtctrlProgSetDigout</b>.
+		PropertyIDigIOState digitalOutputs;
+		/// \brief An enumerated integer property to define which sensor heads to trigger (for devices with more than one sensor head).
+		///
+		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDigIOState</b>.
+		///
+		/// This property only is taken into account, if <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> is set to <b>mvIMPACT::acquire::rtctrlProgTriggerSet</b>
+		/// or <b>mvIMPACT::acquire::rtctrlProgTriggerReset</b>.
+		PropertyIDigIOState sensorHeads;
+		/// \brief An enumerated integer property defining the general purpose of this <b>mvIMPACT::acquire::RTCtrProgramStep</b> object.
+		///
+		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TRTProgOpCodes</b>.
+		PropertyIRTProgOpCodes opCode;
+		/// \brief An integer property, which defines the index of the controller register to refer in this <b>mvIMPACT::acquire::RTCtrProgramStep</b>.
+		///
+		/// This property only is taken into account, if <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> is set to 
+		/// <b>mvIMPACT::acquire::rtctrlProgRegisterSet</b>, <b>mvIMPACT::acquire::rtctrlProgRegisterAdd</b>,
+		/// <b>mvIMPACT::acquire::rtctrlProgRegisterSub</b>, <b>mvIMPACT::acquire::rtctrlProgJumpLocOnZero</b>
+		/// or <b>mvIMPACT::acquire::rtctrlProgJumpLocOnNotZero</b>.
+		///
+		/// \note
+		/// This feature will not be available for every device offering a HRTC. It will be available if the translation
+		/// dictionary of the property <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> contains 
+		/// <b>mvIMPACT::acquire::rtctrlProgRegisterSet</b>, <b>mvIMPACT::acquire::rtctrlProgRegisterAdd</b>,
+		/// <b>mvIMPACT::acquire::rtctrlProgRegisterSub</b>, <b>mvIMPACT::acquire::rtctrlProgJumpLocOnZero</b>
+		/// or <b>mvIMPACT::acquire::rtctrlProgJumpLocOnNotZero</b>.
+		///
+		/// Read the properties translation dictionary with
+		/// the functions <b>mvIMPACT::acquire::PropertyIPulseStartTrigger::getTranslationDictString</b> and
+		/// <b>mvIMPACT::acquire::PropertyIPulseStartTrigger::getTranslationDictValue</b>.
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyIPulseStartTrigger::getTranslationDict</b>
+		/// in addition to the functions mentioned above.
+		///\htmlinclude code_fragment_end.html
+		PropertyI controllerRegister;
+		/// \brief An integer property, which defines the a value to associate with a register access in this <b>mvIMPACT::acquire::RTCtrProgramStep</b>.
+		///
+		/// This property only is taken into account, if <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> is set to 
+		/// <b>mvIMPACT::acquire::rtctrlProgRegisterSet</b>, <b>mvIMPACT::acquire::rtctrlProgRegisterAdd</b>
+		/// or <b>mvIMPACT::acquire::rtctrlProgRegisterSub</b>.
+		///
+		/// \note
+		/// This feature will not be available for every device offering a HRTC. It will be available if the translation
+		/// dictionary of the property <b>mvIMPACT::acquire::RTCtrProgramStep::opCode</b> contains 
+		/// <b>mvIMPACT::acquire::rtctrlProgRegisterSet</b>, <b>mvIMPACT::acquire::rtctrlProgRegisterAdd</b>,
+		/// or <b>mvIMPACT::acquire::rtctrlProgRegisterSub</b>.
+		///
+		/// Read the properties translation dictionary with
+		/// the functions <b>mvIMPACT::acquire::PropertyIPulseStartTrigger::getTranslationDictString</b> and
+		/// <b>mvIMPACT::acquire::PropertyIPulseStartTrigger::getTranslationDictValue</b>.
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyIPulseStartTrigger::getTranslationDict</b>
+		/// in addition to the functions mentioned above.
+		///\htmlinclude code_fragment_end.html
+		PropertyI registerValue;
+	PYTHON_ONLY(%mutable;)
+#	ifdef DOTNET_ONLY_CODE
+		PropertyI getAddress( void ) const { return address; }
+		PropertyI getFrameID( void ) const { return frameID; }
+		PropertyI getClocks_us( void ) const { return clocks_us; }
+		PropertyIDigIOState getDigitalInputs( void ) const { return digitalInputs; }
+		PropertyIDigIOState getDigitalOutputs( void ) const { return digitalOutputs; }
+		PropertyIDigIOState getSensorHeads( void ) const { return sensorHeads; }
+		PropertyIRTProgOpCodes getOpCode( void ) const { return opCode; }
+		PropertyI getControllerRegister( void ) const { return controllerRegister; }
+		PropertyI getRegisterValue( void ) const { return registerValue; }
+#	endif // #ifdef DOTNET_ONLY_CODE
+	};
+
+	//-----------------------------------------------------------------------------
+	/// \brief A class to represent real time control programs(<b>Device specific interface layout only</b>).
+	///
+	/// Real time control programs can be used to control the way how an when images
+	/// are exposed and transmitted to the user.
+	///
+	/// An <b>mvIMPACT::acquire::RTCtrProgram</b> e.g. can be used to achieve a constant frame rate with
+	/// a desired frequency. This can be done e.g. by triggering the camera with a constant frequency.
+	///
+	///\xmlonly
+	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+	///\endxmlonly
+	///\htmlinclude code_fragment_start_cpp.html
+	/// <b>EXAMPLE:</b>
+	/// An appropriate signal for triggering the camera can be generated as follows:
+	///\code
+	/// #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
+	///
+	/// using namespace mvIMPACT::acquire;
+	///
+	/// void runAt10Hz( Device* pBF )
+	/// {
+	///   CameraSettingsBlueFOX bfs( pBF );
+	///   IOSubSystemBlueFOX bfIOs( pBF );
+	///   // define a HRTC program that results in a define image frequency
+	///   // the hardware real time controller shall be used to trigger an image
+	///   bfs.triggerSource.write( ctsRTCtrl );
+	///   // when the hardware real time controller switches the trigger signal to 
+	///   // high the exposure of the image shall start
+	///   bfs.triggerMode.write( ctmOnRisingEdge );
+	///
+	///   // error checks
+	///   if( bfIOs.RTCtrProgramCount() == 0 )
+	///   {
+	///     // no HRTC controllers available (this never happens for the mvBlueFOX)
+	///     return;
+	///   }
+	///
+	///   RTCtrProgram* pRTCtrlprogram = bfIOs.getRTCtrProgram( 0 );
+	///   if( !pRTCtrlprogram )
+	///   {
+	///     // this only should happen if the system is short of memory
+	///     return;
+	///   }
+	///
+	///   // start of the program
+	///
+	///   // we need 5 steps for the program
+	///   pRTCtrlprogram->setProgramSize(5);
+	///
+	///   // wait a certain amount of time to achieve the desired frequency
+	///   int progStep = 0;
+	///   RTCtrProgramStep* pRTCtrlStep = 0;
+	///   pRTCtrlStep = pRTCtrlprogram->programStep( progStep++ );
+	///   pRTCtrlStep->opCode.write( rtctrlProgWaitClocks );
+	///   pRTCtrlStep->clocks_us.write( 99900 );
+	///
+	///   // trigger an image
+	///   pRTCtrlStep = pRTCtrlprogram->programStep( progStep++ );
+	///   pRTCtrlStep->opCode.write( rtctrlProgTriggerSet );
+	///
+	///   // high time for the trigger signal (should not be smaller than 100 us)
+	///   pRTCtrlStep = pRTCtrlprogram->programStep( progStep++ );
+	///   pRTCtrlStep->opCode.write( rtctrlProgWaitClocks );
+	///   pRTCtrlStep->clocks_us.write( 100 );
+	///
+	///   // end trigger signal
+	///   pRTCtrlStep = pRTCtrlprogram->programStep( progStep++ );
+	///   pRTCtrlStep->opCode.write( rtctrlProgTriggerReset );
+	///
+	///   // restart the program
+	///   pRTCtrlStep = pRTCtrlprogram->programStep( progStep++ );
+	///   pRTCtrlStep->opCode.write( rtctrlProgJumpLoc );
+	///   pRTCtrlStep->address.write( 0 );
+	///
+	///   // start the program
+	///   pRTCtrlprogram->mode.write( rtctrlModeRun );
+	///
+	///   // Now this camera will deliver images at exactly 10 Hz ( 1 / ( 99900 us + 100us ) )
+	///   // when it is constantly feed with image requests.
+	/// }
+	///\endcode
+	///\htmlinclude code_fragment_end.html
+	///\xmlonly
+	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+	///\endxmlonly
+	///
+	/// Once this program has been defined it can be executed by setting the \a mode
+	/// property to <b>mvIMPACT::acquire::rtctrlModeRun</b>. As in this example we do not
+	/// wait for an external signal the property <b>triggerMode</b>
+	/// must be set to a value demanding an external signal
+	/// ( e.g. <b>mvIMPACT::acquire::ctmOnRisingEdge </b> ) and the  property 
+	/// <b>triggerMode</b> must be set to <b>mvIMPACT::acquire::ctsRTCtrl</b>
+	/// to inform the driver, that the signal generate by the real time program shall
+	/// be used as the trigger signal.
+	///
+	/// \note
+	/// <b>mvIMPACT::acquire::RTCtrProgram</b> objects can't be created directly! To access an <b>mvIMPACT::acquire::RTCtrProgram</b>
+	/// associated with a certain device create an instance of an object derived from
+	/// <b>mvIMPACT::acquire::IOSubSystem</b> and then use the function
+	/// <b>mvIMPACT::acquire::IOSubSystem::RTCtrProgramCount()</b> to find out if there are
+	/// hardware real time controller machines available for this device and if so how
+	/// many of them can be accessed. Pointers to the machines then can be obtained by calling the
+	/// function <b>mvIMPACT::acquire::IOSubSystem::getRTCtrProgram()</b> with the number of the
+	/// controller (zero based) to be modified.
+	///
+	/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+	/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+	class RTCtrProgram
+	//-----------------------------------------------------------------------------
+	{
+		friend class IOSubSystem;
+		typedef std::vector<RTCtrProgramStep*> RTCtrlProgramStepVector;
+#		ifndef DOXYGEN_SHOULD_SKIP_THIS
+			//-----------------------------------------------------------------------------
+			struct ReferenceCountedData
+			//-----------------------------------------------------------------------------
+			{
+				HDRV                            m_hDrv;
+				mutable RTCtrlProgramStepVector m_programSteps;
+				PropertyI                       m_programSize;
+				HLIST                           m_hRTCtrList;
+				HOBJ                            m_programStepList;
+				unsigned int                    m_refCnt;
+				ReferenceCountedData( HDRV hDrv, HLIST hList ) : m_hDrv(hDrv), m_programSteps(), m_programSize(),
+					m_hRTCtrList(hList), m_programStepList(), m_refCnt(1) {}
+				~ReferenceCountedData()
+				{
+					RTCtrlProgramStepVector::size_type vSize = m_programSteps.size();
+					for( RTCtrlProgramStepVector::size_type i=0; i<vSize; i++ )
+					{
+						delete m_programSteps[i];
+					}
+				}
+			} *m_pRefData;
+#		endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
+		//-----------------------------------------------------------------------------
+		void bindPublicProperties( HLIST hList )
+		//-----------------------------------------------------------------------------
+		{
+			ComponentLocator locator( hList );
+			locator.bindComponent( mode, "Mode" );
+			locator.bindComponent( filename, "Filename" );
+			locator.bindComponent( programState, "ProgramState" );
+		}
+		//-----------------------------------------------------------------------------
+		void dealloc( void )
+		//-----------------------------------------------------------------------------
+		{
+			--(m_pRefData->m_refCnt);
+			if( m_pRefData->m_refCnt == 0 )
+			{
+				delete m_pRefData;
+			}
+		}
+		//-----------------------------------------------------------------------------
+		void updateProgram( void ) const
+		//-----------------------------------------------------------------------------
+		{
+			RTCtrlProgramStepVector::size_type vSize = m_pRefData->m_programSteps.size();
+			unsigned int lSize = ComponentList( m_pRefData->m_programStepList ).size();
+			if( lSize < vSize )
+			{
+				// steps have been deleted somewhere...
+				for( unsigned int i=lSize; i<vSize; i++ )
+				{
+					delete m_pRefData->m_programSteps[i];
+				}
+				m_pRefData->m_programSteps.resize( lSize );
+			}
+			else if( lSize > vSize )
+			{
+				// new steps have been created
+				ComponentIterator iter( m_pRefData->m_programStepList );
+				iter = iter.firstChild();
+				// move to the next valid end point
+				for( unsigned int i=0; i<vSize; i++ )
+				{
+					++iter;
+				}
+
+				while( iter.isValid() )
+				{
+					m_pRefData->m_programSteps.push_back( new RTCtrProgramStep( iter ) );
+					++iter;
+				}
+			}
+		}
+		//-----------------------------------------------------------------------------
+		explicit RTCtrProgram( HDRV hDrv, HLIST hList ) : m_pRefData(new ReferenceCountedData(hDrv, hList)), mode(),
+		  filename(), programState()
+		//-----------------------------------------------------------------------------
+		{
+			ComponentLocator locator( hList );
+			locator.bindComponent( m_pRefData->m_programSize, "ProgramSize" );
+			bindPublicProperties( m_pRefData->m_hRTCtrList );
+			m_pRefData->m_programStepList = locator.findComponent( "RTCtrProgram" );
+			updateProgram();
+		}
+	public:
+		/// \brief Constructs a new <b>mvIMPACT::acquire::RTCtrProgram</b> from
+		/// and exisiting one.
+		explicit RTCtrProgram(	/// A constant reference to the <b>mvIMPACT::acquire::RTCtrProgram</b> object, this object shall be created from
+								const RTCtrProgram& src ) : m_pRefData(src.m_pRefData), mode(src.mode),
+								  filename(src.filename), programState(src.programState)
+		{
+			++(m_pRefData->m_refCnt);
+		}
+		/// \brief Class destructor.
+		~RTCtrProgram()
+		{
+			dealloc();
+		}
+#	ifndef WRAP_PYTHON
+			/// \brief Allows assignments of <b>mvIMPACT::acquire::RTCtrProgram</b> objects
+			RTCtrProgram& operator=( const RTCtrProgram& rhs )
+			{
+				if( this != &rhs )
+				{
+					dealloc();
+					m_pRefData = rhs.m_pRefData;
+					// inc. the NEW reference count
+					++m_pRefData->m_refCnt;
+					bindPublicProperties( m_pRefData->m_hRTCtrList );
+				}
+				return *this;
+			}
+#	endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
+		/// \brief A function to define the number of instructions this program should consist of.
+		void setProgramSize(	/// The new number of program instructions
+								int newSize )
+		{
+			m_pRefData->m_programSize.write( newSize );
+			updateProgram();
+		}
+		/// \brief Returns the number of program instructions for this program.
+		/// \return The number of program instructions for this program.
+		int getProgramSize( void ) const { return m_pRefData->m_programSize.read(); }
+		/// \brief Returns a pointer to a program instruction of the program.
+		///
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		/// If \a nr is invalid(too large) a STL out_of_range exception
+		/// will be thrown.
+		///\htmlinclude code_fragment_end.html
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///
+		/// \return A pointer to a program instruction of the program.
+		RTCtrProgramStep* programStep(	/// The index of the program instruction to obtain.
+										unsigned int nr ) const
+		{
+			updateProgram();
+			return m_pRefData->m_programSteps.at( nr );
+		}
+	PYTHON_ONLY(%immutable;)
+		/// \brief An enumerated integer property defining the current state this program is into.
+		///
+		/// In order to affect the behaviour of the image acquisition an <b>mvIMPACT::acquire::RTCtrProgram</b> must be in
+		/// running mode. Apart from that the property <b>triggerSource</b> must be set
+		/// appropriately.
+		///
+		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TRTCtrlModes</b>.
+		PropertyIRTCtrlModes mode;
+		/// \brief A string property storing the filename for this program.
+		///
+		/// <b>mvIMPACT::acquire::RTCtrProgram</b>s can be stored and loaded from/to XML files.
+		/// To do this, this property must be set to the desired filename.
+		/// \sa
+		/// <b>mvIMPACT::acquire::RTCtrProgram::load, <br>mvIMPACT::acquire::RTCtrProgram::save</b>
+		PropertyS filename;
+		/// \brief A string property <b>(read-only)</b> containing information
+		/// about the current state of the program.
+		PropertyS programState;
+	PYTHON_ONLY(%mutable;)
+#	ifdef DOTNET_ONLY_CODE
+		PropertyIRTCtrlModes		getMode( void ) const { return mode; }
+		PropertyS					getFilename( void ) const { return filename; };
+		PropertyS					getProgramState( void ) const { return programState; };
+#	endif // #ifdef DOTNET_ONLY_CODE
+		/// \brief Loads an existing program specified by the property <b>mvIMPACT::acquire::RTCtrProgram::filename</b>.
+		///
+		/// The default file extension for these programs is '*.rtp'. If the user doesn't
+		/// specify this file extension, it is appended automatically. Only
+		/// files of this type can be loaded by this function.
+		int load( void ) { return DMR_LoadRTCtrProgram( m_pRefData->m_hDrv, m_pRefData->m_hRTCtrList ); }
+		/// \brief stores the current state of the program under the name specified by the
+		/// property <b>mvIMPACT::acquire::RTCtrProgram::filename</b>
+		///
+		/// The default file extension for files stored using this function is '*.rtp'. If
+		/// the user doesn't specify this file extension, it is appended automatically. Only
+		/// files of this type can be loaded by the function <b>mvIMPACT::acquire::RTCtrProgram::load</b>.
+		int save( void ) { return DMR_SaveRTCtrProgram( m_pRefData->m_hDrv, m_pRefData->m_hRTCtrList ); }
+	};
+
+	//-----------------------------------------------------------------------------
+	/// \brief An interface class to model a internal driver event that the user can
+	/// wait for(<b>Device specific interface layout only</b>)(<b>deprecated</b>).
+	///
+	/// \note
+	/// This class has been declared <b>deprecated</b> and will be removed in future versions
+	/// of this interface. A more flexible way of getting informed about changes in driver features
+	/// has been added to the interface and should be used instead. An example for this new method can
+	/// be found here: \ref ExampleApplications_subsection_Callback_source
+	///
+	/// An event can be anything that occurs at a certain time within the driver or
+	/// something that can be reported by the hardware. Typical examples might
+	/// be the detection of an external trigger signal, a change at one of the
+	/// digital inputs of a device or the start of a VD pulse send from a camera and
+	/// detected by a capture device.
+	///
+	/// Sometimes one or more of these events might be important for an application.
+	/// E.g. the user might want to get a notification each time the state of 
+	/// one of the digital inputs of a device changes in order to read the current
+	/// state from the device.
+	///
+	/// Events will return a timestamp, that can be used to synchronize the event 
+	/// with a certain chronology of other events.
+	///
+	/// \note
+	/// Instances of this class can't be constructed directly. Valid objects must be
+	/// obtained via the class <b>mvIMPACT::acquire::EventSubSystem</b>.
+	///
+	/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+	/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+	class Event
+	//-----------------------------------------------------------------------------
+	{
+		friend class EventSubSystem;
+		mutable EventData m_data;
+		HDRV m_hDrv;
+		TDeviceEventType m_type;
+		explicit Event( HDRV hDrv, HOBJ hObjSettings ) : m_data(), m_hDrv(hDrv), m_type(detNone), mode(), 
+		  queueDepth(), type()
+		{
+			memset( &m_data, 0, sizeof(m_data) );
+			ComponentLocator locator(hObjSettings);
+			locator.bindComponent( mode, "Mode" );
+			locator.bindComponent( queueDepth, "QueueDepth" );
+			locator.bindComponent( type, "Type" );
+			// buffer this type as it doesn't change and this provides faster access at runtime.
+			m_type = type.read();
+		}
+	public:
+#	ifndef WRAP_PYTHON
+			/// \brief Returns a const reference to the <b>mvIMPACT::acquire::EventData</b> structure of this event.
+			///
+			/// The referenced <b>mvIMPACT::acquire::EventData</b> structure contains additional information about
+			/// the image, e.g. a timestamp that defines the time this event has been reported by the device.
+			///
+			/// \note
+			/// Please do <b>NOT</b> store this reference in some variable to use it for the
+			/// evaluation of the next notification you get for this event as well, as this will <b>NOT</b> update
+			/// the referenced data. Whenever <b>mvIMPACT::acquire::Event::getData</b> is called the function
+			/// will make sure that the data in the returned structure is up to date while when working with
+			/// an old reference to the <b>mvIMPACT::acquire::EventData</b> structure the data in the structure
+			/// will refer to the previous result.
+			MVIMPACT_DEPRECATED_CPP( const EventData& getData( void ) const );
+#	endif // #	ifndef WRAP_PYTHON
+	PYTHON_ONLY(%immutable;)
+		/// \brief An enumerated integer property <b>(read-only)</b> defining the mode this event
+		/// is currently operated in.
+		///
+		/// This property must be used whenever the user wants to receive notification from this event
+		/// Valid values for this property are defined by the enumeration 
+		/// <b>mvIMPACT::acquire::TDeviceEventMode</b>.
+		PropertyIDeviceEventMode mode;
+		/// \brief Currently unsupported.
+		/// 
+		/// \note
+		/// This feature is subject to change! Don't use it!
+		PropertyI queueDepth;
+		/// \brief An enumerated integer property <b>(read-only)</b> containing the type of this event.
+		///
+		/// Valid values for this property are defined by the enumeration 
+		/// <b>mvIMPACT::acquire::TDeviceEventType</b>.
+		PropertyIDeviceEventType type;
+	PYTHON_ONLY(%mutable;)
+#	ifdef DOTNET_ONLY_CODE
+		PropertyIDeviceEventMode getMode( void ) const { return mode; }
+		PropertyI getQueueDepth( void ) const { return queueDepth; }
+		PropertyIDeviceEventType getType( void ) const { return type; }
+#	endif // #ifdef DOTNET_ONLY_CODE
+	};
+
+	//-----------------------------------------------------------------------------
+	/// \brief A class containing the result of a wait call for events
+	/// (<b>Device specific interface layout only</b>)(<b>deprecated</b>).
+	///
+	/// \note
+	/// This class has been declared <b>deprecated</b> and will be removed in future versions
+	/// of this interface. A more flexible way of getting informed about changes in driver features
+	/// has been added to the interface and should be used instead. An example for this new method can
+	/// be found here: \ref ExampleApplications_subsection_Callback_source
+	///
+	/// Objects of this class will be returned by <b>mvIMPACT::acquire::EventSubSystem::waitFor</b>
+	/// calls.
+	///
+	/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+	/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+	class EventWaitResults
+	//-----------------------------------------------------------------------------
+	{
+		int m_errorCode;
+		TDeviceEventType m_waitMask;
+		TDeviceEventType m_resultMask;
+	public:
+		/// \brief Constructs a new <b>mvIMPACT::acquire::EventWaitResults</b> object.
+		explicit EventWaitResults(	/// The error code returned by the wait function
+									int errorCode,
+									/// The wait mask passed to the wait function
+									TDeviceEventType waitMask,
+									/// The result mask of the wait function call
+									TDeviceEventType resultMask );
+		/// \brief The error code returned by the wait function.
+		int errorCode( void ) const { return m_errorCode; }
+		/// \brief The wait mask passed to the wait function.
+		TDeviceEventType waitMask( void ) const { return m_waitMask; }
+		/// \brief The result mask of the wait function call.
+		TDeviceEventType resultMask( void ) const { return m_resultMask; }
+	};
+
+	//-----------------------------------------------------------------------------
+	/// \brief An interface class that provides access to all event handling related
+	/// objects and functions(<b>Device specific interface layout only</b>)(<b>deprecated</b>).
+	///
+	/// \note
+	/// This class has been declared <b>deprecated</b> and will be removed in future versions
+	/// of this interface. A more flexible way of getting informed about changes in driver features
+	/// has been added to the interface and should be used instead. An example for this new method can
+	/// be found here: \ref ExampleApplications_subsection_Callback_source
+	///
+	/// Events from the <b>mvIMPACT Acquire</b> interfaces point of view are certain
+	/// things reported by the hardware like e.g. the detection of a frame start or
+	/// the change on one of the digital inputs of a device.
+	///
+	/// This class combines everything that is related <b>mvIMPACT Acquire</b>s event
+	/// handling.
+	///\xmlonly
+	/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+	///\endxmlonly
+	///\htmlinclude code_fragment_start_cpp.html
+	/// <b>EXAMPLE:</b>
+	///
+	///\code
+	/// //-----------------------------------------------------------------------------
+	/// void fn( void )
+	/// //-----------------------------------------------------------------------------
+	/// {
+	///   // create an interface to the event processing
+	///   unsigned int frameStartEventCnt = 0;
+	///   EventSubSystem ess(getDevicePointerFromSomewhere());
+	///   Event* pEvent = ess.getEventByType( detFrameStart );
+	///   if( !pEvent )
+	///   {
+	///     cout << "Frame start events not supported by this device." << endl;
+	///     return;
+	///   }
+	///   
+	///   pEvent->mode.write( demNotify );
+	///   TDeviceEventType type = pEvent->type.read();
+	///   TDeviceEventType resultMask;
+	///   int timeout_ms = 500;
+	/// 
+	///   while( !g_boTerminated )
+	///   {
+	///     // wait for frame start event
+	///     EventWaitResults waitResult = ess.waitFor( timeout_ms, type );
+	///     if( ( waitResult.errorCode() == DMR_NO_ERROR ) )
+	///     {
+	///       // we are just waiting for one event type, thus the result mask ain't interessting
+	///       frameStartEventCnt = pEvent->getData().count;
+	///       // do something
+	///     }
+	///     else
+	///     {
+	///       // no event detected within the given timeout
+	///     }
+	///   }
+	/// }
+	///\endcode
+	///\htmlinclude code_fragment_end.html
+	///\xmlonly
+	/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+	///\endxmlonly
+	///
+	/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+	/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+	class EventSubSystem
+	//-----------------------------------------------------------------------------
+	{
+		typedef std::vector<Event*> EventVector;
+		typedef std::map<TDeviceEventType, Event*> EventTypeToEventMap;
+		typedef std::map<std::string, Event*> StringToEventMap;
+#	ifndef DOXYGEN_SHOULD_SKIP_THIS
+			//-----------------------------------------------------------------------------
+			struct ReferenceCountedData
+			//-----------------------------------------------------------------------------
+			{
+				EventVector          m_vEvents;
+				EventTypeToEventMap  m_mTypeToEvent;
+				StringToEventMap     m_mNameToEvent;
+				HDRV                 m_hDrv;
+				int                  m_refCnt;
+				ReferenceCountedData( HDRV hDrv ) : m_vEvents(), m_mTypeToEvent(), m_mNameToEvent(), 
+					m_hDrv(hDrv), m_refCnt(1) {}
+				~ReferenceCountedData()
+				{
+					m_mTypeToEvent.clear();
+					m_mNameToEvent.clear();
+					EventVector::size_type vSize = m_vEvents.size();
+					for( EventVector::size_type i=0; i<vSize; i++ )
+					{
+						delete m_vEvents[i];
+					}
+				}
+			} *m_pRefData;
+#	endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
+		//-----------------------------------------------------------------------------
+		void dealloc( void )
+		//-----------------------------------------------------------------------------
+		{
+			--(m_pRefData->m_refCnt);
+			if( m_pRefData->m_refCnt == 0 )
+			{
+				delete m_pRefData;
+			}
+		}
+	public:
+#	ifndef WRAP_PYTHON
+			/// \brief Constructs a new <b>mvIMPACT::acquire::EventSubSystem</b> object(<b>deprecated</b>).
+			explicit MVIMPACT_DEPRECATED_CPP( EventSubSystem(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+																Device* pDev ) );
+#	endif // #ifndef WRAP_PYTHON
+		/// \brief Constructs a new <b>mvIMPACT::acquire::EventSubSystem</b> from an existing one.
+		///
+		/// Internal data is reference counted, thus modifying an event obtained from \a src will also
+		/// modify the same event obtained from this newly constructed class.
+		explicit EventSubSystem(	/// A reference to an existing <b>mvIMPACT::acquire::EventSubSystem</b>.
+									const EventSubSystem& src ) : m_pRefData(src.m_pRefData)
+		{
+			++(m_pRefData->m_refCnt);
+		}
+		~EventSubSystem() { dealloc(); }
+#	ifndef WRAP_PYTHON
+			/// \brief Allows assignment of one <b>mvIMPACT::acquire::EventSubSystem</b> to another.
+			///
+			/// Internal data is reference counted, thus modifying an event obtained from \a src will also
+			/// modify the same event obtained from this newly constructed class.
+			EventSubSystem& operator=(	/// A reference to an existing <b>mvIMPACT::acquire::EventSubSystem</b>.
+										const EventSubSystem& rhs )
+			{
+				if( this != &rhs )
+				{
+					dealloc();
+					m_pRefData = rhs.m_pRefData;
+					++(m_pRefData->m_refCnt);
+				}
+				return *this;
+			}
+#	endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
+		/// \brief Returns a reference to an <b>mvIMPACT::acquire::Event</b> based on the index in the internal array of event references.
+		///
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		/// If the index is either equal or higher than the number of recognized events<br>
+		/// a STL out_of_range exception is thrown.
+		///\htmlinclude code_fragment_end.html
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+		///\endxmlonly
+		/// \return
+		/// - a pointer to a <b>mvIMPACT::acquire::Event</b> object specifying the event
+		/// the given index in the internal list if available.
+		/// - an invalid pointer or reference otherwise.
+		Event* getEventByIndex(	/// The index of the event object the user wants to access.
+								int index ) const { return m_pRefData->m_vEvents.at( index ); }
+		/// \brief Returns a reference to an <b>mvIMPACT::acquire::Event</b> based on the type of the event.
+		///
+		/// \return
+		/// - a pointer to a <b>mvIMPACT::acquire::Event</b> object specifying the event of
+		/// the given type in the internal list if available.
+		/// - an invalid pointer or reference otherwise.
+		Event* getEventByType(	/// The type of the event object the user wants to access.
+								TDeviceEventType type ) const
+		{
+			EventTypeToEventMap::iterator it = m_pRefData->m_mTypeToEvent.find( type );
+			if( it != m_pRefData->m_mTypeToEvent.end() )
+			{
+				return it->second;
+			}
+			return 0;
+		}
+		/// \brief Returns a reference to an <b>mvIMPACT::acquire::Event</b> based on the type (represented as a string) of the event.
+		///
+		/// \return
+		/// - a pointer to a <b>mvIMPACT::acquire::Event</b> object specifying the event of
+		/// the given type in the internal list if available.
+		/// - an invalid pointer or reference otherwise.
+		Event* getEventByName(	/// The name/string representation of the event object the user wants to access.
+								const std::string& name ) const
+		{
+			StringToEventMap::iterator it = m_pRefData->m_mNameToEvent.find( name );
+			if( it != m_pRefData->m_mNameToEvent.end() )
+			{
+				return it->second;
+			}
+			return 0;
+		}
+		/// \brief Returns the number of different event types available for the device that has been passed
+		/// to the constructor of this object.
+		unsigned int getEventCount( void ) const { return static_cast<unsigned int>(m_pRefData->m_vEvents.size()); }
+#	ifndef WRAP_PYTHON
+			/// \brief Allows to wait for the occurrence of one or more events(<b>deprecated</b>).
+			///
+			/// \note
+			/// This function has been declared <b>deprecated</b> and will be removed in future versions
+			/// of this interface. A more flexible way of getting informed about changes in driver features
+			/// has been added to the interface and should be used instead. An example for this new method can
+			/// be found here: \ref ExampleApplications_subsection_Callback_source
+			///
+			/// This function must be called to wait for one or more events to becomes signalled by the device
+			/// driver.
+			///
+			/// \return A <b>mvIMPACT::acquire::EventWaitResults</b> object containing information about the
+			/// result of this operation.
+			MVIMPACT_DEPRECATED_CPP( EventWaitResults waitFor(	/// The timeout in ms defining the maximum time to be spend waiting
+																int timeout_ms,
+																/// A mask specifying the event types to wait for. Here values defined by
+																/// <b>mvIMPACT::acquire::TDeviceEventType</b> can be ORed together.
+																TDeviceEventType mask ) );
+#	endif // #ifndef WRAP_PYTHON
+	};
+
+#	ifndef DOXYGEN_SHOULD_SKIP_THIS
+#		if !defined(WRAP_PYTHON) && !defined(WRAP_DOTNET) // To date, no customer uses Python, so we don't need backward compatibility here.
+			//-----------------------------------------------------------------------------
+			inline const EventData& Event::getData( void ) const
+			//-----------------------------------------------------------------------------
+			{
+				TDMR_ERROR result = DMR_NO_ERROR;
+				if( ( result = DMR_EventGetData( m_hDrv, m_type, 0, 0, &m_data, sizeof(m_data) ) ) != DMR_NO_ERROR )
+				{
+					std::ostringstream oss;
+					oss << "Couldn't obtain event data for event type " << m_type << "(string representation: " << type.name() << ")";
+					ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, INVALID_ID, oss.str() );
+				}
+				return m_data;
+			}
+
+			//-----------------------------------------------------------------------------
+			inline EventWaitResults::EventWaitResults( int errorCode, TDeviceEventType waitMask, TDeviceEventType resultMask ) : m_errorCode(errorCode), m_waitMask(waitMask), m_resultMask(resultMask) {}
+			//-----------------------------------------------------------------------------
+
+			//-----------------------------------------------------------------------------
+			inline EventSubSystem::EventSubSystem( Device* pDev ) : m_pRefData(0)
+			//-----------------------------------------------------------------------------
+			{
+				if( !pDev->isOpen() )
+				{
+					pDev->open();
+				}
+
+				m_pRefData = new ReferenceCountedData(pDev->hDrv());
+
+				TDMR_ERROR result;
+				HLIST hList;
+				if( ( result = DMR_FindList( pDev->hDrv(), 0, dmltEventSubSystemSettings, 0, &hList ) ) == DMR_NO_ERROR )
+				{
+					ComponentIterator it(hList);
+					it = it.firstChild();
+					while( it.isValid() )
+					{
+						Event* p = new Event(pDev->hDrv(), it.hObj());
+						m_pRefData->m_mTypeToEvent.insert( std::make_pair( p->type.read(), p ) );
+						m_pRefData->m_mNameToEvent.insert( std::make_pair( p->type.readS(), p ) );
+						m_pRefData->m_vEvents.push_back( p );
+						++it;
+					}
+				}
+			}
+
+			//-----------------------------------------------------------------------------
+			inline EventWaitResults EventSubSystem::waitFor( int timeout_ms, TDeviceEventType mask )
+			//-----------------------------------------------------------------------------
+			{
+				TDeviceEventType resultMask;
+				int errorCode = DMR_EventWaitFor( m_pRefData->m_hDrv, timeout_ms, mask, 0, 0, &resultMask );
+				return EventWaitResults(errorCode, mask, resultMask);
+			}
+#		endif // #if !defined(WRAP_PYTHON) && !defined(WRAP_DOTNET)
+#	endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
+
+	//-----------------------------------------------------------------------------
+	/// \brief A class to configure the creation of digital signals passed to one or more of the digital
+	/// outputs of a device(<b>Device specific interface layout only</b>).
+	///
+	/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+	/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+	class PulseStartConfiguration : public ComponentCollection
+	//-----------------------------------------------------------------------------
+	{
+		friend class IOSubSystem;
+		explicit PulseStartConfiguration( HLIST hList, int nr ) : ComponentCollection(hList), m_nr(nr),
+			pulseStartTrigger(), digitalSignal(), divider(), frequency_Hz(), triggerMoment()
+		{
+			ComponentLocator locator(m_hRoot);
+			locator.bindComponent( pulseStartTrigger, "PulseStartTrigger" );
+			locator.bindComponent( digitalSignal, "DigitalSignal" );
+			locator.bindComponent( divider, "Divider" );
+			locator.bindComponent( frequency_Hz, "Frequency_Hz" );
+			locator.bindComponent( triggerMoment, "TriggerMoment" );
+		}
+		int m_nr;
+	public:
+		int number( void ) const { return m_nr; }
+	PYTHON_ONLY(%immutable;)
+		/// \brief An enumerated integer property that will define how/when a digital signal is generated by the
+		/// device.
+		///
+		/// When certain digital output signals
+		///
+		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TPulseStartTrigger</b>.
+		///
+		/// \note
+		/// Not every device will offer the same options.
+		/// Check for valid modes by reading the properties translation dictionary with
+		/// the functions <b>mvIMPACT::acquire::PropertyIPulseStartTrigger::getTranslationDictString</b> and
+		/// <b>mvIMPACT::acquire::PropertyIPulseStartTrigger::getTranslationDictValue</b>.
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyIPulseStartTrigger::getTranslationDict</b>
+		/// in addition to the functions mentioned above.
+		///\htmlinclude code_fragment_end.html
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+		///\endxmlonly
+		PropertyIPulseStartTrigger pulseStartTrigger;
+		/// \brief An enumerated property to define one or more signals, that will trigger the creation of the associated output signals.
+		///
+		/// This property will be visible and thus active when <b>mvIMPACT::acquire::PulseStartConfiguration::digitalSignal</b> is switched
+		/// to <b>mvIMPACT::acquire::pstDigitalSignal</b>.
+		///
+		/// Depending on the device one or more signals can be defined as 'active for output signal creation'. When more than one signal can be
+		/// defined, calling <b>mvIMPACT::acquire::PropertyIDigitalSignal::allowsValueCombinations</b> will return true.
+		///
+		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDigitalSignal</b>.
+		///
+		///\if BUILD_MVHYPERION_DOCUMENTATION
+		/// Currently when more than one signal can be defined here, these signals will have an 'or relationship', which means that when any of these
+		/// signals is detected, it will trigger the creation of the associated output signals.
+		///
+		/// The following signals are defined:
+		/// <table width="100%">
+		/// <tr>
+		///   <th>enum Value</th>
+		///   <th>Associated signal</th>
+		/// </tr>
+		/// <tr>
+		///   <td>mvIMPACT::acquire::dsSignal1</td>
+		///   <td>Line Valid(J1)</td>
+		/// </tr>
+		/// <tr>
+		///   <td>mvIMPACT::acquire::dsSignal2</td>
+		///   <td>Line Valid(J2)</td>
+		/// </tr>
+		/// <tr>
+		///   <td>mvIMPACT::acquire::dsSignal3</td>
+		///   <td>Frame Valid(J1)</td>
+		/// </tr>
+		/// <tr>
+		///   <td>mvIMPACT::acquire::dsSignal4</td>
+		///   <td>Frame Valid(J2)</td>
+		/// </tr>
+		/// <tr>
+		///   <td>mvIMPACT::acquire::dsSignal5</td>
+		///   <td>Trigger-In(J3.4/J3.5)</td>
+		/// </tr>
+		/// <tr>
+		///   <td>mvIMPACT::acquire::dsSignal6</td>
+		///   <td>Sync-In(J3.6/J3.7)</td>
+		/// </tr>
+		/// <tr>
+		///   <td>mvIMPACT::acquire::dsSignal7</td>
+		///   <td>Trigger-In(J4.4/J4.5)</td>
+		/// </tr>
+		/// <tr>
+		///   <td>mvIMPACT::acquire::dsSignal8</td>
+		///   <td>Sync-In(J4.6/J4.7)</td>
+		/// </tr>
+		/// <tr>
+		///   <td>mvIMPACT::acquire::dsSignal9</td>
+		///   <td>DigIn0(J6.9)</td>
+		/// </tr>
+		/// <tr>
+		///   <td>mvIMPACT::acquire::dsSignal10</td>
+		///   <td>DigIn1(J6.10)</td>
+		/// </tr>
+		/// <tr>
+		///   <td>mvIMPACT::acquire::dsSignal11</td>
+		///   <td>DigIn2(J6.11)</td>
+		/// </tr>
+		/// <tr>
+		///   <td>mvIMPACT::acquire::dsSignal12</td>
+		///   <td>DigIn3(J6.12)</td>
+		/// </tr>
+		/// </table>
+		///\endif
+		PropertyIDigitalSignal digitalSignal;
+		/// \brief An integer property defining a factor by which the external input signal shall divided.
+		///
+		/// Every \a divider-value pulse will be used then. All others will be skipped.
+		PropertyI divider;
+		/// \brief A float property defining the frequency in Hz. for the creation of the output signals associated with
+		/// configuration.
+		///
+		/// This property will be visible and thus active when <b>mvIMPACT::acquire::PulseStartConfiguration::digitalSignal</b> is switched
+		/// to <b>mvIMPACT::acquire::pstPeriodically</b>.
+		PropertyF frequency_Hz;
+		/// \brief An enumerated integer property defining the exact moment when this pulse start configuration shall be triggered.
+		///
+		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TTriggerMoment</b>.
+		PropertyITriggerMoment triggerMoment;
+	PYTHON_ONLY(%mutable;)
+#	ifdef DOTNET_ONLY_CODE
+		PropertyIPulseStartTrigger getPulseStartTrigger( void ) const { return pulseStartTrigger; }
+		PropertyIDigitalSignal getDigitalSignal( void ) const { return digitalSignal; }
+		PropertyI getDivider( void ) const { return divider; }
+		PropertyF getFrequency_Hz( void ) const { return frequency_Hz; }
+		PropertyITriggerMoment getTriggerMoment( void ) const { return triggerMoment; }
+#	endif // #ifdef DOTNET_ONLY_CODE
+	};
+
+	//-----------------------------------------------------------------------------
+	/// \brief A base class to handle digital inputs and outputs(<b>Device specific interface layout only</b>).
+	///
+	/// This class can't be instantiated by the user, but acts as a base class for
+	/// hardware specific classes. Please use a device specific class suitable for the device
+	/// you are working with instead. The documentation of the device specific class will also 
+	/// contain some example code.
+	///
+	/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+	/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+	class IOSubSystem
+	//-----------------------------------------------------------------------------
+	{
+	protected:
+#	ifndef DOXYGEN_SHOULD_SKIP_THIS
+			typedef std::vector<RTCtrProgram*> RTCtrProgramVector;
+			typedef std::vector<DigitalInput*> DigitalInputVector;
+			typedef std::vector<DigitalOutput*> DigitalOutputVector;
+			typedef std::vector<SyncOutput*> SyncOutputVector;
+			typedef std::vector<PulseStartConfiguration*> PulseStartConfigurationVector;
+			//-----------------------------------------------------------------------------
+			struct ReferenceCountedData
+			//-----------------------------------------------------------------------------
+			{
+				HDRV                          m_hDrv;
+				DigitalInputVector            m_vInputs;
+				DigitalOutputVector           m_vOutputs;
+				SyncOutputVector              m_vHDOutputs;
+				SyncOutputVector              m_vVDOutputs;
+				mutable RTCtrProgramVector    m_RTCtrPrograms;
+				PulseStartConfigurationVector m_PulseStartConfigurations;
+				unsigned int                  m_refCnt;
+				ReferenceCountedData( HDRV hDrv ) : m_hDrv(hDrv), m_vInputs(), m_vOutputs(),
+					m_vHDOutputs(), m_vVDOutputs(), m_RTCtrPrograms(), m_PulseStartConfigurations(), m_refCnt(1) {}
+				~ReferenceCountedData()
+				{
+					DigitalInputVector::size_type vInputsSize = m_vInputs.size();
+					for( DigitalInputVector::size_type i=0; i<vInputsSize; i++ )
+					{
+						delete m_vInputs[i];
+					}
+
+					DigitalOutputVector::size_type vOutputsSize = m_vOutputs.size();
+					for( DigitalOutputVector::size_type j=0; j<vOutputsSize; j++ )
+					{
+						delete m_vOutputs[j];
+					}
+
+					SyncOutputVector::size_type vSyncOutputsSize = m_vHDOutputs.size();
+					for( SyncOutputVector::size_type k=0; k<vSyncOutputsSize; k++ )
+					{
+						delete m_vHDOutputs[k];
+					}
+
+					vSyncOutputsSize = m_vVDOutputs.size();
+					for( SyncOutputVector::size_type l=0; l<vSyncOutputsSize; l++ )
+					{
+						delete m_vVDOutputs[l];
+					}
+
+					RTCtrProgramVector::size_type vRTCProgSize = m_RTCtrPrograms.size();
+					for( RTCtrProgramVector::size_type m=0; m<vRTCProgSize; m++ )
+					{
+						delete m_RTCtrPrograms[m];
+					}
+
+					PulseStartConfigurationVector::size_type vPulseStartConfigurationsSize = m_PulseStartConfigurations.size();
+					for( PulseStartConfigurationVector::size_type n=0; n<vPulseStartConfigurationsSize; n++ )
+					{
+						delete m_PulseStartConfigurations[n];
+					}
+				}
+			} *m_pRefData;
+			//-----------------------------------------------------------------------------
+			explicit IOSubSystem( Device* pDev ) : m_pRefData(0)
+			//-----------------------------------------------------------------------------
+			{
+				if( !pDev->isOpen() )
+				{
+					pDev->open();
+				}
+				m_pRefData = new ReferenceCountedData(pDev->hDrv());
+			}
+			//-----------------------------------------------------------------------------
+			void dealloc( void )
+			//-----------------------------------------------------------------------------
+			{
+				--(m_pRefData->m_refCnt);
+				if( m_pRefData->m_refCnt == 0 )
+				{
+					delete m_pRefData;
+				}
+			}
+			void registerAllRTCtrPrograms( HDRV hDrv, HLIST hList )
+			{
+				if( hList != INVALID_ID )
+				{
+					unsigned int cnt = ComponentList(hList).size();
+					for( unsigned int k=0; k<cnt; k++ )
+					{
+						if( DMR_FindList( hDrv, 0, dmltRTCtr, k, &hList ) == DMR_NO_ERROR )
+						{
+							registerRTCtrProgram( hDrv, hList );
+						}
+					}
+				}
+			}
+			void registerDigitalInput( PropertyI reg, int nr, const std::string& desc ) { m_pRefData->m_vInputs.push_back( new DigitalInput( m_pRefData->m_hDrv, reg, nr, desc ) ); }
+			void registerDigitalOutput( PropertyI reg, int nr, const std::string& desc ) { m_pRefData->m_vOutputs.push_back( new DigitalOutput( reg, nr, desc ) ); }
+			void registerHDOutput( HLIST hList ) { m_pRefData->m_vHDOutputs.push_back( new SyncOutput(hList) ); }
+			void registerRTCtrProgram( HDRV hDrv, HLIST hList ) { m_pRefData->m_RTCtrPrograms.push_back( new RTCtrProgram( hDrv, hList ) ); }
+			void registerPulseStartConfiguration( HLIST hList ) { m_pRefData->m_PulseStartConfigurations.push_back( new PulseStartConfiguration( hList, static_cast<int>(m_pRefData->m_PulseStartConfigurations.size()) ) ); }
+			void registerVDOutput( HLIST hList ) { m_pRefData->m_vVDOutputs.push_back( new SyncOutput(hList) ); }
+#	endif // DOXYGEN_SHOULD_SKIP_THIS
+	public:
+		/// \brief Constructs a new <b>mvIMPACT::acquire::IOSubSystem</b> from
+		/// and exisiting one.
+		explicit IOSubSystem(	/// A constant reference to the <b>mvIMPACT::acquire::IOSubSystem</b> object, this object shall be created from
+								const IOSubSystem& src ) : m_pRefData(src.m_pRefData)
+		{
+			++(m_pRefData->m_refCnt);
+		}
+		virtual ~IOSubSystem()
+		{
+			dealloc();
+		}
+#	ifndef WRAP_PYTHON
+			/// \brief Allows assignments of <b>mvIMPACT::acquire::IOSubSystem</b> objects
+			IOSubSystem& operator=( const IOSubSystem& rhs )
+			{
+				if( this != &rhs )
+				{
+					dealloc();
+					m_pRefData = rhs.m_pRefData;
+					// inc. the NEW reference count
+					++m_pRefData->m_refCnt;
+				}
+				return *this;
+			}
+#	endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
+		/// \brief Returns a pointer to a <b>mvIMPACT::acquire::PulseStartConfiguration</b> associated with
+		/// this device.
+		///
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		/// If \a nr is invalid(too large) a STL out_of_range exception
+		/// will be thrown.
+		///\htmlinclude code_fragment_end.html
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+		///\endxmlonly
+		PulseStartConfiguration* getPulseStartConfiguration(	/// The number of the pulse start configuration to return
+																unsigned int nr ) const { return m_pRefData->m_PulseStartConfigurations.at( nr ); }
+		/// \brief Returns the number of <b>mvIMPACT::acquire::PulseStartConfiguration</b>s available for the <b>mvIMPACT::acquire::Device</b>
+		/// associated with this object.
+		unsigned int getPulseStartConfigurationCount( void ) const { return static_cast<unsigned int>(m_pRefData->m_PulseStartConfigurations.size()); }
+		/// \brief Returns a pointer to a <b>mvIMPACT::acquire::RTCtrProgram</b> associated with
+		/// this device.
+		///
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		/// If \a nr is invalid(too large) a STL out_of_range exception
+		/// will be thrown.
+		///\htmlinclude code_fragment_end.html
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+		///\endxmlonly
+		RTCtrProgram* getRTCtrProgram(	/// The number of the real time controller program to return
+										unsigned int nr ) const { return m_pRefData->m_RTCtrPrograms.at( nr ); }
+		/// \brief Returns the number of <b>mvIMPACT::acquire::RTCtrProgram</b>s available for the <b>mvIMPACT::acquire::Device</b>
+		/// associated with this object.
+		unsigned int RTCtrProgramCount( void ) const { return static_cast<unsigned int>(m_pRefData->m_RTCtrPrograms.size()); }
+		/// \brief Returns the number of <b>mvIMPACT::acquire::DigitalInput</b>s available for the <b>mvIMPACT::acquire::Device</b>
+		/// associated with this object.
+		unsigned int getInputCount( void ) const { return static_cast<unsigned int>(m_pRefData->m_vInputs.size()); }
+		/// \brief Returns the current state of the digital input register.
+		///
+		/// This function can be used to read all digital inputs as a single value. Each
+		/// bit represents the status of one digital output pin.
+		///
+		/// <b>EXAMPLE:</b>
+		///
+		/// a value of '3' returned by this function means, that digital inputs 0 and 1 are
+		/// currently have a voltage considered as logical '1' applied to them.
+		virtual unsigned int readInputRegister( void ) const = 0;
+		/// \brief Returns a const pointer to a <b>mvIMPACT::acquire::DigitalInput</b> object.
+		///
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		/// If \a nr references an invalid pin a STL out_of_range exception
+		/// will be thrown.
+		///\htmlinclude code_fragment_end.html
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///
+		/// \note
+		/// The possibility to access the digital inputs of a device as single objects is
+		/// just provided for convenience. The same thing can be achieved by calling the
+		/// function <b>mvIMPACT::acquire::IOSubSystem::readInputRegister</b>.
+		const DigitalInput* input(	/// The number of the digital input.
+									unsigned int nr ) const { return m_pRefData->m_vInputs.at( nr ); }
+		/// \brief Returns a pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object.
+		///
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		/// If \a nr references an invalid pin a STL out_of_range exception
+		/// will be thrown.
+		///\htmlinclude code_fragment_end.html
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///
+		/// \note
+		/// The possibility to access the digital outputs of a device as single objects is
+		/// just provided for convenience. The same thing can be achieved by calling the function
+		/// <b>mvIMPACT::acquire::IOSubSystem::writeOutputRegister</b> with the corresponding bit mask.
+		DigitalOutput* output(	/// The number of the digital output.
+								unsigned int nr ) const { return m_pRefData->m_vOutputs.at( nr ); }
+		/// \brief Returns the number of digital outputs available for the <b>mvIMPACT::acquire::Device</b>
+		/// associated with this object.
+		unsigned int getOutputCount( void ) const { return static_cast<unsigned int>(m_pRefData->m_vOutputs.size()); }
+		/// \brief Returns the current state of the digital output register.
+		///
+		/// This function can be used to read all digital outputs as a single value. Each
+		/// bit represents the status of one digital output pin.
+		///
+		/// <b>EXAMPLE:</b>
+		///
+		/// a value of '3' returned by this function means, that digital output 0 and 1 are
+		/// currently set to high.
+		virtual unsigned int readOutputRegister( void ) const = 0;
+		/// \brief Alters the state of the digital output register.
+		///
+		/// This function can be used to alter the state of certain (or all) digital outputs
+		/// with a single function call. By working with the parameter \a mask certain bits
+		/// can remain unaffected.
+		///
+		/// <b>EXAMPLE:</b>
+		///
+		/// If the previous state of a digital output register was '5', which means, that outputs
+		/// 0 and 2 are set to high a call to
+		/// <b>mvIMPACT::acquire::IOSubSystem::writeOutputRegister</b> with
+		/// \a value set to 2 and \a mask set to 3 would result in '6' as the new value for the
+		/// output register. Pin 2 will remain unaffected, as \a mask states just to modify
+		/// pin 0 and 1 ( 3 = 00000011 binary ).
+		///
+		///\code
+		/// currentValue = 5, mask = 3, value = 2
+		/// ( currentValue & ~mask ) | value -> new Value
+		/// ( 00000101b(current value) & 11111100(~mask) ) | 00000010(value) -> 0000110(new value of the register)
+		///\endcode
+		virtual void writeOutputRegister(	/// The value to be applied to the output register
+											unsigned int value,
+											/// The mask to specify which pins to modify. A bit
+											/// set to '1' in this parameter means, that the
+											/// state of this output has to adopt its style according to
+											/// the value in \a value.
+											unsigned int mask = UINT_MAX ) = 0;
+	};
+
+#	ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+		//-----------------------------------------------------------------------------
+		/// \brief A class to handle the digital inputs and outputs for <b>mvBlueFOX</b>
+		/// USB cameras(<b>Device specific interface layout only</b>).
+		///
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		///
+		/// A sample to show how to work with this class and the mvBlueFOX (Creating and instance
+		/// of this class for another device might aise an exception):
+		///
+		///\code
+		/// #include <iostream>
+		/// #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
+		///
+		/// using namespace std;
+		/// using namespace mvIMPACT::acquire;
+		///
+		/// void doSomeIOStuff( Device* pBF )
+		/// {
+		///   IOSubSystemBlueFOX bfIOs( pBF );
+		///   cout << "output 0 was " << bfIOs.output(0)->get() << " and is now(after flipping) ";
+		///   bfIOs.output(0)->flip();
+		///   cout << bfIOs.output(0)->get() << endl;
+		///   cout << "input threshold(" << bfIOs.digitalInputThreshold.readS() << ") set to " << bfdit10V << endl;
+		///   if( bfIOs.digitalInputThreshold.isWriteable() ) // mvBlueFOX-M doesn't support modifying the input threshold
+		///   {
+		///     bfIOs.digitalInputThreshold.write( bfdit10V );
+		///     cout << "input threshold is now " << bfIOs.digitalInputThreshold.readS() << endl;
+		///   }
+		///   cout << "input 0 is " << bfIOs.input(0)->get() << endl;
+		///   cout << "press ENTER." << endl;
+		///   cin.get();
+		///   cout << "input 0 is " << bfIOs.input(0)->get() << endl;
+		///   cout << "press ENTER." << endl;
+		///   cin.get();
+		///   cout << "input 0 is " << bfIOs.input(0)->get() << endl;
+		///   // switch on digital out 0 and 1 ( 3 = 00000011 binary )
+		///   bfIOs.writeOutputRegister( 3 );
+		///   cout << "outputs: %d, inputs: " << bfIOs.readOutputRegister(), bfIOs.readInputRegister() ;
+		///   // the next line will reset bit 0 only, resulting in output 1 to remain high
+		///   // as the mask parameter of '1' defines that only the LSB of the register will be
+		///   // affected by the first parameter of the function call
+		///   bfIOs.writeOutputRegister( 0, 1 );
+		///   cout << "outputs: " << bfIOs.readOutputRegister() << ", inputs " << bfIOs.readInputRegister() << endl;
+		/// }
+		///\endcode
+		///\htmlinclude code_fragment_end.html
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///
+		/// \note
+		/// The <b>mvBlueFOX</b> defines an additional property <b>mvIMPACT::acquire::CameraSettingsBlueFOX::flashMode</b>.
+		/// This might affect the state of the digital outputs as well.
+		///
+		/// If a digital output is defined to be 'logic 0' but the flash mode is switched on
+		/// for the same digital output, the output will be high during the expose time of
+		/// the camera sensor. If a digital output is defined to be 'logic 1' the output will
+		/// be high all the time.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class IOSubSystemBlueFOX : public IOSubSystem
+		//-----------------------------------------------------------------------------
+		{
+		private:
+			unsigned int readRegister( const PropertyI& reg ) const
+			{
+				std::vector<int> v;
+				reg.read( v );
+				std::vector<int>::size_type vSize = v.size();
+				unsigned int result = 0;
+				for( std::vector<int>::size_type i=0; i<vSize; i++ )
+				{
+					result |= ( ( v[i] & 1 ) << i );
+				}
+				return result;
+			}
+			unsigned int readRegisterAtomic( const PropertyI& reg ) const
+			{
+				std::vector<int> v;
+				reg.read( v, true );
+				std::vector<int>::size_type vSize = v.size();
+				unsigned int result = 0;
+				for( std::vector<int>::size_type i=0; i<vSize; i++ )
+				{
+					result |= ( ( v[i] & 1 ) << i );
+				}
+				return result;
+			}
+			PropertyI m_inputRegister;
+			PropertyI m_outputRegister;
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::IOSubSystemBlueFOX</b> object.
+			explicit IOSubSystemBlueFOX(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+											Device* pDev ) : IOSubSystem(pDev), m_inputRegister(), m_outputRegister(), digitalInputThreshold()
+			{
+				DeviceComponentLocator locator(pDev, dltIOSubSystem);
+				locator.bindComponent( digitalInputThreshold, "DigitalInputThreshold" );
+				locator.bindComponent( m_inputRegister, "DigitalInputs" );
+				locator.bindComponent( m_outputRegister, "DigitalOutputs" );
+
+				// register all input pins
+				unsigned int pinCount = m_inputRegister.valCount();
+				for( unsigned int i=0; i<pinCount; i++ )
+				{
+					std::ostringstream oss;
+					oss << "DigitialInput" << i;
+					registerDigitalInput( m_inputRegister, i, oss.str() );
+				}
+
+				// register all output pins
+				pinCount = m_outputRegister.valCount();
+				for( unsigned int j=0; j<pinCount; j++ )
+				{
+					std::ostringstream oss;
+					oss << "DigitalOutput" << j;
+					registerDigitalOutput( m_outputRegister, j, oss.str() );
+				}
+
+				registerAllRTCtrPrograms( pDev->hDrv(), locator.findComponent( "HardwareRealTimeController" ) );
+			}
+			/// \brief Returns the current state of the digital input register.
+			///
+			/// This function can be used to read all digital inputs as a single value. Each
+			/// bit represents the status of one digital output pin.
+			///
+			/// <b>EXAMPLE:</b>
+			///
+			/// a value of '3' returned by this function means, that digital inputs 0 and 1 are
+			/// currently have a voltage considered as logical '1' applied to them.
+			virtual unsigned int readInputRegister( void ) const
+			{
+				DMR_UpdateDigitalInputs( m_pRefData->m_hDrv );
+				return readRegister( m_inputRegister );
+			}
+			/// \brief Returns the current state of the digital input register.
+			///
+			/// This function can be used to read all digital inputs as a single value <b>at the same time</b>. Each
+			/// bit represents the status of one digital output pin.
+			///
+			/// <b>EXAMPLE:</b>
+			///
+			/// a value of '3' returned by this function means, that digital inputs 0 and 1 are
+			/// currently have a voltage considered as logical '1' applied to them.
+			unsigned int readInputRegisterAtomic( void ) const
+			{
+				DMR_UpdateDigitalInputs( m_pRefData->m_hDrv );
+				return readRegisterAtomic( m_inputRegister );
+			}
+			/// \brief Returns the current state of the digital output register.
+			///
+			/// This function can be used to read all digital outputs as a single value. Each
+			/// bit represents the status of one digital output pin.
+			///
+			/// <b>EXAMPLE:</b>
+			///
+			/// a value of '3' returned by this function means, that digital output 0 and 1 are
+			/// currently set to high.
+			virtual unsigned int readOutputRegister( void ) const { return readRegister( m_outputRegister ); }
+			/// \brief Returns the current state of the digital output register.
+			///
+			/// This function can be used to read all digital outputs as a single value <b>at the same time</b>. Each
+			/// bit represents the status of one digital output pin.
+			///
+			/// <b>EXAMPLE:</b>
+			///
+			/// a value of '3' returned by this function means, that digital output 0 and 1 are
+			/// currently set to high.
+			unsigned int readOutputRegisterAtomic( void ) const { return readRegisterAtomic( m_outputRegister ); }
+			/// \brief Alters the state of the digital output register.
+			///
+			/// This function can be used to alter the state of certain (or all) digital outputs
+			/// with a single function call. By working with the parameter \a mask certain bits
+			/// can remain unaffected.
+			///
+			/// <b>EXAMPLE:</b>
+			///
+			/// If the previous state of a digital output register was '5', which means, that outputs
+			/// 0 and 2 are set to high a call to
+			/// <b>mvIMPACT::acquire::IOSubSystem::writeOutputRegister</b> with
+			/// \a value set to 2 and \a mask set to 3 would result in '6' as the new value for the
+			/// output register. Pin 2 will remain unaffected, as \a mask states just to modify
+			/// pin 0 and 1 ( 3 = 00000011 binary ).
+			void writeOutputRegister(	/// The value to be applied to the output register
+										unsigned int value,
+										/// The mask to specify which pins to modify. A bit
+										/// set to '1' in this parameter means, that the
+										/// state of this output has to adopt its style according to
+										/// the value in \a value.
+										unsigned int mask = UINT_MAX )
+			{
+				unsigned int newVal = ( readRegister( m_outputRegister ) & ~mask ) | ( mask & value );
+				DigitalOutputVector::size_type vSize = m_pRefData->m_vOutputs.size();
+				std::vector<int> v(vSize);
+				for( std::vector<int>::size_type i=0; i<vSize; i++ )
+				{
+					v[i] = ( ( newVal & ( 1 << i ) ) != 0 );
+				}
+				m_outputRegister.write( v );
+			}
+			/// \brief Alters the state of the digital output register.
+			///
+			/// This function can be used to alter the state of certain (or all) digital outputs
+			/// with a single function call <b>at the same time</b>. By working with the parameter \a mask
+			/// certain bits can remain unaffected.
+			///
+			/// <b>EXAMPLE:</b>
+			///
+			/// If the previous state of a digital output register was '5', which means, that outputs
+			/// 0 and 2 are set to high a call to
+			/// <b>mvIMPACT::acquire::IOSubSystem::writeOutputRegister</b> with
+			/// \a value set to 2 and \a mask set to 3 would result in '6' as the new value for the
+			/// output register. Pin 2 will remain unaffected, as \a mask states just to modify
+			/// pin 0 and 1 ( 3 = 00000011 binary ).
+			void writeOutputRegisterAtomic(	/// The value to be applied to the output register
+											unsigned int value,
+											/// The mask to specify which pins to modify. A bit
+											/// set to '1' in this parameter means, that the
+											/// state of this output has to adopt its style according to
+											/// the value in \a value.
+											unsigned int mask = UINT_MAX )
+			{
+				unsigned int newVal = ( readRegister( m_outputRegister ) & ~mask ) | ( mask & value );
+				DigitalOutputVector::size_type vSize = m_pRefData->m_vOutputs.size();
+				std::vector<int> v(vSize);
+				for( std::vector<int>::size_type i=0; i<vSize; i++ )
+				{
+					v[i] = ( ( newVal & ( 1 << i ) ) != 0 );
+				}
+				m_outputRegister.write( v, true );
+			}
+		PYTHON_ONLY(%immutable;)
+			/// \brief An enumerated integer property defining the threshold for the digital
+			/// inputs in Volt.
+			///
+			/// If a voltage applied to the digital input lies above the threshold this pin
+			/// will be considered as 'logic 1' otherwise it will be considered as 'logic 0'.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBlueFOXDigitalInputThreshold</b>.
+			///
+			/// \note
+			/// This property is <b>read-only</b> for <b>mvBlueFOX-M</b> devices and will always be 2V.
+			PropertyIBlueFOXDigitalInputThreshold digitalInputThreshold;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyIBlueFOXDigitalInputThreshold getDigitalInputThreshold( void ) const { return digitalInputThreshold; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+#	endif // #	ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+
+#	if !defined(IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION)
+		//-----------------------------------------------------------------------------
+		/// \brief A base class to handle the digital inputs and outputs for devices
+		/// (<b>Device specific interface layout only</b>).
+		///
+		/// This class provides a convenient basic access to the digital inputs and 
+		/// outputs of almost every device supported by this interface.
+		///
+		/// \note
+		/// This class may <b>NOT</b> be used for mvBlueFOX devices.
+		///
+		/// \note
+		/// The number of digital inputs and outputs available will vary significantly
+		/// from device to device. Some devices might not even have digital inputs and/or
+		/// digital outputs. Therefore it's crucial to check for available pins before
+		/// using them. The corresponding functions to do that can be found in the
+		/// base class <b>mvIMPACT::acquire::IOSubSystem</b>.
+		///
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		///
+		/// <b>EXAMPLES</b>(lists all available digital inputs and outputs and their description): 
+		///\code
+		/// #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
+		/// #include <iostream>
+		///
+		/// using namespace std;
+		/// using namespace mvIMPACT::acquire;
+		///
+		/// void listIOPins( Device* pDev )
+		/// {
+		///   IOSubSystemCommon io(pDev);
+		///   unsigned int iCnt = io.getInputCount();
+		///   cout << "available digital inputs: " << iCnt << endl;
+		///   for( unsigned int d=0; d<iCnt; d++ )
+		///   {
+		///     out << io.input(d)->getDescription() << endl;
+		///   }
+		///   unsigned int oCnt = io.getOutputCount();
+		///   cout << "available digital outputs: " << oCnt << endl;
+		///   for( unsigned int e=0; e<oCnt; e++ )
+		///   {
+		///     DigitalOutput* pOutput = io.output(e);
+		///     out << "setting " << pOutput->getDescription() << " to high" << endl;
+		///     // set this output to logic '1'
+		///     pOutput->set();
+		///   }
+		/// }
+		///\endcode
+		///\htmlinclude code_fragment_end.html
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class IOSubSystemCommon : public IOSubSystem
+		//-----------------------------------------------------------------------------
+		{
+			ComponentList m_inputs;
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::IOSubSystemCommon</b> object.
+			explicit IOSubSystemCommon(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+										Device* pDev ) : IOSubSystem(pDev), m_inputs()
+			{
+				DeviceComponentLocator locator(pDev, dltIOSubSystem);
+				HOBJ hObj = locator.findComponent( "PulseStartConfigurations" );
+				if( hObj != INVALID_ID )
+				{
+					ComponentIterator itPulseConfigs(hObj);
+					itPulseConfigs = itPulseConfigs.firstChild();
+					while( itPulseConfigs.isValid() )
+					{
+						registerPulseStartConfiguration( itPulseConfigs.hObj() );
+						++itPulseConfigs;
+					}
+				}
+
+				locator.bindComponent( m_inputs, "DigitalInputs", 0, 1 );
+				if( m_inputs.isValid() )
+				{
+					ComponentIterator it(m_inputs);
+					it = it.firstChild();
+					while( it.isValid() )
+					{
+						registerDigitalInput( PropertyI(it), 0, it.name() );
+						++it;
+					}
+				}
+
+				ComponentList outputs;
+				locator.bindComponent( outputs, "DigitalOutputs", 0, 1 );
+				if( outputs.isValid() )
+				{
+					ComponentIterator it(outputs);
+					it = it.firstChild();
+					while( it.isValid() )
+					{
+						if( it.isList() )
+						{
+							ComponentLocator outputStateLocator(it);
+							registerDigitalOutput( PropertyI(outputStateLocator.findComponent("State")), 0, it.name() );
+						}
+						++it;
+					}
+				}
+
+				registerAllRTCtrPrograms( pDev->hDrv(), locator.findComponent( "HardwareRealTimeController" ) );
+			}
+			/// \brief Returns the current state of the digital input register.
+			///
+			/// This function can be used to read all digital inputs as a single value. Each
+			/// bit represents the status of one digital output pin.
+			///
+			/// <b>EXAMPLE:</b>
+			///
+			/// a value of '3' returned by this function means, that digital inputs 0 and 1 are
+			/// currently have a voltage considered as logical '1' applied to them.
+			///
+			/// \return The current state of the digital inputs where bit 0 in the result represents
+			/// the state of digital input 0, bit 1 the state of digital input 1 a.s.o..
+			virtual unsigned int readInputRegister( void ) const
+			{
+				DMR_UpdateDigitalInputs( m_pRefData->m_hDrv );
+				if( !m_inputs.isValid() )
+				{
+					return 0; 
+				}
+				unsigned int result = 0;
+				ComponentIterator it( m_inputs );
+				int i=0;
+				it = it.firstChild();
+				while( it.isValid() )
+				{
+					PropertyI input(it);
+					result |= ( ( input.read() & 1 ) << i );
+					++it;
+					++i;
+				}
+				return result;
+			}
+			/// \brief Returns the current state of the digital output register.
+			///
+			/// This function can be used to read all digital outputs as a single value. Each
+			/// bit represents the status of one digital output pin.
+			///
+			/// <b>EXAMPLE:</b>
+			///
+			/// a value of '3' returned by this function means, that digital output 0 and 1 are
+			/// currently set to high.
+			///
+			/// \return The current state of the digital outputs where bit 0 in the result represents
+			/// the state of digital output 0, bit 1 the state of digital output 1 a.s.o..
+			virtual unsigned int readOutputRegister( void ) const
+			{
+				unsigned int result = 0;
+				DigitalOutputVector::size_type vSize = m_pRefData->m_vOutputs.size();
+				for( DigitalOutputVector::size_type i=0; i<vSize; i++ )
+				{
+					result |= ( ( m_pRefData->m_vOutputs[i]->get() & 1 ) << i );
+				}
+				return result;
+			}
+			/// \brief Alters the state of the digital output register.
+			///
+			/// This function can be used to alter the state of certain (or all) digital outputs
+			/// with a single function call. By working with the parameter \a mask certain bits
+			/// can remain unaffected.
+			///
+			/// <b>EXAMPLE:</b>
+			///
+			/// If the previous state of a digital output register was '5', which means, that outputs
+			/// 0 and 2 are set to high a call to
+			/// <b>mvIMPACT::acquire::IOSubSystem::writeOutputRegister</b> with
+			/// \a value set to 2 and \a mask set to 3 would result in '6' as the new value for the
+			/// output register. Pin 2 will remain unaffected, as \a mask states just to modify
+			/// pin 0 and 1 ( 3 = 00000011 binary ).
+			void writeOutputRegister(	/// The value to be applied to the output register
+										unsigned int value,
+										/// The mask to specify which pins to modify. A bit
+										/// set to '1' in this parameter means, that the
+										/// state of this output has to adopt its style according to
+										/// the value in \a value.
+										unsigned int mask = UINT_MAX )
+			{
+				DigitalOutputVector::size_type vSize = m_pRefData->m_vOutputs.size();
+				for( DigitalOutputVector::size_type i=0; i<vSize; i++ )
+				{
+					if( mask & ( 1 << i ) )
+					{
+						if( value & ( 1 << i ) )
+						{
+							m_pRefData->m_vOutputs[i]->set();
+						}
+						else
+						{
+							m_pRefData->m_vOutputs[i]->reset();
+						}
+					}
+				}
+			}
+		};
+#	endif // #i	f !defined(IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION)
+
+#	ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
+		/// \brief A class to create complex digital output signals(<b>Device specific interface layout only</b>).
+		///
+		/// Instances of this class can be used to create more complex digital output
+		/// related signals like a single pulse or sequence of pulses on a certain pin
+		/// as a reaction on a signal on one of the digital inputs of a device.
+		///
+		/// The availability of the features provided by this class heavily depends on the
+		/// used capture device. Therefore it's crucial to check if a desired feature is available
+		/// at all. This class either provides the functions needed for these checks or its
+		/// functions will return appropriate error codes.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class OutputSignalGeneratorBlueDevice
+		//-----------------------------------------------------------------------------
+		{
+#		ifndef DOXYGEN_SHOULD_SKIP_THIS
+				//-----------------------------------------------------------------------------
+				struct OutputProperties
+				//-----------------------------------------------------------------------------
+				{
+					PropertyIDeviceDigitalOutputMode mode;
+					PropertyIBoolean inverter;
+					OutputProperties( HLIST hOutput ) : mode()
+					{
+						ComponentLocator locator(hOutput);
+						locator.bindComponent( mode, "Mode" );
+						locator.bindComponent( inverter, "Inverter" );
+					}
+				};
+				//-----------------------------------------------------------------------------
+				struct ReferenceCountedData
+				//-----------------------------------------------------------------------------
+				{
+					std::map<std::string, OutputProperties*> m_mOutputs;
+					unsigned int                             m_refCnt;
+					ReferenceCountedData() : m_mOutputs(), m_refCnt(1) {}
+					~ReferenceCountedData()
+					{
+						std::map<std::string, OutputProperties*>::iterator itEnd = m_mOutputs.end();
+						std::map<std::string, OutputProperties*>::iterator it = m_mOutputs.begin();
+						while( it != itEnd )
+						{
+							delete it->second;
+							++it;
+						}
+					}
+				} *m_pRefData;
+				//-----------------------------------------------------------------------------
+				void dealloc( void )
+				//-----------------------------------------------------------------------------
+				{
+					--(m_pRefData->m_refCnt);
+					if( m_pRefData->m_refCnt == 0 )
+					{
+						delete m_pRefData;
+					}
+				}
+				//-----------------------------------------------------------------------------
+				OutputProperties* getOutputProperties( DigitalOutput* pOutput ) const
+				//-----------------------------------------------------------------------------
+				{
+					if( pOutput )
+					{
+						std::map<std::string, OutputProperties*>::iterator it = m_pRefData->m_mOutputs.find( pOutput->getDescription() );
+						if( it != m_pRefData->m_mOutputs.end() )
+						{
+							return it->second;
+						}
+					}
+					return 0;
+				}
+#		endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::OutputSignalGeneratorBlueDevice</b> object.
+			explicit OutputSignalGeneratorBlueDevice(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+														Device* pDev ) : m_pRefData(0)
+			{
+				m_pRefData = new ReferenceCountedData();
+				DeviceComponentLocator locator(pDev, dltIOSubSystem);
+				ComponentList outputs;
+				locator.bindComponent( outputs, "DigitalOutputs" );
+				if( outputs.isValid() )
+				{
+					ComponentIterator it(outputs.hObj());
+					it = it.firstChild();
+					while( it.isValid() )
+					{
+						if( it.isList() )
+						{
+							m_pRefData->m_mOutputs.insert( std::pair<std::string, OutputProperties*>(it.name(), new OutputProperties(it)) );
+						}
+						++it;
+					}
+				}
+			}
+			/// \brief Constructs a new <b>mvIMPACT::acquire::OutputSignalGeneratorBlueDevice</b> from
+			/// and exisiting one.
+			explicit OutputSignalGeneratorBlueDevice(	/// A constant reference to the <b>mvIMPACT::acquire::OutputSignalGeneratorBlueDevice</b> object, this object shall be created from
+														const OutputSignalGeneratorBlueDevice& src ) : m_pRefData(src.m_pRefData)
+			{
+				++(m_pRefData->m_refCnt);
+			}
+			/// \brief Class destructor.
+			~OutputSignalGeneratorBlueDevice()
+			{
+				dealloc();
+			}
+#		ifndef WRAP_PYTHON
+				/// \brief Allows assignments of <b>mvIMPACT::acquire::OutputSignalGeneratorBlueDevice</b> objects
+				OutputSignalGeneratorBlueDevice& operator=( const OutputSignalGeneratorBlueDevice& rhs )
+				{
+					if( this != &rhs )
+					{
+						dealloc();
+						m_pRefData = rhs.m_pRefData;
+						// inc. the NEW reference count
+						++m_pRefData->m_refCnt;
+					}
+					return *this;
+				}
+#		endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
+			/// \brief Removes the signal definition from the specified output pin.
+			///
+			/// Whenever a signal has been defined for a a certain digital output
+			/// pin, this pin can no longer controlled using the corresponding functions
+			/// in the class <b>mvIMPACT::acquire::DigitalOutput</b>. This function removes the
+			/// signal definition and hands back manual control of that digital output to the user.
+			/// \return
+			/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
+			/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
+			int undefineSignal(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
+								/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemCommon</b>
+								/// for this device.
+								DigitalOutput* pOutput )
+			{
+				OutputProperties* p = getOutputProperties( pOutput );
+				if( p )
+				{
+					p->mode.write( ddomManual );
+					return DMR_NO_ERROR;
+				}
+				else
+				{
+					return DMR_FEATURE_NOT_AVAILABLE;
+				}
+			}
+			/// \brief Checks whether the specified output can be used to create an inverted expose active signal.
+			bool canCreateExposeActiveSignal(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
+												/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemCommon</b>
+												/// for this device.
+												DigitalOutput* pOutput ) const
+			{
+				OutputProperties* p = getOutputProperties( pOutput );
+				if( !p || !p->mode.isValid() )
+				{
+					return false;
+				}
+				unsigned int dictSize = p->mode.dictSize();
+				for( unsigned int i=0; i<dictSize; i++ )
+				{
+					if( p->mode.getTranslationDictValue( i ) == ddomExposureActive )
+					{
+						return true;
+					}
+				}
+				return false;
+			}
+			/// \brief Checks whether the specified output can be used to create an inverted version of a certain signal.
+			bool canInvertSignal(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
+									/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemCommon</b>
+									/// for this device.
+									DigitalOutput* pOutput ) const
+			{
+				OutputProperties* p = getOutputProperties( pOutput );
+				return ( p && p->inverter.isValid() );
+			}
+			/// \brief Returns the current mode a digital output is operated in.
+			///
+			/// If the mode is not selectable for the current output an exception will be raised.
+			TDeviceDigitalOutputMode getOutputMode(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
+													/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemCommon</b>
+													/// for this device.
+													DigitalOutput* pOutput ) const
+			{
+				OutputProperties* p = getOutputProperties( pOutput );
+				if( !p )
+				{
+					ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, DMR_FEATURE_NOT_AVAILABLE, INVALID_ID, "Unsupported feature query(Could not obtain pointer to output properties)" );
+				}
+				return p->mode.read();
+			}
+			/// \brief Checks wheter the specified output is currently operated in a certain mode
+			bool isOutputModeActive(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
+										/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemCommon</b>
+										/// for this device.
+										DigitalOutput* pOutput,
+										/// The mode the specified output shall be checked for.
+										TDeviceDigitalOutputMode mode ) const
+			{
+				OutputProperties* p = getOutputProperties( pOutput );
+				return ( p && p->mode.isValid() && ( p->mode.read() == mode ) );
+			}
+			/// \brief Checks whether the specified output will currently invert a certain internal signal.
+			bool isSignalInverted(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
+									/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemCommon</b>
+									/// for this device.
+									DigitalOutput* pOutput ) const
+			{
+				OutputProperties* p = getOutputProperties( pOutput );
+				return ( p && p->mode.isValid() && p->inverter.isValid() && ( p->inverter.read() == bTrue ) );
+			}
+			/// \brief This function will configure the digital output to switch state during the active exposure time.
+			///
+			/// After calling this function the digital output will invert its current state at the beginning of the exposure of
+			/// the sensor and switch back to the initial value at the end of the exposure time. This can be useful to control
+			/// a flash connected to the digital output.
+			///
+			/// \return An error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
+			int setOutputMode(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
+								/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemCommon</b>
+								/// for this device.
+								DigitalOutput* pOutput,
+								/// The mode the specified output shall be operated in. If the mode passed to the
+								/// function is not available for the output or the device an exception will be raised.
+								TDeviceDigitalOutputMode mode,
+								/// Set this parameter to true, to invert the exposure signal
+								bool boInverted = false )
+			{
+				OutputProperties* p = getOutputProperties( pOutput );
+				if( p && p->mode.isValid() )
+				{
+					p->mode.write( mode );
+					if( p->inverter.isValid() )
+					{
+						p->inverter.write( boInverted ? bTrue : bFalse );
+					}
+					else if( boInverted )
+					{
+						return DMR_FEATURE_NOT_AVAILABLE;
+					}
+					return DMR_NO_ERROR;
+				}
+				else
+				{
+					return DMR_FEATURE_NOT_AVAILABLE;
+				}
+			}
+		};
+#	endif // #ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
+
+#	ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+		//-----------------------------------------------------------------------------
+		/// \brief A class to handle the digital inputs and outputs for frame grabber
+		/// devices(<b>Device specific interface layout only</b>).
+		///
+		/// This class provides a convenient basic access to the digital inputs and 
+		/// outputs of a frame grabber device.
+		///
+		/// \note
+		/// The number of digital inputs and outputs available will vary significantly
+		/// from device to device. Some devices might not even have digital inputs and/or
+		/// digital outputs. Therefore it's crucial to check for available pins before
+		/// using them. The corresponding functions to do that can be found in the
+		/// base class <b>mvIMPACT::acquire::IOSubSystem</b>.
+		///
+		/// To create more complex digital output related signals the class 
+		/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber</b> should be used.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class IOSubSystemFrameGrabber : public IOSubSystemCommon
+		//-----------------------------------------------------------------------------
+		{
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b> object.
+			explicit IOSubSystemFrameGrabber(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+												Device* pDev ) : IOSubSystemCommon(pDev), syncOutputMode()
+			{
+				DeviceComponentLocator locator(pDev, dltIOSubSystem);
+				ComponentIterator itSyncs;
+				locator.bindComponent( itSyncs, "SyncOutputs", 0, 1 );
+				if( itSyncs.isValid() && itSyncs.firstChild().isValid() )
+				{
+					locator.bindSearchBase( locator.searchbase_id(), "SyncOutputs" );
+					locator.bindComponent( syncOutputMode, "Mode" );
+					itSyncs = itSyncs.firstChild();
+					while( itSyncs.isValid() )
+					{
+						if( itSyncs.isList() )
+						{
+							std::string name = itSyncs.name();
+							if( name.substr( 0, 3 ) == "VD-" )
+							{
+								registerVDOutput( itSyncs );
+							}
+							else if( name.substr( 0, 3 ) == "HD-" )
+							{
+								registerHDOutput( itSyncs );
+							}
+							else
+							{
+								; // type not recognized?!
+							}
+						}
+						++itSyncs;
+					}
+				}
+			}
+			/// \brief Returns the number of available HD output pins for the <b>mvIMPACT::acquire::Device</b>
+			/// associated with this object.
+			unsigned int getHDOutputCount( void ) const { return static_cast<unsigned int>(m_pRefData->m_vHDOutputs.size()); }
+			/// \brief Returns a pointer to a <b>mvIMPACT::acquire::SyncOutput</b> object that represents
+			/// a HD output for this device.
+			///
+			/// \a outputNr <b>MUST</b> be a valid number ( larger or equal than 0 and smaller than the
+			/// value returned by <b>mvIMPACT::acquire::IOSubSystemFrameGrabber::getHDOutputCount</b>.
+			///
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// If \a nr references an invalid pin a STL out_of_range exception
+			/// will be thrown.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///
+			/// \return A pointer to a <b>mvIMPACT::acquire::SyncOutput</b> object.
+			SyncOutput* HDOutput(	/// The number of the HD output to return.
+									unsigned int nr ) const { return m_pRefData->m_vHDOutputs.at( nr ); }
+			/// \brief Returns the number of available VD output pins for the <b>mvIMPACT::acquire::Device</b>
+			/// associated with this object.
+			unsigned int getVDOutputCount( void ) const { return static_cast<unsigned int>(m_pRefData->m_vVDOutputs.size()); }
+			/// \brief Returns a pointer to a <b>mvIMPACT::acquire::SyncOutput</b> object that represents
+			/// a VD output for this device.
+			///
+			/// \a outputNr <b>MUST</b> be a valid number ( larger or equal than 0 and smaller than the
+			/// value returned by <b>mvIMPACT::acquire::IOSubSystemFrameGrabber::getVDOutputCount</b>.
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// If \a nr references an invalid pin a STL out_of_range exception
+			/// will be thrown.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///
+			/// \return A pointer to a <b>mvIMPACT::acquire::SyncOutput</b> object.
+			SyncOutput* VDOutput(	/// The number of the VD output to return.
+									unsigned int nr ) const { return m_pRefData->m_vVDOutputs.at( nr ); }
+		PYTHON_ONLY(%immutable;)
+			/// \brief An enumerated integer property defining the current mode for sync. signal creation.
+			///
+			/// Sometimes it's desired to create a signal to sync. cameras connected to a capture device.
+			/// E.g. when capturing 3 monochrome cameras in parallel these should be synchronized. Therefore
+			/// some devices can create HD and VD signals that synchronize the connected cameras.
+			///
+			/// To create snyc. signals this property must be set either to <b>mvIMPACT::acquire::dsomNonInterlaced</b>
+			/// or <b>mvIMPACT::acquire::dsomInterlaced</b>.
+			///
+			/// In interlaced mode only the frequency of the VD signals can be modified, while in non-interlaced
+			/// mode the width (in percent) the signal stays low can be modified as well.
+			///
+			/// Now e.g. to sync. two or more CCIR compliant cameras connected to a capture device, that can
+			/// create sync. signals, the HD signals must be generated with a CCIR compliant frequency.
+			/// The function <b>mvIMPACT::acquire::IOSubSystemFrameGrabber::HDOutput</b> can be used to access the
+			/// desired output pin. Then it's property <b>mvIMPACT::acquire::SyncOutput::frequency_Hz</b> is
+			/// set to 15625 Hz (CCIR standard). The remaining values can be left untouched. The capture device
+			/// will no generate HD signals with the desired frequency and VD outputs with the frequency
+			/// stored by the property <b>mvIMPACT::acquire::SyncOutput::frequency_Hz</b> belonging to the
+			/// pointer to the object returned by a call to <b>mvIMPACT::acquire::IOSubSystemFrameGrabber::VDOutput</b>.
+			PropertyIDeviceSyncOutMode syncOutputMode;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyIDeviceSyncOutMode getSyncOutputMode( void ) const { return syncOutputMode; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+
+		//-----------------------------------------------------------------------------
+		/// \brief A class to create complex digital output signals(<b>Device specific interface layout only</b>).
+		///
+		/// Instances of this class can be used to create more complex digital output
+		/// related signals like a single pulse or sequence of pulses on a certain pin
+		/// as a reaction on a signal on one of the digital inputs of a device.
+		///
+		/// The availability of the features provided by this class heavily depends on the
+		/// used capture device. Therefore it's crucial to check if a desired feature is available
+		/// at all. This class either provides the functions needed for these checks or its
+		/// functions will return appropriate error codes.
+		///
+		/// \note
+		/// If the property <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::controlMode</b>
+		/// is not available <b>NO</b> feature of this class can be used.
+		/// 
+		/// \note
+		/// If the translation dictionary of <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::controlMode</b>
+		/// does not contain <b>mvIMPACT::acquire::docmRTC</b> the function
+		/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::defineLineScanPulse</b> will <b>NOT</b>
+		/// be available.
+		///
+		/// \note 
+		/// Calling unsupported functions or accessing unsupported features will raise an exception.
+		///
+		/// Pointers to <b>mvIMPACT::acquire::DigitalOutput</b> objects <b>MUST</b> be obtained
+		/// by an instance to a <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b> object of the
+		/// same device.
+		///
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		///
+		/// <b>EXAMPLES:</b>
+		///\code
+		/// #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
+		/// #include <iostream>
+		/// #include <vector>
+		///
+		/// using namespace std;
+		/// using namespace mvIMPACT::acquire;
+		///
+		/// Device* pDev = getValidDevicePointerFromSomewhere();
+		/// IOSubSystemFrameGrabber io(pDev);
+		/// unsigned int iCnt = io.getInputCount();
+		/// cout << "available digital inputs: " << iCnt << endl;
+		/// for( unsigned int d=0; d<iCnt; d++ )
+		/// {
+		///   cout << io.input(d)->getDescription() << endl;
+		/// }
+		/// unsigned int oCnt = io.getOutputCount();
+		/// cout << "available digital outputs: " << oCnt << endl;
+		/// // set all available digital outputs to high
+		/// for( unsigned int e=0; e<oCnt; e++ )
+		/// {
+		///   DigitalOutput* pOutput = io.output(e);
+		///   cout << "setting " << pOutput->getDescription() << " to high" << endl;
+		///   pOutput->set();
+		/// }
+		///
+		/// // check there is at least one digital output
+		/// if( oCnt > 0 )
+		/// {
+		///   OutputSignalGeneratorFrameGrabber osg(pDev);
+		///   // check if this device supports enhanced signal creation at all
+		///   if( osg.controlMode.isValid() )
+		///   {
+		///     // define a simple pulse on the first digital output detected. 
+		///     // this pulse will be low after 100 us for
+		///     // 200us and then switches back to high.
+		///     osg.definePulse( io.output( 0 ), 0, 100, 200 );
+		/// 
+		///     // define a more complex pulse
+		///     vector<int> v;
+		///     v.push_back(100);
+		///     v.push_back(299);
+		///     v.push_back(666);
+		///     osg.definePulseSequence( io.output( 0 ), 0, v );
+		///     osg.controlMode.write( docmSoftware );
+		///     osg.imageTrigger.write( ditAfterDigOutSignals );
+		/// 
+		///     // check if line scan pulse creation is supported by this device
+		///     vector<pair<string, TDigitalOutputControlMode> > dict;
+		///     osg.controlMode.getTranslationDict( dict );
+		///     unsigned int dictSize = osg.controlMode.dictSize();
+		///     for( unsigned int i=0; i<dictSize; i++ )
+		///     {
+		///       if( dict[i].second == docmRTC )
+		///       {
+		///         // supported -> define some signal
+		///         cout << "checkGrabberInterface: This device supports RTC control signal creation." << endl;
+		///         osg.controlMode.write( docmRTC );
+		///         osg.defineLineScanPulse( io.output( 0 ), dsosePeriodically, 100, 100, 1, 1 );
+		///       }
+		///     }
+		///   }
+		/// }
+		///\endcode
+		///\htmlinclude code_fragment_end.html
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///
+		/// Whenever a signal has been defined for a a certain digital output
+		/// pin, this pin can no longer controlled using the corresponding functions
+		/// in the class <b>mvIMPACT::acquire::DigitalOutput</b>. In order to do that
+		/// the pin in question must be released using the function
+		/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::undefineSignal</b>.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class OutputSignalGeneratorFrameGrabber
+		//-----------------------------------------------------------------------------
+		{
+#		ifndef DOXYGEN_SHOULD_SKIP_THIS
+				//-----------------------------------------------------------------------------
+				struct OutputProperties
+				//-----------------------------------------------------------------------------
+				{
+					PropertyIDeviceDigitalOutputMode mode;
+					PropertyI polarity;
+					PropertyI delay_us;
+					PropertyI width_us;
+					PropertyI width_pclk;
+					PropertyI startLevel;
+					PropertyI polaritySwitchAfter_us;
+					PropertyIDigitalSignal digitalSignal;
+					PropertyI pulseStartConfiguration;
+					OutputProperties( HLIST hOutput ) : mode(), polarity(), delay_us(), width_us(),
+					  width_pclk(), startLevel(), polaritySwitchAfter_us(), digitalSignal(),
+					  pulseStartConfiguration()
+					{
+						ComponentLocator locator(hOutput);
+						locator.bindComponent( mode, "Mode" );
+						locator.bindComponent( polarity, "Polarity" );
+						locator.bindComponent( delay_us, "Delay_us" );
+						locator.bindComponent( width_us, "Width_us" );
+						locator.bindComponent( width_pclk, "Width_pclk" );
+						locator.bindComponent( startLevel, "StartLevel" );
+						locator.bindComponent( polaritySwitchAfter_us, "PolaritySwitchAfter_us" );
+						locator.bindComponent( digitalSignal, "DigitalSignal" );
+						locator.bindComponent( pulseStartConfiguration, "PulseStartConfiguration" );
+					}
+				};
+				//-----------------------------------------------------------------------------
+				struct ReferenceCountedData
+				//-----------------------------------------------------------------------------
+				{
+					ComponentList                            m_outputs;
+					PropertyIDeviceSignalOutputStartEvent    m_pulseStartEventLineScan;
+					PropertyI                                m_softwareSignalPeriod_pclk;
+					PropertyI                                m_output;
+					PropertyI                                m_width_pclk;
+					PropertyI                                m_polarity;
+					PropertyI                                m_divider;
+					std::map<std::string, OutputProperties*> m_mOutputs;
+					unsigned int                             m_refCnt;
+					ReferenceCountedData() : m_outputs(), m_pulseStartEventLineScan(),
+						m_softwareSignalPeriod_pclk(), m_output(), m_width_pclk(),
+						m_polarity(), m_divider(), m_mOutputs(), m_refCnt(1) {}
+					~ReferenceCountedData()
+					{
+						std::map<std::string, OutputProperties*>::iterator itEnd = m_mOutputs.end();
+						std::map<std::string, OutputProperties*>::iterator it = m_mOutputs.begin();
+						while( it != itEnd )
+						{
+							delete it->second;
+							++it;
+						}
+					}
+				} *m_pRefData;
+				//-----------------------------------------------------------------------------
+				void bindPublicProperties( HLIST hList )
+				//-----------------------------------------------------------------------------
+				{
+					ComponentLocator locator(hList);
+					locator.bindComponent( controlMode, "ControlMode" );
+					locator.bindComponent( pulseStartEvent, "PulseStartEvent" );
+					locator.bindComponent( imageTrigger, "ImageTrigger" );
+				}
+				//-----------------------------------------------------------------------------
+				void dealloc( void )
+				//-----------------------------------------------------------------------------
+				{
+					--(m_pRefData->m_refCnt);
+					if( m_pRefData->m_refCnt == 0 )
+					{
+						delete m_pRefData;
+					}
+				}
+				//-----------------------------------------------------------------------------
+				OutputProperties* getOutputProperties( DigitalOutput* pOutput ) const
+				//-----------------------------------------------------------------------------
+				{
+					if( pOutput )
+					{
+						std::map<std::string, OutputProperties*>::iterator it = m_pRefData->m_mOutputs.find( pOutput->getDescription() );
+						if( it != m_pRefData->m_mOutputs.end() )
+						{
+							return it->second;
+						}
+					}
+					return 0;
+				}
+#		endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber</b> object.
+			explicit OutputSignalGeneratorFrameGrabber(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+														Device* pDev ) : m_pRefData(0), controlMode(), pulseStartEvent(), imageTrigger()
+			{
+				m_pRefData = new ReferenceCountedData();
+				DeviceComponentLocator locator(pDev, dltIOSubSystem);
+				locator.bindComponent( m_pRefData->m_outputs, "DigitalOutputs" );
+				locator.bindSearchBase( m_pRefData->m_outputs.hObj() );
+				bindPublicProperties( m_pRefData->m_outputs.hObj() );
+				locator.bindComponent( m_pRefData->m_pulseStartEventLineScan, "PulseStartEvent(LineScan)" );
+				locator.bindComponent( m_pRefData->m_softwareSignalPeriod_pclk, "SoftwareSignalPeriod_pclk" );
+				locator.bindComponent( m_pRefData->m_output, "Output" );
+				locator.bindComponent( m_pRefData->m_width_pclk, "Width_pclk" );
+				locator.bindComponent( m_pRefData->m_polarity, "Polarity" );
+				locator.bindComponent( m_pRefData->m_divider, "Divider" );
+				if( m_pRefData->m_outputs.isValid() )
+				{
+					ComponentIterator it(m_pRefData->m_outputs.hObj());
+					it = it.firstChild();
+					while( it.isValid() )
+					{
+						if( it.isList() )
+						{
+							m_pRefData->m_mOutputs.insert( std::pair<std::string, OutputProperties*>(it.name(), new OutputProperties(it)) );
+						}
+						++it;
+					}
+				}
+			}
+			/// \brief Constructs a new <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber</b> from
+			/// and exisiting one.
+			explicit OutputSignalGeneratorFrameGrabber(	/// A constant reference to the <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber</b> object, this object shall be created from
+														const OutputSignalGeneratorFrameGrabber& src ) : m_pRefData(src.m_pRefData),
+														  controlMode(src.controlMode), pulseStartEvent(src.pulseStartEvent), imageTrigger(src.imageTrigger)
+			{
+				++(m_pRefData->m_refCnt);
+			}
+			/// \brief Class destructor.
+			~OutputSignalGeneratorFrameGrabber()
+			{
+				dealloc();
+			}
+#		ifndef WRAP_PYTHON
+				/// \brief Allows assignments of <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber</b> objects
+				OutputSignalGeneratorFrameGrabber& operator=( const OutputSignalGeneratorFrameGrabber& rhs )
+				{
+					if( this != &rhs )
+					{
+						dealloc();
+						m_pRefData = rhs.m_pRefData;
+						// inc. the NEW reference count
+						++m_pRefData->m_refCnt;
+						bindPublicProperties( m_pRefData->m_outputs.hObj() );
+					}
+					return *this;
+				}
+#		endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
+			/// \brief Assigns a single pulse to a digital output.
+			///
+			/// Whenever a single pulse of a certain duration and polarity shall be generated
+			/// on a digital output as a reaction on a trigger signal that was either generated by one of
+			/// digital inputs of the device or software this is the right function to use.
+			///
+			/// When the signal is generated can be defined by the properties 
+			/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::pulseStartEvent</b> and
+			/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::imageTrigger</b>.
+			///
+			/// \sa
+			/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::undefineSignal</b>
+			/// \return
+			/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
+			/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
+			int definePulse(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
+								/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
+								/// for this device.
+								DigitalOutput* pOutput,
+								/// The polarity of the pulse to generate.
+								///
+								/// - 0: The pulse will be low for \a width_pclk and high otherwise
+								/// - 1: The pulse will be high for \a width_pclk and high otherwise
+								int polarity,
+								/// The delay after the trigger event before a signal generation starts
+								int delay,
+								/// The width of the pulse to generate
+								int width,
+								/// The pulse start configuration to be used for this pulse sequence.
+								/// Not every device will support the use of pulse start configurations. Valid objects that
+								/// can be passed to this function can be obtained from a call to <b>mvIMPACT::acquire::IOSubSystem::getPulseStartConfiguration</b>,
+								/// and <b>mvIMPACT::acquire::IOSubSystem::getPulseStartConfigurationCount</b>. If objects of these type are
+								/// not supported, pass 0 or ignor this parameter. In that case the property 
+								/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::imageTrigger</b> will define the start condition
+								/// for the signal output.
+								PulseStartConfiguration* pPulseStartConfiguration = 0 )
+			{
+				OutputProperties* p = getOutputProperties( pOutput );
+				if( p )
+				{
+					p->mode.write( ddomPulse );
+					p->polarity.write( polarity );
+					p->delay_us.write( delay );
+					p->width_us.write( width );
+					if( pPulseStartConfiguration )
+					{
+						p->pulseStartConfiguration.write( pPulseStartConfiguration->number() );
+					}
+					return DMR_NO_ERROR;
+				}
+				else
+				{
+					return DMR_FEATURE_NOT_AVAILABLE;
+				}
+			}
+			/// \brief Assigns a complex signal to a digital output.
+			///
+			/// This function can be used when a complex signal shall be generated
+			/// on a digital output as a reaction on a trigger signal that was either generated by one of
+			/// digital inputs of the device or software.
+			///
+			/// When the signal is generated can be defined by the properties 
+			/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::pulseStartEvent</b> and
+			/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::imageTrigger</b>.
+			///
+			/// \sa
+			/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::undefineSignal</b>
+			/// \return
+			/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
+			/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
+			int definePulseSequence(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
+										/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
+										/// for this device.
+										DigitalOutput* pOutput,
+										/// The start level of the generated signal.
+										///
+										/// - 0: The signal will start with 'low'
+										/// - 1: The signal will start with 'high'
+										int startLevel,
+										/// An array of integer values. Each values defines a switch in polarity
+										/// of the signal after 'x' us.
+										/// An array containing '1000', '2000' therefore will describe a signal
+										/// starting with \a startLevel, switches polarity after 1000 us and then
+										/// again switches polarity after 2000 us.
+										std::vector<int>& sequence,
+										/// The pulse start configuration to be used for this pulse sequence.
+										/// Not every device will support the use of pulse start configurations. Valid objects that
+										/// can be passed to this function can be obtained from a call to <b>mvIMPACT::acquire::IOSubSystem::getPulseStartConfiguration</b>,
+										/// and <b>mvIMPACT::acquire::IOSubSystem::getPulseStartConfigurationCount</b>. If objects of these type are
+										/// not supported, pass 0 or ignor this parameter. In that case the property 
+										/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::imageTrigger</b> will define the start condition
+										/// for the signal output.
+										PulseStartConfiguration* pPulseStartConfiguration = 0 )
+			{
+				OutputProperties* p = getOutputProperties( pOutput );
+				if( p )
+				{
+					p->mode.write( ddomUser );
+					p->startLevel.write( startLevel );
+					p->polaritySwitchAfter_us.write( sequence );
+					if( pPulseStartConfiguration )
+					{
+						p->pulseStartConfiguration.write( pPulseStartConfiguration->number() );
+					}
+					return DMR_NO_ERROR;
+				}
+				else
+				{
+					return DMR_FEATURE_NOT_AVAILABLE;
+				}
+			}
+#		ifndef WRAP_DOTNET
+				/// \brief Receives a list of valid signals that can be passed directly to a certain digital output pin.
+				///
+				/// Whenever it is necessary to output a certain signal (e.g. a digital input signal connected to the device or
+				/// an internal digital signal like e.g. a frame valid signal) to a digital output of the device this can be done
+				/// by a call to the function <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::definePassThroughSignal</b>
+				///
+				/// As the type of signals that a device can send to a digital output depents heavily on the device and even on the 
+				/// digital output as well, this function will return a list of strings and a numerical representation for each signal
+				/// that can be send to this digital output.
+				///
+				/// \note
+				/// This function is much more efficient than calling
+				/// <b>OutputSignalGeneratorFrameGrabber::getValidPassThroughSignalValue</b> and
+				/// <b>OutputSignalGeneratorFrameGrabber::getValidPassThroughSignalString</b> and
+				/// therefore this function should be called whenever all entries are required.
+				///
+				/// \return
+				/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
+				/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
+				int getValidSignalsForPassThroughModes(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
+														/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
+														/// for this device.
+														DigitalOutput* pOutput,
+														/// A reference to a vector that will receive the list of allowed digital signals
+														/// for this particular digital output pin.
+														std::vector<std::pair<std::string, TDigitalSignal> >& sequence ) const
+				{
+					OutputProperties* p = getOutputProperties( pOutput );
+					if( p && p->digitalSignal.isValid() && p->digitalSignal.hasDict() )
+					{
+						p->digitalSignal.getTranslationDict( sequence );
+						return DMR_NO_ERROR;
+					}
+					else
+					{
+						return DMR_FEATURE_NOT_AVAILABLE;
+					}
+				}
+#		endif // WRAP_DOTNET
+			/// \brief Returns the number of signals that can be used for pass through signal definitions for
+			/// a certain digital output pin of this device.
+			unsigned int getValidPassThroughSignalCount(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
+															/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
+															/// for this device.
+															DigitalOutput* pOutput ) const
+			{
+				OutputProperties* p = getOutputProperties( pOutput );
+				if( p && p->digitalSignal.isValid() && p->digitalSignal.hasDict() )
+				{
+					return p->digitalSignal.dictSize();
+				}
+				return 0;
+			}
+			/// \brief Receives a valid signal that can be passed directly to a certain digital output pin.
+			///
+			/// Whenever it is necessary to output a certain signal (e.g. a digital input signal connected to the device or
+			/// an internal digital signal like e.g. a frame valid signal) to a digital output of the device this can be done
+			/// by a call to the function <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::definePassThroughSignal</b>
+			///
+			/// As the type of signals that a device can send to a digital output depents heavily on the device and even on the 
+			/// digital output as well, this function together with the function <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::getValidPassThroughSignalString</b>
+			/// can be used to query a list of strings and a numerical representation for each signal
+			/// that can be send to this digital output.
+			///
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// C++ offers the more efficient function <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::getValidSignalsForPassThroughModes</b>
+			/// to obtain this information.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			TDigitalSignal getValidPassThroughSignalValue(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
+															/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
+															/// for this device.
+															DigitalOutput* pOutput,
+															/// The index of the entry to read from the property. The find out the last valid value for this parameter
+															/// call <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::getValidPassThroughSignalCount</b>
+															int index = 0 ) const
+			{
+				OutputProperties* p = getOutputProperties( pOutput );
+				if( !p || !p->digitalSignal.isValid() || !p->digitalSignal.hasDict() )
+				{
+					ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, DMR_FEATURE_NOT_AVAILABLE, ( p && p->digitalSignal.isValid() ) ? p->digitalSignal.hObj() : INVALID_ID, "Unsupported feature query" );
+				}
+				return p->digitalSignal.getTranslationDictValue( index );
+			}
+			/// \brief Receives a valid string representation of a signal that can be passed directly to a certain digital output pin.
+			///
+			/// Whenever it is necessary to output a certain signal (e.g. a digital input signal connected to the device or
+			/// an internal digital signal like e.g. a frame valid signal) to a digital output of the device this can be done
+			/// by a call to the function <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::definePassThroughSignal</b>
+			///
+			/// As the type of signals that a device can send to a digital output depents heavily on the device and even on the 
+			/// digital output as well, this function together with the function <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::getValidPassThroughSignalString</b>
+			/// can be used to query a list of strings and a numerical representation for each signal
+			/// that can be send to this digital output.
+			///
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// C++ offers the more efficient function <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::getValidSignalsForPassThroughModes</b>
+			/// to obtain this information.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			std::string getValidPassThroughSignalString(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
+															/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
+															/// for this device.
+															DigitalOutput* pOutput,
+															/// The index of the entry to read from the property. The find out the last valid value for this parameter
+															/// call <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::getValidPassThroughSignalCount</b>
+															int index = 0 ) const
+			{
+				OutputProperties* p = getOutputProperties( pOutput );
+				if( !p || !p->digitalSignal.isValid() || !p->digitalSignal.hasDict() )
+				{
+					ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, DMR_FEATURE_NOT_AVAILABLE, ( p && p->digitalSignal.isValid() ) ? p->digitalSignal.hObj() : INVALID_ID, "Unsupported feature query" );
+				}
+				return p->digitalSignal.getTranslationDictString( index );
+			}
+			/// \brief Assing a certain signal to a digital output.
+			///
+			/// Some digital input signals or even some internal signals can be passed directly to one or more
+			/// digital outputs.
+			///
+			/// \return
+			/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
+			/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
+			int definePassThroughSignal(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
+											/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
+											/// for this device.
+											DigitalOutput* pOutput,
+											/// The digital signal that shall be passed to the digital output.
+											/// Valid values for this parameter will be obtained by a call to the function
+											/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::getValidSignalsForPassThroughModes</b>
+											TDigitalSignal digitalSignal,
+											/// If set to \a true, the signal will be inverted internally before being passed to the output.
+											bool boInverted = false )
+			{
+				OutputProperties* p = getOutputProperties( pOutput );
+				if( p && p->digitalSignal.isValid() )
+				{
+					p->mode.write( boInverted ? ddomDigitalSignalPassThroughInv : ddomDigitalSignalPassThrough );
+					p->digitalSignal.write( digitalSignal );
+					return DMR_NO_ERROR;
+				}
+				else
+				{
+					return DMR_FEATURE_NOT_AVAILABLE;
+				}
+			}
+			/// \brief Assing a certain signal to a digital output.
+			///
+			/// Some digital input signals or even some internal signals can be passed directly to one or more
+			/// digital outputs.
+			///
+			/// \return
+			/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
+			/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
+			int definePassThroughSignal(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
+											/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
+											/// for this device.
+											DigitalOutput* pOutput,
+											/// The string representation of the digital output that shall be passed to the digital output.
+											/// Valid values for this parameter will be obtained by a call to the function
+											/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::getValidSignalsForPassThroughModes</b>
+											const std::string& digitalSignal,
+											/// If set to \a true, the signal will be inverted internally before being passed to the output.
+											bool boInverted = false )
+			{
+				OutputProperties* p = getOutputProperties( pOutput );
+				if( p && p->digitalSignal.isValid() )
+				{
+					p->mode.write( boInverted ? ddomDigitalSignalPassThroughInv : ddomDigitalSignalPassThrough );
+					p->digitalSignal.writeS( digitalSignal );
+					return DMR_NO_ERROR;
+				}
+				else
+				{
+					return DMR_FEATURE_NOT_AVAILABLE;
+				}
+			}
+			/// \brief Removes the signal definition from the specified output pin.
+			///
+			/// Whenever a signal has been defined for a a certain digital output
+			/// pin, this pin can no longer controlled using the corresponding functions
+			/// in the class <b>mvIMPACT::acquire::DigitalOutput</b>. This function removes the
+			/// signal definition and hands back manual control of that digital output to the user.
+			/// \return
+			/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
+			/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
+			int undefineSignal(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
+								/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
+								/// for this device.
+								DigitalOutput* pOutput )
+			{
+				OutputProperties* p = getOutputProperties( pOutput );
+				if( p )
+				{
+					p->mode.write( ddomManual );
+					return DMR_NO_ERROR;
+				}
+				else
+				{
+					return DMR_FEATURE_NOT_AVAILABLE;
+				}
+			}
+			/// \brief Defines a pulse to trigger line scan cameras.
+			///
+			/// Calling this function without setting <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::controlMode</b>
+			/// to <b>mvIMPACT::acquire::docmRTC</b> will have <b>NO</b> effect.
+			///
+			/// \note
+			/// Not every frame grabber will offer the <b>mvIMPACT::acquire::docmRTC</b>
+			/// mode. Check is the mode is available by reading the properties translation dictionary with
+			/// the functions <b>mvIMPACT::acquire::PropertyIDigitalOutputControlMode::getTranslationDictString</b> and
+			/// <b>mvIMPACT::acquire::PropertyIDigitalOutputControlMode::getTranslationDictValue</b>. The detailed description
+			/// of this class might contain source code examples for the language you are working with.
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyIDigitalOutputControlMode::getTranslationDict</b>
+			/// in addition to the functions mentioned above.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///
+			/// \sa
+			/// <b>mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber::undefineSignal</b>
+			/// \return
+			/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
+			/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
+			int defineLineScanPulse(	/// A pointer to a <b>mvIMPACT::acquire::DigitalOutput</b> object
+										/// obtained from an instance of the class <b>mvIMPACT::acquire::IOSubSystemFrameGrabber</b>
+										/// for this device.
+										DigitalOutput* pOutput,
+										/// Defines the start event for the signal generation. Valid values for this parameter
+										/// are defined by <b>mvIMPACT::acquire::TDeviceSignalOutputStartEvent</b>.
+										TDeviceSignalOutputStartEvent pulseStartEvent,
+										/// Defines the frequency for a continuously generated signal if
+										/// \a pulseStartEvent is <b>mvIMPACT::acquire::dsoseSyncInRisingEdge</b>
+										/// or <b>mvIMPACT::acquire::dsoseSyncInFallingEdge</b> and is 
+										/// ignored otherwise.
+										int softwareSignalPeriod_pclk,
+										/// The width of the signal to generate if \a pulseStartEvent is <b>mvIMPACT::acquire::dsoseSyncInRisingEdge</b>,
+										/// <b>mvIMPACT::acquire::dsosePeriodically</b> or
+										/// <b>mvIMPACT::acquire::dsoseSyncInFallingEdge</b> and is 
+										/// ignored otherwise.
+										int width_pclk,
+										/// The polarity of the signal to generate if \a pulseStartEvent is <b>mvIMPACT::acquire::dsoseSyncInRisingEdge</b>,
+										/// <b>mvIMPACT::acquire::dsosePeriodically</b> or
+										/// <b>mvIMPACT::acquire::dsoseSyncInFallingEdge</b> and is 
+										/// ignored otherwise.
+										///
+										/// - 0: The signal will be low for \a width_pclk and high otherwise
+										/// - 1: The signal will be high for \a width_pclk and high otherwise
+										int polarity,
+										/// Defines the divider value if \a pulseStartEvent is
+										/// <b>mvIMPACT::acquire::dsosePeriodically</b>
+										unsigned int divider )
+			{
+				OutputProperties* p = getOutputProperties( pOutput );
+				if( p )
+				{
+					m_pRefData->m_pulseStartEventLineScan.write( pulseStartEvent );
+					m_pRefData->m_output.writeS( pOutput->getDescription() );
+					switch( pulseStartEvent )
+					{
+					case dsoseSyncInRisingEdge:
+					case dsoseSyncInFallingEdge:
+						m_pRefData->m_width_pclk.write( width_pclk );
+						m_pRefData->m_polarity.write( polarity );
+						m_pRefData->m_divider.write( divider );
+						break;
+					case dsosePeriodically:
+						m_pRefData->m_softwareSignalPeriod_pclk.write( softwareSignalPeriod_pclk );
+						m_pRefData->m_width_pclk.write( width_pclk );
+						m_pRefData->m_polarity.write( polarity );
+						break;
+					default:
+						// nothing to do
+						break;
+					}
+					return DMR_NO_ERROR;
+				}
+				else
+				{
+					return DMR_FEATURE_NOT_AVAILABLE;
+				}
+			}
+		PYTHON_ONLY(%immutable;)
+			/// \brief An enumerated integer property defining the general method used to create output
+			/// signals.
+			///
+			/// This setting always applies to every signal defined. Modifying this property will also 
+			/// change the behaviour of signals already defined.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDigitalOutputControlMode</b>.
+			///
+			/// When switching to <b>mvIMPACT::acquire::docmRTC</b> mode
+			/// only one signal can be created currently.
+			///
+			/// \note
+			/// Not every frame grabber will offer the <b>mvIMPACT::acquire::docmRTC</b>
+			/// mode. Check is the mode is available by reading the properties translation dictionary with
+			/// the functions <b>mvIMPACT::acquire::PropertyIDigitalOutputControlMode::getTranslationDictString</b> and
+			/// <b>mvIMPACT::acquire::PropertyIDigitalOutputControlMode::getTranslationDictValue</b>.
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyIDigitalOutputControlMode::getTranslationDict</b>
+			/// in addition to the functions mentioned above.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///
+			/// Some devices will offer a more flexible way to define this behaviour. In this case, this property won't be available (a call to the function
+			/// <b>mvIMPACT::acquire::Component::isValid</b> will return false). However then calls to <b>mvIMPACT::acquire::IOSubSystem::getPulseStartConfigurationCount</b>
+			/// and <b>mvIMPACT::acquire::IOSubSystem::getPulseStartConfiguration</b> will succeed and the objects returned by 
+			/// <b>mvIMPACT::acquire::IOSubSystem::getPulseStartConfiguration</b> (<b>mvIMPACT::acquire::PulseStartConfiguration</b>) will
+			/// provide a more sofisticated way to define the signal output behaviour of a device.
+			PropertyIDigitalOutputControlMode controlMode;
+			/// \brief An enumerated integer property defining the general behaviour of created output
+			/// signals.
+			///
+			/// This setting always applies to every signal defined. Modifying this property will also 
+			/// change the behaviour of signals already defined.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDeviceSignalOutputStartEvent</b>.
+			PropertyIDeviceSignalOutputStartEvent pulseStartEvent;
+			/// \brief An enumerated integer property defining the general behaviour of created output
+			/// signals.
+			///
+			/// This setting always applies to every signal defined. Modifying this property will also 
+			/// change the behaviour of signals already defined.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDeviceImageTrigger</b>.
+			PropertyIDeviceImageTrigger imageTrigger;
+		PYTHON_ONLY(%mutable;)
+		#ifdef DOTNET_ONLY_CODE
+			PropertyIDigitalOutputControlMode getControlMode( void ) const { return controlMode; }
+			PropertyIDeviceSignalOutputStartEvent getPulseStartEvent( void ) const { return pulseStartEvent; }
+			PropertyIDeviceImageTrigger getImageTrigger( void ) const { return imageTrigger; }
+		#endif // #ifdef DOTNET_ONLY_CODE
+		};
+#	endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+#	ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
+		//-----------------------------------------------------------------------------
+		/// \brief A class to handle the digital inputs and outputs of a
+		/// <b>mvBlueCOUGAR</b> of <b>mvBlueLYNX-M7</b> device(<b>Device specific interface layout only</b>).
+		///
+		/// This class provides a convenient basic access to the digital inputs and 
+		/// outputs of a <b>mvBlueCOUGAR</b> or <b>mvBlueLYNX-M7</b> device.
+		///
+		/// \note
+		/// The number of digital inputs and outputs available will vary significantly
+		/// from device to device. Some devices might not even have digital inputs and/or
+		/// digital outputs. Therefore it's crucial to check for available pins before
+		/// using them. The corresponding functions to do that can be found in the
+		/// base class <b>mvIMPACT::acquire::IOSubSystem</b>.
+		///
+		/// Please also see the code sample in the base class <b>mvIMPACT::acquire::IOSubSystemCommon</b>.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class IOSubSystemBlueCOUGAR : public IOSubSystemCommon
+		//-----------------------------------------------------------------------------
+		{
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::IOSubSystemBlueCOUGAR</b> object.
+			explicit IOSubSystemBlueCOUGAR(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+											Device* pDev ) : IOSubSystemCommon(pDev)
+			{
+				DeviceComponentLocator locator(pDev, dltIOSubSystem);
+				locator.bindComponent( digitalInputThreshold_mV, "DigitalInputThreshold_mV" );
+			}
+		PYTHON_ONLY(%immutable;)
+			/// \brief An integer property defining the threshold for the digital
+			/// inputs in milli-Volt.
+			///
+			/// If a voltage applied to the digital input lies above the threshold this pin
+			/// will be considered as 'logic 1' otherwise it will be considered as 'logic 0'.
+			///
+			/// \note
+			/// This property is currently only available for <b>mvBlueLYNX-M7</b> devices. Thus always call <b>mvIMPACT::acquire::Component::isValid</b>
+			/// to check if the device you are working it supports this feature. Not doing so and using the feature with a device
+			/// not supporting it will raise an exception.
+			PropertyI digitalInputThreshold_mV;
+		PYTHON_ONLY(%mutable;)
+		#ifdef DOTNET_ONLY_CODE
+			PropertyI getDigitalInputThreshold_mV( void ) const { return digitalInputThreshold_mV; }
+		#endif // #ifdef DOTNET_ONLY_CODE
+		};
+#	endif // #ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
+
+	//-----------------------------------------------------------------------------
+	/// \brief A class describing how a video signal source(e.g. a camera or image sensor) is 
+	/// connected to a video signal sink(e.g. a frame grabber)(<b>Device specific interface layout only</b>).
+	///
+	/// With an instance of this class the user can define on which input channels the
+	/// video signal source used for this setting is connected to the video signal sink and how(in which format) the
+	/// video signal source transmits it's data.
+	///
+	/// Video signal source and video signal sink can both belong to the same physical piece
+	/// of hardware. This e.g. might apply to a digital camera that doesn't need a
+	/// frame grabber (e.g. a GigE Vision&trade; or USB camera). In such a scenario
+	/// certain properties belonging to this class might be read-only or may only allow
+	/// a single enumeration value.
+	///
+	/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+	/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+	class Connector : public ComponentCollection
 	//-----------------------------------------------------------------------------
 	{
 	public:
-		/// \brief Constructs a new <b>mvIMPACT::acquire::SystemV4L2</b> object.
-		explicit SystemV4L2(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-								Device* pDev ) : SystemBase(pDev), volume(), balance(), bass(), treble(), mute(), loudness()
+		/// \brief Constructs a new <b>mvIMPACT::acquire::Connector</b> object
+		explicit Connector(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+							Device* pDev,
+							/// The name of the driver internal setting to access with this instance.
+							/// A list of valid setting names can be obtained by a call to
+							/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
+							/// settings can be created with the function
+							/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
+							const std::string& settingName = "Base" ) : ComponentCollection(pDev), cameraOutputUsed(),
+							  videoChannel(), pinDescription()
 		{
-			DeviceComponentLocator locator(pDev, dltSystemSettings);
-			locator.bindSearchBase( locator.searchbase_id(), "V4L-Audio" );
-			locator.bindComponent( volume, "Volume" );
-			locator.bindComponent( balance, "Balance" );
-			locator.bindComponent( bass, "Bass" );
-			locator.bindComponent( treble, "Treble" );
-			locator.bindComponent( mute, "Mute" );
-			locator.bindComponent( loudness, "Loudness" );
+			DeviceComponentLocator locator(pDev, dltSetting, settingName);
+			if( locator.findComponent( "Connector" ) != INVALID_ID )
+			{
+				locator.bindSearchBase( locator.searchbase_id(), "Connector" );
+				m_hRoot = locator.searchbase_id();
+				locator.bindComponent( cameraOutputUsed, "CameraOutputUsed" );
+				locator.bindComponent( videoChannel, "VideoChannel" );
+				locator.bindComponent( pinDescription, "PinDescription" );
+			}
 		}
-		PYTHON_ONLY(%immutable;)
-		/// \brief If V4L2 device supports audio, this integer property adjusts the audio volume.
+	PYTHON_ONLY(%immutable;)
+		/// \brief An enumerated integer property defining the video signal output of the video signal source used for the
+		/// connection to the video signal sink.
 		///
-		/// This property represents a V4L2-audio-control ID.
+		/// \note
+		/// Not every video signal sink will support every possible value defined in the enumeration
+		/// <b>mvIMPACT::acquire::TCameraOutput</b>. For example a CameraLink&reg; frame grabber
+		/// will not offer to use a SVideo connector. Therefore the translation dictionary of this
+		/// property should be used to find out, which connector types are available.
 		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
-		/// values too large or too small will raise an exception.
-		PropertyI volume;
-		/// \brief If V4L2 device supports audio, this integer property adjusts the audio balance.
+		/// \note
+		/// This property might not be supported by every device. Therefore always call the function 
+		/// <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+		PropertyICameraOutput cameraOutputUsed;
+		/// \brief An integer property containing the video channel the camera belonging to the current
+		/// setting is connected to.
 		///
-		/// This property represents a V4L2-audio-control ID.
+		/// The maximum possible video channel might change when the property 
+		/// <b>mvIMPACT::acquire::Connector::cameraOutputUsed</b> is modified as the different
+		/// ways to transmit a video signal require more or less video input channels. While e.g. a composite
+		/// video signal can be transmitted via a single wire, an RGB signal requires either 3 or 4 wires
+		/// (depending on whether the sync. signal is transmitted on a separate wire or not).
+		/// 
+		/// The first channel will always have the number 0. The limits (max/min values) can be queried
+		/// by calling the function <b>mvIMPACT::acquire::PropertyI::getMinValue</b> or
+		/// <b>mvIMPACT::acquire::PropertyI::getMaxValue</b>.
 		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
-		/// values too large or too small will raise an exception.
-		PropertyI balance;
-		/// \brief If V4L2 device supports audio, this integer property adjusts the audio bass.
+		/// \note
+		/// This property might not be supported by every device. Therefore always call the function 
+		/// <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+		PropertyI videoChannel;
+		/// \brief A string property <b>(read-only)</b> containing a description for the video channel 
+		/// currently selected by the property <b>mvIMPACT::acquire::Connector::videoChannel</b>
 		///
-		/// This property represents a V4L2-audio-control ID.
+		/// The description string contains information about the connector pins belonging to this video
+		/// input of the video signal sink as well as the corresponding name of this video input.
 		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
-		/// values too large or too small will raise an exception.
-		PropertyI bass;
-		/// \brief If V4L2 device supports audio, this integer property adjusts the audio treble.
-		///
-		/// This property represents a V4L2-audio-control ID.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
-		/// values too large or too small will raise an exception.
-		PropertyI treble;
-		/// \brief If V4L2 device supports audio, this enumerated integer property sets audio mute on/off
-		///
-		/// This property represents a boolean-valued V4L2-control ID. Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		PropertyIBoolean mute;
-		/// \brief If V4L2 device supports audio, this enumerated integer property sets audio loudness on/off.
-		///
-		/// This property represents a boolean-valued V4L2-control ID. Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
-		///
-		/// \note This property is not supported by every device.
-		/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
-		PropertyIBoolean loudness;
-		PYTHON_ONLY(%mutable;)
-	#ifdef DOTNET_ONLY_CODE
-		PropertyI getVolume( void ) const { return volume; }
-		PropertyI getBalance( void ) const { return balance; }
-		PropertyI getBass( void ) const { return bass; }
-		PropertyI getTreble( void ) const { return treble; }
-		PropertyIBoolean getMute( void ) const { return mute; }
-		PropertyIBoolean getLoudness( void ) const { return loudness; }
-	#endif // #ifdef DOTNET_ONLY_CODE
+		/// \note
+		/// This property might not be supported by every device. Therefore always call the function 
+		/// <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+		PropertyS pinDescription;
+	PYTHON_ONLY(%mutable;)
+#	ifdef DOTNET_ONLY_CODE
+		PropertyICameraOutput getCameraOutputUsed( void ) const { return cameraOutputUsed; }
+		PropertyI getVideoChannel( void ) const { return videoChannel; }
+		PropertyS getPinDescription( void ) const { return pinDescription; }
+#	endif // #ifdef DOTNET_ONLY_CODE
 	};
-#endif // #ifndef IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
+
+	//-----------------------------------------------------------------------------
+	/// \brief A base class for camera related settings(<b>Device specific interface layout only</b>).
+	///
+	/// This class acts as a base class for camera related settings. It only contains
+	/// settings that are available for every device!
+	///
+	/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+	/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+	class CameraSettingsBase : public BasicDeviceSettings
+	//-----------------------------------------------------------------------------
+	{
+	public:
+		explicit CameraSettingsBase(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+										Device* pDev,
+										/// The name of the driver internal setting to access with this instance.
+										/// A list of valid setting names can be obtained by a call to
+										/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
+										/// settings can be created with the function
+										/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
+										const std::string& settingName = "Base" ) : BasicDeviceSettings(pDev), aoiHeight(),
+										  aoiStartX(), aoiStartY(), aoiWidth(), pixelFormat()
+		{
+			DeviceComponentLocator locator(pDev, dltSetting, settingName);
+			locator.bindSearchBase( locator.searchbase_id(), "Camera" );
+			m_hRoot = locator.searchbase_id();
+			locator.bindComponent( pixelFormat, "PixelFormat" );
+			if( locator.findComponent( "Aoi" ) != INVALID_ID )
+			{
+				locator.bindSearchBase( locator.searchbase_id(), "Aoi" );
+				locator.bindComponent( aoiHeight, "H" );
+				locator.bindComponent( aoiStartX, "X" );
+				locator.bindComponent( aoiStartY, "Y" );
+				locator.bindComponent( aoiWidth, "W" );
+			}
+		}
+	PYTHON_ONLY(%immutable;)
+		/// \brief An integer property defining the number of lines to capture.
+		PropertyI aoiHeight;
+		/// \brief An integer property defining the X-offset for each capture line.
+		///
+		/// Example: When setting this property to 5 the first pixel in each line of
+		/// the resulting image will be pixel number 5 of each line transmitted by
+		/// the camera.
+		PropertyI aoiStartX;
+		/// \brief An integer property defining the Y-offset.
+		///
+		/// Example: When setting this property to 5 the first line of
+		/// the resulting image will be line number 5 of the image transmitted by
+		/// the camera.
+		PropertyI aoiStartY;
+		/// \brief An integer property defining the number of pixels to capture per line.
+		PropertyI aoiWidth;
+		/// \brief An enumerated integer property defining the pixel format used to transfer the image data into the target
+		/// systems host memory.
+		///
+		/// Support for this property has been added in version 1.11.0 of mvIMPACT Acquire thus old driver versions will
+		/// raise an exception if an application accesses the property without checking if the property is present.
+		///
+		/// By default this property will be set to <b>mvIMPACT::acquire::ibpfAuto</b>. This will result in the previous driver
+		/// behaviour where depending on the various post processing steps that are enabled or disabled the driver will decide
+		/// which transfer format will be used. However sometimes this could result in a transfer format, which is not ideal
+		/// for the application (e.g. when a post processing step of the application needs RGBx888Packed but the systems bandwidth
+		/// is limited the application might want to transfer the data in YUV422 packed and then use the fast format conversion
+		/// algorithm in the driver). This can be achieved by explicitly setting <b>mvIMPACT::acquire::CameraSettingsBase::pixelFormat</b> to
+		/// <b>mvIMPACT::acquire::ibpfYUV422Packed</b> and <b>mvIMPACT::acquire::ImageDestination::pixelFormat</b> to
+		/// <b>mvIMPACT::acquire::ibpfRGBx888Packed</b>.
+		///
+		/// \note
+		/// Selecting a defined transfer format can in some cases result in certain filters (e.g. dark current, ...) to be switched
+		/// of as then the filters themself can no longer influence the trnasfer format, which is sometimes neccessary as not every
+		/// filter does support every input format. Also this property will contain only pixel formats, which are actually supported
+		/// by the capture device, thus in most of the cases this will be a subset of the pixel formats defined by
+		/// <b>mvIMPACT::acquire::TImageBufferPixelFormat</b>
+		///
+		/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TImageBufferPixelFormat</b>.
+		PropertyIImageBufferPixelFormat pixelFormat;
+	PYTHON_ONLY(%mutable;)
+#	ifdef DOTNET_ONLY_CODE
+		PropertyI getAoiHeight( void ) const { return aoiHeight; }
+		PropertyI getAoiStartX( void ) const { return aoiStartX; }
+		PropertyI getAoiStartY( void ) const { return aoiStartY; }
+		PropertyI getAoiWidth( void ) const { return aoiWidth; }
+		PropertyIImageBufferPixelFormat getPixelFormat( void ) const { return pixelFormat; }
+#	endif // #ifdef DOTNET_ONLY_CODE
+	};
+
+#	ifndef IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
+		//-----------------------------------------------------------------------------
+		/// \brief <b>mvVirtualDevice</b> related camera settings(<b>Device specific interface layout only</b>).
+		///
+		/// \note
+		/// As this is a device driver meant for testing the interface an allowing to
+		/// start the integration of mvIMPACT Acquire into an application, this class
+		/// might change at ANY time! Changes in the virtual device driver might not
+		/// be backward compatible!
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class CameraSettingsVirtualDevice : public CameraSettingsBase
+		//-----------------------------------------------------------------------------
+		{
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::CameraSettingsVirtualDevice</b> object
+			explicit CameraSettingsVirtualDevice(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+													Device* pDev,
+													/// The name of the driver internal setting to access with this instance.
+													/// A list of valid setting names can be obtained by a call to
+													/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
+													/// settings can be created with the function
+													/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
+													const std::string& settingName = "Base" ) : CameraSettingsBase(pDev, settingName),
+													gain_dB(), testMode(), channelBitDepth(), paddingX(), frameDelay_us(), imageDirectory(), imageType(),
+													bayerMosaicParity(), testImageBarWidth(), userData()
+			{
+				ComponentLocator locator(m_hRoot);
+				locator.bindComponent( gain_dB, "Gain_dB" );
+				locator.bindComponent( testMode, "TestMode" );
+				locator.bindComponent( channelBitDepth, "ChannelBitDepth" );
+				locator.bindComponent( paddingX, "PaddingX" );
+				locator.bindComponent( frameDelay_us, "FrameDelay_us" );
+				locator.bindComponent( imageDirectory, "ImageDirectory" );
+				locator.bindComponent( imageType, "ImageType" );
+				locator.bindComponent( bayerMosaicParity, "BayerMosaicParity" );
+				locator.bindComponent( testImageBarWidth, "TestImageBarWidth" );
+				locator.bindComponent( userData, "UserData" );
+			}
+		PYTHON_ONLY(%immutable;)
+			/// \brief A float property defining the gain in dB to be applied to the test image.
+			PropertyF gain_dB;
+			/// \brief An enumerated integer property defining the test mode use to generate the dummy images.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TVirtualDeviceTestMode</b>.
+			PropertyIVirtualDeviceTestMode testMode;
+			/// \brief An integer property defining the channel bit depth for certain test image generation modes.
+			///
+			/// When <b>mvIMPACT::acquire::CameraSettingsVirtualDevice::testMode</b> is set to <b>mvIMPACT::acquire::vdtmMovingMonoRamp</b>,
+			/// <b>mvIMPACT::acquire::vdtmMovingBayerDataRamp</b> or <b>mvIMPACT::acquire::vdtmBayerWhiteBalanceTestImage</b> this property
+			/// will allow to define the pixel format for the test image.
+			PropertyI channelBitDepth;
+			/// \brief An integer property defining the padding(in bytes) in X-direction for certain test image generation modes.
+			///
+			/// When <b>mvIMPACT::acquire::CameraSettingsVirtualDevice::testMode</b> is set to a mono format(not the weird packed ones!),
+			/// <b>mvIMPACT::acquire::vdtmMovingBayerDataRamp</b> or <b>mvIMPACT::acquire::vdtmBayerWhiteBalanceTestImage</b> this property
+			/// will allow to define the padding in bytes for each line. This will result in images where the line pitch differs from 
+			/// the width multiplied by the bytes per pixel value. E.g. a padding of 1 in X-direction and a width of 5 for a 16 bit mono
+			/// format will result in a line pitch of 11 bytes(5*2 + 1).
+			PropertyI paddingX;
+			/// \brief An integer property defining a delay in us before the 'captured' image is returned to the user
+			PropertyI frameDelay_us;
+			/// \brief A string property defining the directory to capture images from.
+			///
+			/// This feature will only be visible, when the property <b>mvIMPACT::acquire::CameraSettingsVirtualDevice::testMode</b>
+			/// is set to <b>mvIMPACT::acquire::vdtmImageDirectory</b>.
+			PropertyS imageDirectory;
+			/// \brief An enumerated integer property defining what images shall be captured from harddisc.
+			///
+			/// This feature will only be visible, when the property <b>mvIMPACT::acquire::CameraSettingsVirtualDevice::testMode</b>
+			/// is set to <b>mvIMPACT::acquire::vdtmImageDirectory</b>.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TVirtualDeviceTestMode</b>.
+			PropertyIVirtualDeviceImageType imageType;
+			/// \brief An enumerated integer property defining the bayer attribute assigned to the generated test image.
+			///
+			/// When images are acquired via a directory, or a bayer test pattern is generated this can be used to specify the bayer parity.
+			/// <b>mvIMPACT::acquire::bmpUndefined</b> will set the buffers bayer attribute thus will result in a grey(mono) buffer being returned.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBayerMosaicParity</b>.
+			PropertyIBayerMosaicParity bayerMosaicParity;
+			/// \brief An integer property defining the width (in pixels) of the different bars in certain test modes.
+			PropertyI testImageBarWidth;
+			/// \brief A string property that will be copied into the user data property of each request.
+			///
+			/// This e.g. can be used to assign a certain identifier to each image request.
+			PropertyS userData;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyF getGain_dB( void ) const { return gain_dB; }
+			PropertyIVirtualDeviceTestMode getTestMode( void ) const { return testMode; }
+			PropertyI getChannelBitDepth( void ) const { return channelBitDepth; }
+			PropertyI getPaddingX( void ) const { return paddingX; }
+			PropertyI getFrameDelay_us( void ) const { return frameDelay_us; }
+			PropertyS getImageDirectory( void ) const { return imageDirectory; }
+			PropertyIVirtualDeviceImageType getImageType( void ) const { return imageType; }
+			PropertyI getTestImageBarWidth( void ) const { return testImageBarWidth; }
+			PropertyIBayerMosaicParity getBayerMosaicParity( void ) const { return bayerMosaicParity; }
+			PropertyS getUserData( void ) const { return userData; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+#	endif // #ifndef IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
+
+#	ifndef IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
+		//-----------------------------------------------------------------------------
+		/// \brief <b>mvV4L2</b> related camera settings(<b>Device specific interface layout only</b>).
+		///
+		/// \note UNDER CONSTRUCTION! Subject to change.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class CameraSettingsV4L2Device : public CameraSettingsBase
+		//-----------------------------------------------------------------------------
+		{
+			ComponentIterator        m_customFeatureIterator;
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::CameraSettingsV4L2Device</b> object.
+			explicit CameraSettingsV4L2Device(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+													Device* pDev,
+													/// The name of the driver internal setting to access with this instance.
+													/// A list of valid setting names can be obtained by a call to
+													/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
+													/// settings can be created with the function
+													/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
+													const std::string& settingName = "Base" ) : CameraSettingsBase(pDev, settingName),
+														m_customFeatureIterator(), imageWidth(), imageHeight(), videoStandard(), pixelFormat(),
+														brightness(), contrast(), saturation(), hue(), blackLevel(), autoWhiteBalance(), redBalance(),
+														blueBalance(), gamma(), exposure(), autoGain(), gain(), HFlip(), VFlip(), powerLineFrequency(),
+														hueAuto(), whiteBalanceTemperature(), sharpness(), backlightCompensation()
+			{
+				ComponentLocator locator(m_hRoot);
+				locator.bindComponent( imageWidth, "ImageWidth" );
+				locator.bindComponent( imageHeight, "ImageHeight" );
+				locator.bindComponent( videoStandard, "VideoStandard" );
+				locator.bindComponent( pixelFormat, "PixelFormat" );
+				locator.bindComponent( brightness, "Brightness" );
+				locator.bindComponent( contrast, "Contrast" );
+				locator.bindComponent( saturation, "Saturation" );
+				locator.bindComponent( hue, "Hue" );
+				locator.bindComponent( blackLevel, "BlackLevel" );
+				locator.bindComponent( autoWhiteBalance, "AutoWhiteBalance" );
+				locator.bindComponent( redBalance, "RedBalance" );
+				locator.bindComponent( blueBalance, "BlueBalance" );
+				locator.bindComponent( gamma, "Gamma" );
+				locator.bindComponent( exposure, "Exposure" );
+				locator.bindComponent( autoGain, "AutoGain" );
+				locator.bindComponent( gain, "Gain" );
+				locator.bindComponent( HFlip, "HFlip" );
+				locator.bindComponent( VFlip, "VFlip" );
+				locator.bindComponent( powerLineFrequency, "PowerLineFrequency" );
+				locator.bindComponent( hueAuto, "HueAuto" );
+				locator.bindComponent( whiteBalanceTemperature, "WhiteBalanceTemperature" );
+				locator.bindComponent( sharpness, "Sharpness" );
+				locator.bindComponent( backlightCompensation, "BacklightCompensation" );
+				m_customFeatureIterator = ComponentIterator(pixelFormat.hObj());
+				m_customFeatureIterator = m_customFeatureIterator.firstSibling();
+			}
+			/// \brief Returns an interator to for iterating inside the device specific feature list of the .
+			///
+			/// This can be useful a device offers custom features that are not defined in the V4L2 standard and thus
+			/// can't be known at compile time.
+			///
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// It allows to write code like this:
+			///
+			///\code
+			/// CameraSettingsV4L2Device cs(getDevicePointerFromSomewhere());
+			/// ComponentIterator it(cs.getCustomFeatureIterator());
+			/// std::map<std::string, std::string> m;
+			/// while( it.isValid() )
+			/// {
+			///   // collect all entries that are properties and store their current name and value in a map
+			///   if( it.isProp() && it.isVisible() )
+			///   {
+			///     Property prop(it);
+			///     m.insert( std::make_pair( prop.name(), prop.readS() );
+			///   }
+			///   ++it;
+			/// }
+			///\endcode
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			ComponentIterator getCustomFeatureIterator( void ) const { return m_customFeatureIterator; }
+		PYTHON_ONLY(%immutable;)
+			/// \brief An integer property defining the width of the image supplied by the V4L2 device.
+			///
+			/// \sa V4L2 API at http://v4l2spec.bytesex.org/spec-single/v4l2.html
+			PropertyI imageWidth;
+			/// \brief An integer property defining the height of the image supplied by the V4L2 device.
+			///
+			/// \sa V4L2 API at http://v4l2spec.bytesex.org/spec-single/v4l2.html
+			PropertyI imageHeight;
+			/// \brief An integer property defining the video standard
+			///
+			/// Use this property to configure the V4L2-device corresponding to connectes video source.
+			/// Availabale video standards depend on the V4L2-device and conform to <b>v4l2_std_id</b>
+			/// \sa V4L2 API at http://v4l2spec.bytesex.org/spec-single/v4l2.html
+			PropertyI videoStandard;
+			/// \brief An integer property defining the pixelformat of captured frames.
+			///
+			/// Use this property to set the pixelformat within the image buffer supplied by the V4L2-device.
+			/// Available pixelformats depend on the V4L2-device and conform to <b>v4l2_fourcc()</b>
+			/// \sa V4L2 API at http://v4l2spec.bytesex.org/spec-single/v4l2.html
+			PropertyI pixelFormat;
+			/// \brief An integer property to adjust the brightness.
+			///
+			/// This property represents a V4L2-control ID.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
+			/// values too large or too small will raise an exception.
+			PropertyI brightness;
+			/// \brief An integer property to adjust the contrast.
+			///
+			/// This property represents a V4L2-control ID.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
+			/// values too large or too small will raise an exception.
+			PropertyI contrast;
+			/// \brief An integer property to adjust the saturation.
+			///
+			/// This property represents a V4L2-control ID.
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
+			/// values too large or too small will raise an exception.
+			PropertyI saturation;
+			/// \brief An integer property to adjust the hue.
+			///
+			/// This property represents a V4L2-control ID.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
+			/// values too large or too small will raise an exception.
+			PropertyI hue;
+			/// \brief An integer property to adjust the black level.
+			///
+			/// This property represents a V4L2-control ID.
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
+			/// values too large or too small will raise an exception.
+			PropertyI blackLevel;
+			/// \brief An enumerated integer property to switch on/off the auto white balance function of the V4L2-device
+			///
+			/// This property represents a boolean-valued V4L2-control ID. Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			PropertyIBoolean autoWhiteBalance;
+			/// \brief An integer property to adjust the red balance.
+			///
+			/// This property represents a V4L2-control ID.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
+			/// values too large or too small will raise an exception.
+			PropertyI redBalance;
+			/// \brief An integer property to adjust the blue balance.
+			///
+			/// This property represents a V4L2-control ID.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
+			/// values too large or too small will raise an exception.
+			PropertyI blueBalance;
+			/// \brief An integer property to adjust the gamma.
+			///
+			/// This property represents a V4L2-control ID
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			/// If supported, a min-value, a max-value and step-width are defined. Thus, invalid values may be tuned after writing to fit within the limits.
+			PropertyI gamma;
+			/// \brief An integer property to adjust the exposure.
+			///
+			/// This property represents a V4L2-control ID.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
+			/// values too large or too small will raise an exception.
+			PropertyI exposure;
+			/// \brief An enumerated integer property to switch on/off the auto gain.
+			///
+			/// This property represents a boolean-valued V4L2-control ID. Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			PropertyIBoolean autoGain;
+			/// \brief An integer property to adjust the gain.
+			///
+			/// This property represents a V4L2-control ID.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
+			/// values too large or too small will raise an exception.
+			PropertyI gain;
+			/// \brief An enumerated integer property to mirror the frames horizontally
+			///
+			/// This property represents a boolean-valued V4L2-control ID. Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			PropertyIBoolean HFlip;
+			/// \brief An integer property to mirror the frames vertically.
+			///
+			/// This property represents a boolean-valued V4L2-control ID. Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			PropertyIBoolean VFlip;
+			/// \brief An enumerated integer property to enable power line frequency filter.
+			///
+			/// This property represents a V4L2-control ID.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			///
+			/// If supported, possible values conform to V4L2 API:
+			/// <table>
+			/// <tr><td class="header">string representation</td><td class="header">numerical representation</td></tr>
+			/// <tr><td class="indexvalue">V4L2_CID_POWER_LINE_FREQUENCY_DISABLED</td><td class="indexvalue">0</td></tr>
+			/// <tr><td class="indexvalue">V4L2_CID_POWER_LINE_FREQUENCY_50HZ</td><td class="indexvalue">1</td></tr>
+			/// <tr><td class="indexvalue">V4L2_CID_POWER_LINE_FREQUENCY_60HZ</td><td class="indexvalue">2</td></tr>
+			/// </table>
+			PropertyI powerLineFrequency;
+			/// \brief An enumerated integer property to switch on/off auto hue.
+			///
+			/// This property represents a boolean-valued V4L2-control ID. Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			PropertyIBoolean hueAuto;
+			/// \brief An integer property to adjust white balnace temperature.
+			///
+			/// This property represents a V4L2-control ID.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
+			/// values too large or too small will raise an exception.
+			PropertyI whiteBalanceTemperature;
+			/// \brief An integer property to adjust the sharpness.
+			///
+			/// This property represents a V4L2-control ID.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
+			/// values too large or too small will raise an exception.
+			PropertyI sharpness;
+			/// \brief An integer property to adjust the backlight compensation.
+			///
+			/// This property represents a V4L2-control ID.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			/// If supported, a min-value, a max-value and step-width are defined. Thus, invalid values may be tuned after writing to fit within the limits.
+			PropertyI backlightCompensation;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyI getImageWidth( void ) const { return imageWidth; }
+			PropertyI getImageHeight( void ) const { return imageHeight; }
+			PropertyI getVideoStandard( void ) const { return videoStandard; }
+			PropertyI getPixelFormat( void ) const { return pixelFormat; }
+			PropertyI getBrightness( void ) const { return brightness; }
+			PropertyI getContrast( void ) const { return contrast; }
+			PropertyI getSaturation( void ) const { return saturation; }
+			PropertyI getHue( void ) const { return hue; }
+			PropertyI getBlackLevel( void ) const { return blackLevel; }
+			PropertyIBoolean getAutoWhiteBalance( void ) const { return autoWhiteBalance; }
+			PropertyI getRedBalance( void ) const { return redBalance; }
+			PropertyI getBlueBalance( void ) const { return blueBalance; }
+			PropertyI getGamma( void ) const { return gamma; }
+			PropertyI getExposure( void ) const { return exposure; }
+			PropertyIBoolean getAutoGain( void ) const { return autoGain; }
+			PropertyI getGain( void ) const { return gain; }
+			PropertyIBoolean getHFlip( void ) const { return HFlip; }
+			PropertyIBoolean getVFlip( void ) const { return VFlip; }
+			PropertyI getPowerLineFrequency( void ) const { return powerLineFrequency; }
+			PropertyIBoolean getHueAuto( void ) const { return hueAuto; }
+			PropertyI getWhiteBalanceTemperature( void ) const { return whiteBalanceTemperature; }
+			PropertyI getSharpness( void ) const { return sharpness; }
+			PropertyI getBacklightCompensation( void ) const { return backlightCompensation; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+#	endif // #ifndef IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
+
+#	if !defined(IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION)
+		//-----------------------------------------------------------------------------
+		/// \brief A class to control the automatic control parameters of a device(<b>Device specific interface layout only</b>).
+		///
+		/// Currently this class provides access to the properties, which control the way the
+		/// AGC(<b>A</b>utomatic <b>G</b>ain <b>C</b>ontrol) and the AEC
+		/// (<b>A</b>utomatic <b>E</b>xpose <b>C</b>ontrol) operates.
+		///
+		/// The values used to capture the image, which are directly influenced by this properties
+		/// (e.g. the gain or the exposure time) will be returned as part of the result of the
+		/// image request.
+		///
+		/// \note
+		/// Not every device will offer the features provided in this class. Before accessing any members
+		/// and/or properties call the function <b>mvIMPACT::acquire::AutoControlParameters::isAvailable</b>.
+		/// If this function returns false, no other member or function call in this class will return valid
+		/// results.
+		///
+		/// \note
+		/// Instances of these class can't be constructed directly. It's parameters can
+		/// be accessed via an instance of the class <b>mvIMPACT::acquire::CameraSettingsBlueDevice</b>.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		///
+		/// \sa
+		/// <b>mvIMPACT::acquire::RequestInfo, <br>mvIMPACT::acquire::Request::getInfo</b>
+		class AutoControlParameters : public ComponentCollection
+		//-----------------------------------------------------------------------------
+		{
+			friend class CameraSettingsBlueDevice;
+			bool m_boAvailable;
+			explicit AutoControlParameters( HOBJ hObj ): m_boAvailable(false), aoiHeight(),
+			  aoiStartX(), aoiStartY(), aoiWidth(), aoiMode(), desiredAverageGreyValue(),
+			  controllerSpeed(), controllerGain(), controllerIntegralTime_ms(), controllerDerivativeTime_ms(),
+			  controllerDelay_Images(), gainLowerLimit_dB(),
+			  gainUpperLimit_dB(), exposeLowerLimit_us(), exposeUpperLimit_us()
+			{
+				ComponentLocator locator(hObj);
+				HOBJ hRoot = locator.findComponent( "AutoControlParameters" );
+				if( hRoot != INVALID_ID )
+				{
+					m_hRoot = hRoot;
+					locator.bindSearchBase( locator.searchbase_id(), "AutoControlParameters" );
+					locator.bindComponent( aoiMode, "AoiMode" );
+					locator.bindComponent( desiredAverageGreyValue, "DesiredAverageGreyValue" );
+					locator.bindComponent( controllerSpeed, "ControllerSpeed" );
+					locator.bindComponent( controllerDelay_Images, "ControllerDelay_Images" );
+					locator.bindComponent( gainLowerLimit_dB, "GainLowerLimit_dB" );
+					locator.bindComponent( gainUpperLimit_dB, "GainUpperLimit_dB" );
+					locator.bindComponent( exposeLowerLimit_us, "ExposeLowerLimit_us" );
+					locator.bindComponent( exposeUpperLimit_us, "ExposeUpperLimit_us" );
+					if( locator.findComponent( "ControllerParameter" ) != INVALID_ID )
+					{
+						locator.bindSearchBase( hRoot, "ControllerParameter" );
+						locator.bindComponent( controllerGain, "ControllerGain" );
+						locator.bindComponent( controllerIntegralTime_ms, "IntegralTime_ms" );
+						locator.bindComponent( controllerDerivativeTime_ms, "DerivativeTime_ms" );
+					}
+					locator.bindSearchBase( hRoot );
+					if( locator.findComponent( "Aoi" ) != INVALID_ID )
+					{
+						locator.bindSearchBase( hRoot, "Aoi" );
+						locator.bindComponent( aoiHeight, "H" );
+						locator.bindComponent( aoiStartX, "X" );
+						locator.bindComponent( aoiStartY, "Y" );
+						locator.bindComponent( aoiWidth, "W" );
+					}
+					m_boAvailable = true;
+				}
+			}
+		public:
+			/// \brief This function should be called to check if this device offers auto control parameters.
+			/// \return
+			/// - true if the device offers the features defined by this object.
+			/// - false otherwise
+			bool isAvailable( void ) const { return m_boAvailable; }
+		PYTHON_ONLY(%immutable;)
+			/// \brief An integer property defining the height of the rectangle used for
+			/// the parameter calculation.
+			PropertyI aoiHeight;
+			/// \brief An integer property defining the X-offset of the rectangle used for
+			/// the parameter calculation.
+			///
+			/// Example: When setting this property to 5 the first pixel in each line of
+			/// the resulting rectangle used for the calculation will be pixel number 5
+			/// of each line transmitted by the camera.
+			PropertyI aoiStartX;
+			/// \brief An integer property defining the Y-offset of the rectangle used for the
+			/// parameter calculation.
+			///
+			/// Example: When setting this property to 5 the first line of
+			/// the resulting rectangle used for the calculation will be line number 5 of the
+			/// image transmitted by the camera.
+			PropertyI aoiStartY;
+			/// \brief An integer property defining the width of the rectangle.
+			PropertyI aoiWidth;
+			/// \brief An enumerated integer property defining the which area of the image is used
+			/// for the calculation of the parameters.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAoiMode</b>.
+			PropertyIAoiMode aoiMode;
+			/// \brief An integer property defining the average grey value to be reached within
+			/// the AOI in the image by the control circuit.
+			///
+			/// For multi-byte pixel formats like e.g. <b>mvIMPACT::acquire::ibpfMono10</b> this value will refer to
+			/// the 8 most significant bits of the pixel data, thus e.g a value of 128 for this property will result
+			/// it the controller trying reach an average grey value of 512 (0x200).
+			PropertyI desiredAverageGreyValue;
+			/// \brief An enumerated integer property defining the speed the control ciruit will
+			/// be operated in.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAutoControlSpeed</b>.
+			///
+			/// Once the controller started to react and adapt itself to a new situation, this property will
+			/// define how long this adaption will take, while <b>AutoControlParameters::controllerDelay_Images</b>
+			/// defines the the number of images to wait from a detected change to the actual start of the 
+			/// adaption to this new situation.
+			PropertyIAutoControlSpeed controllerSpeed;
+			/// \brief The <b>P</b> fraction of the controller.
+			///
+			/// This feature will only be visible when <b>mvIMPACT::acquire::AutoControlParameters::controllerSpeed</b>
+			/// is set to <b>mvIMPACT::acquire::acsUserDefined</b>.
+			PropertyF controllerGain;
+			/// \brief The <b>I</b> fraction of the controller.
+			///
+			/// This feature will only be visible when <b>mvIMPACT::acquire::AutoControlParameters::controllerSpeed</b>
+			/// is set to <b>mvIMPACT::acquire::acsUserDefined</b>.
+			PropertyF controllerIntegralTime_ms;
+			/// \brief The <b>D</b> fraction of the controller.
+			///
+			/// This feature will only be visible when <b>mvIMPACT::acquire::AutoControlParameters::controllerSpeed</b>
+			/// is set to <b>mvIMPACT::acquire::acsUserDefined</b>.
+			PropertyF controllerDerivativeTime_ms;
+			/// \brief An integer property to influence the speed the AGC and/or AEC control circuit will react and adapt
+			/// to changes.
+			///
+			/// While <b>AutoControlParameters::controllerSpeed</b> influences the overall time
+			/// needed to adjust the controller to a new situation, this property can be used to define a
+			/// delay when the controller shall start to adapt to a changed situation.
+			PropertyI controllerDelay_Images;
+			/// \brief A float property defining the lower limit for the cameras gain(in dB).
+			///
+			/// When the AGC is active this value defines the minimum value for the cameras gain.
+			/// Even if the controller can reach the desired average grey value, the gain will
+			/// never fall below this value.
+			PropertyF gainLowerLimit_dB;
+			/// \brief A float property defining the upper limit for the cameras gain(in dB).
+			///
+			/// When the AGC is active this value defines the maximum value for the cameras gain.
+			/// Even if the controller can reach the desired average grey value, the gain will
+			/// never exceed this value.
+			PropertyF gainUpperLimit_dB;
+			/// \brief A float property defining the lower limit for the sensors expose time(in us).
+			///
+			/// When the AEC is active this value defines the minimum value for the sensors expose time(in us).
+			/// Even if the controller can reach the desired average grey value, the expose time will
+			/// never fall below this value.
+			PropertyI exposeLowerLimit_us;
+			/// \brief An integer property defining the upper limit for the sensors expose time in us.
+			///
+			/// When the AEC is active this value defines the maximum value for the sensors expose time(in us).
+			/// Even if the controller can reach the desired average grey value, the expose time will
+			/// never exceed this value.
+			PropertyI exposeUpperLimit_us;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyI getAoiHeight( void ) const { return aoiHeight; }
+			PropertyI getAoiStartX( void ) const { return aoiStartX; }
+			PropertyI getAoiStartY( void ) const { return aoiStartY; }
+			PropertyI getAoiWidth( void ) const { return aoiWidth; }
+			PropertyIAoiMode getAoiMode( void ) const { return aoiMode; }
+			PropertyI getDesiredAverageGreyValue( void ) const { return desiredAverageGreyValue; }
+			PropertyIAutoControlSpeed getControllerSpeed( void ) const { return controllerSpeed; }
+			PropertyF getControllerGain( void ) const { return controllerGain; }
+			PropertyF getControllerIntegralTime_ms( void ) const { return controllerIntegralTime_ms; }
+			PropertyF getControllerDerivativeTime_ms( void ) const { return controllerDerivativeTime_ms; }
+			PropertyI getControllerDelay_Images( void ) const { return controllerDelay_Images; }
+			PropertyF getGainLowerLimit_dB( void ) const { return gainLowerLimit_dB; }
+			PropertyF getGainUpperLimit_dB( void ) const { return gainUpperLimit_dB; }
+			PropertyI getExposeLowerLimit_us( void ) const { return exposeLowerLimit_us; }
+			PropertyI getExposeUpperLimit_us( void ) const { return exposeUpperLimit_us; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+
+		/// \brief A base class for camera related settings belonging to the mvBlueXXX-series
+		/// (<b>Device specific interface layout only</b>).
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class CameraSettingsBlueDevice : public CameraSettingsBase
+		//-----------------------------------------------------------------------------
+		{
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::CameraSettingsBlueDevice</b> object
+			explicit CameraSettingsBlueDevice(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+												Device* pDev,
+												/// The name of the driver internal setting to access with this instance.
+												/// A list of valid setting names can be obtained by a call to
+												/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
+												/// settings can be created with the function
+												/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
+												const std::string& settingName = "Base" ) : CameraSettingsBase(pDev, settingName),
+												  autoControlMode(), autoGainControl(), autoExposeControl(), gain_dB(), offset_pc(), pixelClock_KHz(),
+												  exposeMode(), expose_us(), binningMode(), testMode(), triggerMode(), frameDelay_us(),
+												  autoControlParameters(m_hRoot)
+			{
+				ComponentLocator locator(m_hRoot);
+				locator.bindComponent( autoControlMode, "AutoControlMode" );
+				locator.bindComponent( autoGainControl, "AutoGainControl" );
+				locator.bindComponent( autoExposeControl, "AutoExposeControl" );
+				locator.bindComponent( gain_dB, "Gain_dB" );
+				locator.bindComponent( offset_pc, "Offset_pc" );
+				locator.bindComponent( pixelClock_KHz, "PixelClock_KHz" );
+				locator.bindComponent( exposeMode, "ExposeMode" );
+				locator.bindComponent( expose_us, "Expose_us" );
+				locator.bindComponent( binningMode, "BinningMode" );
+				locator.bindComponent( testMode, "TestMode" );
+				locator.bindComponent( triggerMode, "TriggerMode", 0, 0 );
+				locator.bindComponent( frameDelay_us, "FrameDelay_us" );
+			}
+		PYTHON_ONLY(%immutable;)
+			/// \brief An enumerated integer property defining the auto control mode the device is operated in.
+			///
+			/// This property can be used to control the overall behaviour of the algorithms used for performing AEC
+			/// (<b>A</b>utomatic <b>E</b>xpose <b>C</b>ontrol) or AGC (<b>A</b>utomatic <b>G</b>ain <b>C</b>ontrol).
+			/// This could be done by the device itself thus e.g. even in the analog domain or e.g. by a software 
+			/// process in the driver. Each method will offer certain advantages and disadvantages and depending on the
+			/// application the correct method can be selected.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAutoControlMode</b>.
+			///
+			/// Every device or even different models belonging to the same device family may support different auto control modes,
+			/// thus it's crucial to query the valid modes for each device by reading the properties translation dictionary BEFORE trying
+			/// to assign a certain value to this property.
+			PropertyIAutoControlMode autoControlMode;
+			/// \brief An enumerated integer property, which represents the current mode the AGC
+			/// (<b>A</b>utomatic <b>G</b>ain <b>C</b>ontrol) is operated in.
+			///
+			/// The values used to capture the image, which are directly influenced by an activated AGC or AEC
+			/// (e.g. the gain or the exposure time) will be returned as part of the result of the
+			/// image request.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAutoGainControl</b>.
+			///
+			/// \note
+			/// This property is not supported by every device. Therefore always call the function 
+			/// <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			///
+			/// \sa
+			/// <b>mvIMPACT::acquire::RequestInfo, <br>mvIMPACT::acquire::Request::getInfo</b>
+			PropertyIAutoGainControl autoGainControl;
+			/// \brief An enumerated integer property, which represents the current mode the AEC
+			/// (<b>A</b>utomatic <b>E</b>xpose <b>C</b>ontrol) is operated in.
+			///
+			/// The values used to capture the image, which are directly influenced by an activated AGC or AEC
+			/// (e.g. the gain or the exposure time) will be returned as part of the result of the
+			/// image request.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAutoExposureControl</b>.
+			///
+			/// \note
+			/// This property might not be supported by every device. Therefore always call the function 
+			/// <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			///
+			/// \sa
+			/// <b>mvIMPACT::acquire::RequestInfo, <br>mvIMPACT::acquire::Request::getInfo</b>
+			PropertyIAutoExposureControl autoExposeControl;
+			/// \brief A float property defining the gain in dB.
+			PropertyF gain_dB;
+			/// \brief A float property defining the analogue sensor offset in percent of the
+			/// allowed range (sensor specific).
+			///
+			/// This property influences the average grey level when no light reaches the sensor.
+			///
+#		ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+			/// Changing its value will have no effect if <b>mvIMPACT::acquire::CameraSettingsBlueFOX::offsetAutoCalibration</b> is set to
+			/// <b>mvIMPACT::acquire::aocOn</b>.
+			///
+			/// By default
+			/// this value will be around 10 (if <b>mvIMPACT::acquire::CameraSettingsBlueFOX::offsetAutoCalibration</b> if set
+			/// to <b>mvIMPACT::acquire::aocOn</b>). This means the average grey value for an image
+			/// taken in a completely dark environment will be around 10. When setting
+			/// <b>mvIMPACT::acquire::CameraSettingsBlueFOX::offsetAutoCalibration</b> to <b>mvIMPACT::acquire::aocOff</b>
+			/// <b>mvIMPACT::acquire::CameraSettingsBlueFOX::offset_pc</b> can be used to modify this value.
+#		endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+#		ifndef IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION
+			/// Changing its value will have no effect if <b>mvIMPACT::acquire::CameraSettingsBlueLYNX::offsetAutoCalibration</b> is set to
+			/// <b>mvIMPACT::acquire::aocOn</b>.
+#		endif // #ifndef IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION
+			///
+			/// \image html Offset_pc.png
+			/// The valid range for this property lies between -100% and +100%, whereas negative values
+			/// will shifts the black level towards 0 and positive values to 255.
+			///
+			/// \note
+			/// This property might not be supported by every device. Therefore always call the function 
+			/// <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			PropertyF offset_pc;
+			/// \brief An enumerated integer property defining the pixel clock of the camera sensor in KHz.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraPixelClock</b>.
+			///
+			/// \note
+			/// Changing the pixel clock at runtime will have major impact on the overall behaviour of the
+			/// camera. The pixel clock should therefore not be modified constantly during the execution
+			/// of the application code. Whenever this property is changed, the next images caputured should
+			/// be skipped if a device works with an active auto offset calibration controller circuit as then the
+			/// control circuits on the camera might need one to three images until all control loops are
+			/// locked again.
+			///
+			/// Every device or even different models belonging to the same device family may support different pixel clocks,
+			/// thus it's crucial to query the valid clock modes for each sensor by reading the properties translation dictionary.
+			PropertyICameraPixelClock pixelClock_KHz;
+			/// \brief An enumerated integer property defining the exposure mode the camera sensor
+			/// is operated in.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraExposeMode</b>.
+			///
+			/// \note
+			/// Not every device will offer the same options.
+			/// Check for valid modes by reading the properties translation dictionary with
+			/// the functions <b>mvIMPACT::acquire::PropertyICameraExposeMode::getTranslationDictString</b> and
+			/// <b>mvIMPACT::acquire::PropertyICameraExposeMode::getTranslationDictValue</b>.
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyICameraExposeMode::getTranslationDict</b>
+			/// in addition to the functions mentioned above.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			PropertyICameraExposeMode exposeMode;
+			/// \brief An integer property which defines the exposure time for an
+			/// image in us.
+			///
+			/// \image html Expose_us.png
+			///
+			PropertyI expose_us;
+			/// \brief An enumerated integer property defining the binning mode the camera is operated in.
+			///
+			/// By default the no binning will be performed.
+			/// \note
+			/// Not every camera will support every binning mode. To find out which binning modes
+			/// are supported by your camera you can query the properties translation table with
+			/// the functions <b>mvIMPACT::acquire::PropertyICameraBinningMode::getTranslationDictString</b> and
+			/// <b>mvIMPACT::acquire::PropertyICameraBinningMode::getTranslationDictValue</b>
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyICameraBinningMode::getTranslationDict</b>
+			/// in addition to the functions mentioned above.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraBinningMode</b>.
+			PropertyICameraBinningMode binningMode;
+			/// \brief An enumerated integer property defining the image transmission mode of the camera.
+			///
+			/// If this property is set to <b>mvIMPACT::acquire::ctmOff</b> the 'normal' image
+			/// captured by the cameras sensor will be transmitted. This is the default.
+			/// To ensure correct operation the camera might define several test modes where
+			/// some kind of well defined pattern will be transmitted.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraTestMode</b>. No every
+			/// testmode will be supported by every device.
+			PropertyICameraTestMode testMode;
+			/// \brief An enumerated integer property which defines what kind of trigger mode
+			/// shall be used for an image acquisition.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraTriggerMode</b>.
+			///
+			/// \note
+			/// Not every device will support every trigger mode. To find out which trigger modes are supported by a specific
+			/// device at runtime the properties translation dictionary should be queried.
+			///
+			/// \note
+			/// Also the sensor specific part of this manual will contain a list of trigger modes, that are available for
+			/// this specific image sensor.
+			PropertyICameraTriggerMode triggerMode;
+			/// \brief An integer property defining the delay in us between an external trigger
+			/// event an the begin of the sensor exposure.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			PropertyI frameDelay_us;
+			/// \brief Provides access to the control parameters for AGC and AEC.
+			///
+			/// \note
+			/// These settings will only affect the image if <b>mvIMPACT::acquire::CameraSettingsBlueDevice::autoGainControl</b>,
+			/// <b>mvIMPACT::acquire::CameraSettingsBlueDevice::autoExposeControl</b> or both are set to active.
+			AutoControlParameters autoControlParameters;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyIAutoControlMode getAutoControlMode( void ) const { return autoControlMode; }
+			PropertyIAutoGainControl getAutoGainControl( void ) const { return autoGainControl; }
+			PropertyIAutoExposureControl getAutoExposeControl( void ) const { return autoExposeControl; }
+			PropertyF getGain_dB( void ) const { return gain_dB; }
+			PropertyF getOffset_pc( void ) const { return offset_pc; }
+			PropertyICameraPixelClock getPixelClock_KHz( void ) const { return pixelClock_KHz; }
+			PropertyICameraExposeMode getExposeMode( void ) const { return exposeMode; }
+			PropertyI getExpose_us( void ) const { return expose_us; }
+			PropertyICameraBinningMode getBinningMode( void ) const { return binningMode; }
+			PropertyICameraTestMode getTestMode( void ) const { return testMode; }
+			PropertyICameraTriggerMode getTriggerMode( void ) const { return triggerMode; }
+			PropertyI getFrameDelay_us( void ) const { return frameDelay_us; }
+			AutoControlParameters& getAutoControlParameters( void ) { return autoControlParameters; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+#	endif // #if !defined(IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION)
+
+#	ifndef IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION
+		//-----------------------------------------------------------------------------
+		/// \brief <b>mvBlueLYNX</b> related camera settings(<b>Device specific interface layout only</b>).
+		///
+		/// This class contains properties to control the way the image sensor of the
+		/// <b>mvBlueLYNX</b> behaves.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class CameraSettingsBlueLYNX : public CameraSettingsBlueDevice
+		//-----------------------------------------------------------------------------
+		{
+		public:
+			/// \brief Constructs a new instance of <b>mvIMPACT::acquire::CameraSettingsBlueLYNX</b>.
+			explicit CameraSettingsBlueLYNX( /// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+										Device* pDev,
+										/// The name of the driver internal setting to access with this instance.
+										/// A list of valid setting names can be obtained by a call to
+										/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
+										/// settings can be created with the function
+										/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
+										const std::string& settingName = "Base" ) : CameraSettingsBlueDevice(pDev, settingName),
+										  offsetAutoCalibration(), lineDelay_clk(),
+										  flashMode(), flashOutputMask(), dataClipMode(), preFlashMode(), flashTime_lines(),
+										  preExposeErase(), inputThreshold_mV()
+			{
+				ComponentLocator locator( m_hRoot );
+				locator.bindComponent( offsetAutoCalibration, "OffsetAutoCalibration" );
+				locator.bindComponent( lineDelay_clk, "LineDelay_clk" );
+				locator.bindComponent( flashMode, "FlashMode" );
+				locator.bindComponent( flashOutputMask, "FlashOutputMask" );
+				locator.bindComponent( dataClipMode, "DataClipMode" );
+				locator.bindComponent( preFlashMode, "PreFlashMode" );
+				locator.bindComponent( flashTime_lines, "FlashTime_lines" );
+				locator.bindComponent( preExposeErase, "PreExposeErase" );
+				locator.bindComponent( inputThreshold_mV, "InputThreshold_mV" );
+			}
+		PYTHON_ONLY(%immutable;)
+			/// \brief An enumerated integer property defining the offset calibration mode.
+			///
+			/// If this property is set to <b>mvIMPACT::acquire::aocOff</b>
+			/// the offset can be adjusted manually by modifying the <b>mvIMPACT::acquire::CameraSettingsBlueLYNX::offset_pc</b> property.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAutoOffsetCalibration</b>.
+			PropertyIAutoOffsetCalibration offsetAutoCalibration;
+			/// \brief An integer property defining the delay in clocks between two lines.
+			///
+			/// Can be used to slow down the image readout the reduce the peak bandwidth required
+			/// for the transfer.
+			PropertyI lineDelay_clk;
+			/// \brief An enumerated integer property defining the behaviour of the flash output
+			/// of the camera (if available).
+			///
+			/// If this property is set the cameras flash output (if available) will be pulsed
+			/// during the exposure period of the sensor. In that case the pulse width will be equal
+			/// to the exposure time.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBlueLYNXCameraFlashMode</b>.
+			PropertyIBlueLYNXCameraFlashMode flashMode;
+			/// \brief An integer property defining flash output mask.
+			///
+			/// If this property can be set specified for <b>mvIMPACT::acquire::blcfmSoftware</b>.
+			PropertyI flashOutputMask;
+			/// \brief An enumerated integer property defining the behaviour of the sensor video data.
+			///
+			/// If this property is set to <b>TBlueLYNXCameraDataClipMode::blcdcmOn</b> the video data
+			/// will be clipped to <b>247</b>, leaves room to draw overlay with color information.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBlueLYNXCameraDataClipMode</b>.
+			PropertyIBlueLYNXCameraDataClipMode dataClipMode;
+			/// \brief An integer property defining the delay if the flash to exposure.
+			///
+			/// If this property is <b>0</b> (<i>e.g. set to n</i>) the flash starts <b>n</b> lines prior to exposure.
+			PropertyI preFlashMode;
+			/// \brief An integer property defining the flash time in lines.
+			///
+			/// If this property is <b>0</b> (<i>auto mode</i>) the flash signal is on during the pre-flash
+			/// and exposure of sensor. By setting the property to a value <b>>0 == n</b> the flash signal is on
+			/// for <b>n lines</b> while the pre-flash is active.
+			PropertyI flashTime_lines;
+			/// \brief An integer property defining a pre exposure erasure.
+			///
+			/// If this property is <b>0</b> no erase takes place between trigger signal and the expose.
+			/// For a value <b>>0 == n</b> the sensor performs <b>n</b> erase cycles.
+			PropertyI preExposeErase;
+			/// \brief An integer property defining the input switching threshold for the digital inputs in <b>mV</b> resolution.
+			///
+			/// The range is <i>(1..16V)</i>, if the threshold is outside this range it will be clipped silently
+			/// to legal values. This level determines at which voltage a logical <b>1</b> or <b>0</b> is recognised.
+			/// \note There is an hysteresis of <b>+/-0.5V</b> at the digital inputs.
+			PropertyI inputThreshold_mV;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyIAutoOffsetCalibration getOffsetAutoCalibration( void ) const { return offsetAutoCalibration; }
+			PropertyI getLineDelay_clk( void ) const { return lineDelay_clk; }
+			PropertyIBlueLYNXCameraFlashMode getFlashMode( void ) const { return flashMode; }
+			PropertyI getFlashOutputMask( void ) const { return flashOutputMask; }
+			PropertyIBlueLYNXCameraDataClipMode getDataClipMode( void ) const { return dataClipMode; }
+			PropertyI getPreFlashMode( void ) const { return preFlashMode; }
+			PropertyI getFlashTime_lines( void ) const { return flashTime_lines; }
+			PropertyI getPreExposeErase( void ) const { return preExposeErase; }
+			PropertyI getInputThreshold_mV( void ) const { return inputThreshold_mV; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+#	endif // #ifndef IGNORE_MVBLUELYNX_SPECIFIC_DOCUMENTATION
+
+#	if !defined(IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION)
+		//-----------------------------------------------------------------------------
+		/// \brief A class to configure a HDR(<b>H</b>igh <b>D</b>ynamic <b>R</b>ange knee point
+		/// (<b>Device specific interface layout only</b>).
+		///
+		/// \note
+		/// Not every device will offer the features provided in this class. Before accessing properties call
+		/// the function <b>mvIMPACT::acquire::Component::isValid</b>. Right now only the mvBlueFOX-x00wx types
+		/// will support the features defined by this class.
+		///
+		/// \note
+		/// Instances of these class can't be constructed directly. It's parameters can
+		/// be accessed via an instance of the class <b>mvIMPACT::acquire::CameraSettingsBlueFOX</b> or
+		/// <b>mvIMPACT::acquire::CameraSettingsBlueCOUGAR</b>.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class HDRKneePoint : public ComponentCollection
+		//-----------------------------------------------------------------------------
+		{
+			friend class HDRControl;
+			explicit HDRKneePoint( HOBJ hObj ): ComponentCollection(hObj)
+			{
+				ComponentLocator locator(m_hRoot);
+				locator.bindComponent( HDRControlVoltage_mV, "HDRControlVoltage_mV" );
+				locator.bindComponent( HDRExposure_ppm, "HDRExposure_ppm" );
+			}
+		public:
+		PYTHON_ONLY(%immutable;)
+			/// \brief An enumerated integer property that can be used to define the control voltage in mV for
+			/// this knee point.
+			PropertyI HDRControlVoltage_mV;
+			/// \brief An enumerated integer property that can be used to define the exposure time in ppm of the overall exposure time for
+			/// this knee point.
+			PropertyI HDRExposure_ppm;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyI getHDRControlVoltage_mV( void ) const { return HDRControlVoltage_mV; }
+			PropertyI getHDRExposure_ppm( void ) const { return HDRExposure_ppm; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+
+		//-----------------------------------------------------------------------------
+		/// \brief A class to control the HDR(<b>H</b>igh <b>D</b>ynamic <b>R</b>ange) parameters of a device
+		/// (<b>Device specific interface layout only</b>).
+		///
+		/// \note
+		/// Not every device will offer the features provided in this class. Before accessing properties call
+		/// the function <b>mvIMPACT::acquire::Component::isValid</b>. Right now only the mvBlueFOX-x00wx and
+		/// mvBlueCOUGAR-x00wx types will support the features defined by this class.
+		///
+		/// \note
+		/// Instances of these class can't be constructed directly. It's parameters can
+		/// be accessed via an instance of the class <b>mvIMPACT::acquire::CameraSettingsBlueFOX</b> or
+		/// <b>mvIMPACT::acquire::CameraSettingsBlueCOUGAR</b>.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class HDRControl : public ComponentCollection
+		//-----------------------------------------------------------------------------
+		{
+			friend class CameraSettingsBlueCOUGAR;
+			friend class CameraSettingsBlueFOX;
+			typedef std::vector<HDRKneePoint*> HDRKneePointContainer;
+#		ifndef DOXYGEN_SHOULD_SKIP_THIS
+				//-----------------------------------------------------------------------------
+				struct ReferenceCountedData
+				//-----------------------------------------------------------------------------
+				{
+					HDRKneePointContainer            m_KneePoints;
+					HOBJ                             m_HDRControlRoot;
+					unsigned int                     m_refCnt;
+					ReferenceCountedData() : m_KneePoints(), m_HDRControlRoot(INVALID_ID), m_refCnt(1) {}
+					~ReferenceCountedData()
+					{
+						const HDRKneePointContainer::size_type HDRKneePointCnt = m_KneePoints.size();
+						for( HDRKneePointContainer::size_type h=0; h<HDRKneePointCnt; h++ )
+						{
+							delete m_KneePoints[h];
+						}
+					}
+				} *m_pRefData;
+#		endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
+			//-----------------------------------------------------------------------------
+			void dealloc( void )
+			//-----------------------------------------------------------------------------
+			{
+				--(m_pRefData->m_refCnt);
+				if( m_pRefData->m_refCnt == 0 )
+				{
+					delete m_pRefData;
+				}
+			}
+			//-----------------------------------------------------------------------------
+			void bindPublicProperties( void )
+			//-----------------------------------------------------------------------------
+			{
+				if( m_pRefData->m_HDRControlRoot != INVALID_ID )
+				{
+					ComponentLocator locator(m_pRefData->m_HDRControlRoot);
+					locator.bindComponent( HDREnable, "HDREnable" );
+					locator.bindComponent( HDRMode, "HDRMode" );
+					locator.bindComponent( HDRKneePointCount, "HDRKneePointCount" );
+				}
+			}
+			//-----------------------------------------------------------------------------
+			explicit HDRControl( HOBJ hObj ): ComponentCollection(hObj), m_pRefData(new ReferenceCountedData())
+			//-----------------------------------------------------------------------------
+			{
+				ComponentLocator locator(m_hRoot);
+				HOBJ hRoot = locator.findComponent( "HDRControl" );
+				if( hRoot != INVALID_ID )
+				{
+					m_hRoot = hRoot;
+					m_pRefData->m_HDRControlRoot = m_hRoot;
+					bindPublicProperties();
+					locator.bindSearchBase( locator.searchbase_id(), "HDRControl" );
+					// create the HDR knee point objects for this setting
+					ComponentIterator it;
+					locator.bindComponent( it, "HDRKneePoints" );
+					if( it.isValid() )
+					{
+						it = it.firstChild();
+						while( it.isValid() )
+						{
+							m_pRefData->m_KneePoints.push_back( new HDRKneePoint(it.hObj()) );
+							++it;
+						}
+					}
+				}
+			}
+		public:
+			/// \brief Copy constructor
+			///
+			/// Creates a new object from an existing device object. Keep in mind that this new object 
+			/// will provide access to the very same hardware and therefore you might as well use the original
+			/// reference. This constructor is only provided for internal reference counting to guarantee correct operation of the 
+			/// objects of this class under all platforms and languages.
+			explicit HDRControl( const HDRControl& src ) : ComponentCollection(src), m_pRefData(src.m_pRefData), HDREnable(src.HDREnable),
+				HDRMode(src.HDRMode), HDRKneePointCount(src.HDRKneePointCount)
+			{
+				++(m_pRefData->m_refCnt);
+			}
+			~HDRControl() { dealloc(); }
+#		ifndef WRAP_PYTHON
+				/// \brief Allows assignments of <b>mvIMPACT::acquire::HDRControl</b> objects
+				HDRControl& operator=( const HDRControl& rhs )
+				{
+					if( this != &rhs )
+					{
+						dealloc();
+						m_pRefData = rhs.m_pRefData;
+						// inc. the NEW reference count
+						++(m_pRefData->m_refCnt);
+						bindPublicProperties();
+					}
+					return *this;
+				}
+#		endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
+			/// \brief Returns a reference to a set of user definable parameters to configure a HDR(<b>H</b>igh <b>D</b>ynamic <b>R</b>ange knee point.
+			///
+			/// Use the property <b>mvIMPACT::acquire::HDRControl::HDRKneePointCount</b> to find out how many knee points are available
+			/// or to change the number of knee points.
+			///
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// If \a nr is invalid(too large) a STL out_of_range exception
+			/// will be thrown.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///
+			/// \return A reference to a set of user definable parameters to configure a HDR(<b>H</b>igh <b>D</b>ynamic <b>R</b>ange knee point.
+			HDRKneePoint& getHDRKneePoint(	/// The number of the knee point to be returned
+											unsigned int nr ) const { return *(m_pRefData->m_KneePoints.at( nr )); }
+		PYTHON_ONLY(%immutable;)
+			/// \brief An enumerated integer property which can be used to enable/disable HDR(<b>H</b>igh <b>D</b>ynamic <b>R</b>ange) mode.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
+			PropertyIBoolean HDREnable;
+			/// \brief An enumerated integer property which can be used to configure the HDR(<b>H</b>igh <b>D</b>ynamic <b>R</b>ange) mode to work with.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraHDRMode</b>.
+			PropertyICameraHDRMode HDRMode;
+			/// \brief An integer property to define the number of knee points to work with when <b>mvIMPACT::acquire::HDRControl::HDRMode</b> is set
+			/// to <b>mvIMPACT::acquire::cHDRmUser</b>.
+			PropertyI HDRKneePointCount;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyIBoolean getHDREnable( void ) const { return HDREnable; }
+			PropertyICameraHDRMode getHDRMode( void ) const { return HDRMode; }
+			PropertyI getHDRKneePointCount( void ) const { return HDRKneePointCount; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+#	endif // #if !defined(IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION)
+
+#	ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+		//-----------------------------------------------------------------------------
+		/// \brief <b>mvBlueFOX</b> related camera settings(<b>Device specific interface layout only</b>).
+		///
+		/// This class contains properties to control the way the image sensor of the
+		/// <b>mvBlueFOX</b> behaves.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class CameraSettingsBlueFOX : public CameraSettingsBlueDevice
+		//-----------------------------------------------------------------------------
+		{
+			HDRControl HDRControl_;
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::CameraSettingsBlueFOX</b> object
+			explicit CameraSettingsBlueFOX( /// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+											Device* pDev,
+											/// The name of the driver internal setting to access with this instance.
+											/// A list of valid setting names can be obtained by a call to
+											/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
+											/// settings can be created with the function
+											/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
+											const std::string& settingName = "Base" ) : CameraSettingsBlueDevice(pDev, settingName), HDRControl_(m_hRoot),
+											  offsetAutoCalibration(), offsetAutoBlackLevel(),
+											  offsetAutoBlackSpeed(), lineDelay_clk(), advancedOptions(),
+											  flashToExposeDelay_us(), flashMode(), flashType(), shutterMode(),
+											  triggerSource(), sensorTimingMode()
+			{
+				ComponentLocator locator(m_hRoot);
+				locator.bindComponent( offsetAutoCalibration, "OffsetAutoCalibration" );
+				locator.bindComponent( offsetAutoBlackLevel, "OffsetAutoBlackLevel" );
+				locator.bindComponent( offsetAutoBlackSpeed, "OffsetAutoBlackSpeed" );
+				locator.bindComponent( lineDelay_clk, "LineDelay_clk" );
+				locator.bindComponent( advancedOptions, "AdvancedOptions" );
+				locator.bindComponent( flashToExposeDelay_us, "FlashToExposeDelay_us" );
+				locator.bindComponent( flashMode, "FlashMode" );
+				locator.bindComponent( flashType, "FlashType" );
+				locator.bindComponent( shutterMode, "ShutterMode" );
+				locator.bindComponent( triggerSource, "TriggerSource" );
+				locator.bindComponent( sensorTimingMode, "SensorTimingMode" );
+			}
+			/// \brief Returns the <b>mvIMPACT::acquire::HDRControl</b> object associated with this setting.
+			HDRControl& getHDRControl( void ) { return HDRControl_; }
+		PYTHON_ONLY(%immutable;)
+			/// \brief An enumerated integer property defining the offset calibration mode.
+			///
+			/// If this property is set to <b>mvIMPACT::acquire::aocOff</b>
+			/// the offset can be adjusted manually by modifying the <b>mvIMPACT::acquire::CameraSettingsBlueFOX::offset_pc</b> property.
+			///
+			/// If set to <b>mvIMPACT::acquire::aocOn</b> the offset is approx. 10. That means,
+			/// that the medium pixel count is 10, in case no light is falling on the sensor.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAutoOffsetCalibration</b>.
+			PropertyIAutoOffsetCalibration offsetAutoCalibration;
+			/// \brief An integer property defining the digital value assumed as black.
+			///
+			/// Modifying this property in rare cases might be useful to achieve a higher dynamic range for noise close to the black
+			/// level.
+			///
+			/// \note
+			/// As the <b>mvBlueFOX</b> internally works with a 10 bit analog to digital conversion increasing this
+			/// value by 4 will result in a black level increased by about 1 in the resulting 8 bit raw image 
+			/// delivered from the camera.
+			PropertyI offsetAutoBlackLevel;
+			/// \brief An enumerated integer property defining the speed of the auto offset calibration circuit.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBlueFOXOffsetAutoBlackSpeed</b>.
+			PropertyIBlueFOXOffsetAutoBlackSpeed offsetAutoBlackSpeed;
+			/// \brief An integer property defining the delay in clocks between two lines.
+			///
+			/// Can be used to slow down the image readout the reduce the peak bandwidth required
+			/// for the transfer.
+			PropertyI lineDelay_clk;
+			/// \brief An enumerated integer property defining a collection of advanced options that can be enabled or disabled.
+			///
+			/// This property is highly sensor dependent. Each sensor might offer a different sub set of the options offered.
+			/// Only experienced users should work with this feature.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDeviceAdvancedOptions</b>.
+			PropertyIDeviceAdvancedOptions advancedOptions;
+			/// \brief An integer property defining the delay in us betwenn the start of the flash signal output
+			/// and the beginning of the expose period of the image sensor.
+			///
+			/// \note
+			/// This property is mainly provided for compatibility reasons. Previous versions of the 
+			/// <b>mvBlueFOX</b> driver produced a fixed delay of about 300 us between the beginning of the
+			/// flash signal creation and the beginning of the sensors expose period. Newer versions of the
+			/// driver do <b>NOT</b> produce this delay anymore which might cause a different illumination
+			/// for applications using very intensive, short flash and expose times. Applications relying on
+			/// the delay introduced in older driver versions should set this property to
+			/// '300' by calling <b>mvIMPACT::acquire::PropertyI::write</b>.
+			///
+			/// \sa
+			/// <b>mvIMPACT::acquire::CameraSettingsBlueDevice::expose_us</b>
+			PropertyI flashToExposeDelay_us;
+			/// \brief An enumerated integer property defining the behaviour of the flash output
+			/// of the camera (if available).
+			///
+			/// If this property is set the cameras flash output (if available) will be pulsed
+			/// during the exposure period of the sensor. In that case the pulse width will be equal
+			/// to the exposure time.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraFlashMode</b>.
+			///
+			/// \sa
+			/// <b>mvIMPACT::acquire::CameraSettingsBlueFOX::flashToExposeDelay_us</b>
+			PropertyICameraFlashMode flashMode;
+			/// \brief An enumerated integer property defining the type of the flash output
+			/// of the camera (if available).
+			///
+			/// Depending of the camera sensor type (\a rolling shutter or \a frame \a shutter 
+			/// there well be different modes available
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraFlashType</b>.
+			PropertyICameraFlashType flashType;
+			/// \brief An enumerated integer property defining the shutter mode to use.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraShutterMode</b>.
+			PropertyICameraShutterMode shutterMode;
+			/// \brief An enumerated integer property defining where the trigger signal is
+			/// expected to occur.
+			///
+			/// When working with hardware generated signals via <b>mvIMPACT::acquire::RTCtrProgram</b> objects
+			/// this property should be set to <b>mvIMPACT::acquire::ctsRTCtrl</b> as otherwise
+			/// the program will not affect the behaviour of the camera.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraTriggerSource</b>.
+			PropertyICameraTriggerSource triggerSource;
+			/// \brief An enumerated integer property defining the current image sensor timing mode.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBlueFOXSensorTiming</b>.
+			PropertyIBlueFOXSensorTiming sensorTimingMode;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyIAutoOffsetCalibration getOffsetAutoCalibration( void ) const { return offsetAutoCalibration; }
+			PropertyI getOffsetAutoBlackLevel( void ) const { return offsetAutoBlackLevel; }
+			PropertyIBlueFOXOffsetAutoBlackSpeed getOffsetAutoBlackSpeed( void ) const { return offsetAutoBlackSpeed; }
+			PropertyI getLineDelay_clk( void ) const { return lineDelay_clk; }
+			PropertyIDeviceAdvancedOptions getAdvancedOptions( void ) const { return advancedOptions; }
+			PropertyI getFlashToExposeDelay_us( void ) const { return flashToExposeDelay_us; }
+			PropertyICameraFlashMode getFlashMode( void ) const { return flashMode; }
+			PropertyICameraFlashType getFlashType( void ) const { return flashType; }
+			PropertyICameraShutterMode getShutterMode( void ) const { return shutterMode; }
+			PropertyICameraTriggerSource getTriggerSource( void ) const { return triggerSource; }
+			PropertyIBlueFOXSensorTiming getSensorTimingMode( void ) const { return sensorTimingMode; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+	};
+#	endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+
+#	ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
+		//-----------------------------------------------------------------------------
+		/// \brief <b>mvBlueCOUGAR</b> and <b>mvBlueLYNX-M7</b> related camera settings
+		/// (<b>Device specific interface layout only</b>).
+		///
+		/// This class contains properties to control the way the image sensor(s) of the
+		/// <b>mvBlueCOUGAR</b> or <b>mvBlueLYNX-M7</b> behaves.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class CameraSettingsBlueCOUGAR : public CameraSettingsBlueDevice
+		//-----------------------------------------------------------------------------
+		{
+			typedef std::vector<TriggerControl*> TriggerControlVector;
+			TriggerControlVector m_triggerControls;
+			HDRControl HDRControl_;
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::CameraSettingsBlueCOUGAR</b> object
+			explicit CameraSettingsBlueCOUGAR(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+												Device* pDev,
+												/// The name of the driver internal setting to access with this instance.
+												/// A list of valid setting names can be obtained by a call to
+												/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
+												/// settings can be created with the function
+												/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
+												const std::string& settingName = "Base" ) : CameraSettingsBlueDevice(pDev, settingName),
+												m_triggerControls(), HDRControl_(m_hRoot),
+												triggerInterface(), triggerSource()
+			{
+				ComponentLocator locator(m_hRoot);
+				locator.bindComponent( frameRate_Hz, "FrameRate_Hz" );
+				locator.bindComponent( partialScanMode, "PartialScanMode" );
+				locator.bindComponent( triggerInterface, "TriggerInterface" );
+				locator.bindComponent( triggerSource, "TriggerSource" );
+				if( locator.findComponent( "TriggerControls" ) != INVALID_ID )
+				{
+					locator.bindSearchBase( locator.searchbase_id(), "TriggerControls" );
+					ComponentIterator it(locator.searchbase_id());
+					it = it.firstChild();
+					while( it.isValid() )
+					{
+						m_triggerControls.push_back( new TriggerControl(it) );
+						++it;
+					}
+				}
+			}
+			virtual ~CameraSettingsBlueCOUGAR()
+			{
+				TriggerControlVector::size_type vSize = m_triggerControls.size();
+				for( TriggerControlVector::size_type i=0; i<vSize; i++ )
+				{
+					delete m_triggerControls[i];
+				}
+			}
+			/// \brief Returns the number of <b>mvIMPACT::acquire::TriggerControl</b>s available for this device.
+			///
+			/// This might be 0 if the device either does not support this feature.
+			unsigned int getTriggerControlCount( void ) const { return static_cast<unsigned int>(m_triggerControls.size()); }
+			/// \brief Returns a const pointer to a <b>mvIMPACT::acquire::TriggerControl</b> object.
+			///
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// If \a nr references an invalid pin a STL out_of_range exception
+			/// will be thrown.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///
+			/// \note
+			/// The features of each <b>mvIMPACT::acquire::TriggerControl</b> will only be visibile and thus available,
+			/// when <b>mvIMPACT::acquire::CameraSettingsBlueCOUGAR::triggerInterface</b>
+			/// is set to <b>mvIMPACT::acquire::dtiAdvanced</b>.
+			const TriggerControl* triggerControl(	/// The number of the trigger control
+													unsigned int nr ) const { return m_triggerControls.at( nr ); }
+			/// \brief Returns a const pointer to a <b>mvIMPACT::acquire::TriggerControl</b> object or NULL if the name passed to the function
+			/// does not specify a valid trigger control.
+			const TriggerControl* triggerControl(	/// The name of the trigger control
+													const std::string& name ) const
+			{
+				const TriggerControlVector::size_type cnt = m_triggerControls.size();
+				for( TriggerControlVector::size_type i=0; i<cnt; i++ )
+				{
+					const TriggerControl* p = triggerControl( static_cast<unsigned int>(i) );
+					if( p->getDescription() == name )
+					{
+						return p;
+					}
+				}
+				return 0;
+			}
+			/// \brief Returns the <b>mvIMPACT::acquire::HDRControl</b> object associated with this setting.
+			HDRControl& getHDRControl( void ) { return HDRControl_; }
+		PYTHON_ONLY(%immutable;)
+			/// \brief A float property defining the frame rate (in Hz) this device shall use to transfer images.
+			///
+			/// Depending on other parameters the desired frame rate might not be achievable (e.g. if the exposure time
+			/// is higher than the frame period. In that case the device will automatically reduce the frame rate.
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			PropertyF frameRate_Hz;
+			/// \brief An enumerated integer property defining whether partial scan mode shall be used or not.
+			///
+			/// This property currently is only available for mvBlueCOUGAR-S devices. When partial scan mode is active, the
+			/// frame rate can no longer be controlled be the property <b>mvIMPACT::acquire::CameraSettingsBlueCOUGAR::frameRate_Hz</b>.
+			/// The device will always transmit frames as fast as possible instead.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
+			PropertyIBoolean partialScanMode;
+			/// \brief An enumerated integer property defining which view of the trigger interface to use.
+			///
+			/// This property mainly switches the visibility of trigger the different trigger interfaces. After applying changes to
+			/// this property all trigger related features might have a different visibility. However the documentation will state
+			/// what features are available in which mode.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDeviceTriggerInterface</b>.
+			PropertyIDeviceTriggerInterface triggerInterface;
+			/// \brief An enumerated integer property defining where the trigger signal is
+			/// expected to occur.
+			///
+			/// When working with hardware generated signals via <b>mvIMPACT::acquire::RTCtrProgram</b> objects
+			/// this property should be set to <b>mvIMPACT::acquire::ctsRTCtrl</b> as otherwise
+			/// the program will not affect the behaviour of the camera.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraTriggerSource</b>.
+			///
+			/// \note
+			/// This feature will only be visibile and thus available, when <b>mvIMPACT::acquire::CameraSettingsBlueCOUGAR::triggerInterface</b>
+			/// is set to <b>mvIMPACT::acquire::dtiStandard</b>.
+			PropertyICameraTriggerSource triggerSource;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyF getFrameRate_Hz( void ) const { return frameRate_Hz; }
+			PropertyIBoolean getPartialScanMode( void ) const { return partialScanMode; }
+			PropertyIDeviceTriggerInterface getTriggerInterface( void ) const { return triggerInterface; }
+			PropertyICameraTriggerSource getTriggerSource( void ) const { return triggerSource; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+#	endif // #ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
+
+#	ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+		//-----------------------------------------------------------------------------
+		/// \brief A class to access frame grabber related camera settings(<b>Device specific interface layout only</b>).
+		///
+		/// This class contains properties to control the way the a frame grabber
+		/// behaves in connection with the connected camera.
+		///
+		/// \note
+		/// Not every frame grabber will support every property defined in this class. Please
+		/// refer to the description of the individual properties and make heavy use of the
+		/// function <b>mvIMPACT::acquire::Component::isValid</b> in order to check whether
+		/// a property is available for the device.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class CameraSettingsFrameGrabber : public CameraSettingsBase
+		//-----------------------------------------------------------------------------
+		{
+			typedef std::vector<TriggerControl*> TriggerControlVector;
+			TriggerControlVector m_triggerControls;
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::CameraSettingsFrameGrabber</b> object
+			explicit CameraSettingsFrameGrabber(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+													Device* pDev,
+													/// The name of the driver internal setting to access with this instance.
+													/// A list of valid setting names can be obtained by a call to
+													/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
+													/// settings can be created with the function
+													/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
+													const std::string& settingName = "Base" ) : CameraSettingsBase(pDev, settingName),
+													  type(), aoiMode(), gain_dB(), offset_mV(), scanClock(), triggerMode(), softwareTriggerPeriod_ms(),
+													  serialPortBaudrate(), interlacedMode(), acquisitionField(), scanRateMode(), scanRate_kHz(),
+													  luminance_pc(), saturation_pc(), hue_pc(), contrast_pc(), lineCounter()
+			{
+				ComponentLocator locator( m_hRoot );
+				locator.bindComponent( type, "Type" );
+				locator.bindComponent( aoiMode, "AoiMode" );
+				locator.bindComponent( gain_dB, "Gain_dB" );
+				locator.bindComponent( offset_mV, "Offset_mV" );
+				locator.bindComponent( scanClock, "ScanClock" );
+				locator.bindComponent( triggerMode, "TriggerMode", 0, 0 );
+				locator.bindComponent( softwareTriggerPeriod_ms, "SoftwareTriggerPeriod_ms" );
+				locator.bindComponent( serialPortBaudrate, "SerialPortBaudRate" );
+				locator.bindComponent( interlacedMode, "InterlacedMode" );
+				locator.bindComponent( acquisitionField, "AcquisitionField" );
+				locator.bindComponent( scanRateMode, "ScanRateMode" );
+				locator.bindComponent( scanRate_kHz, "ScanRate_kHz" );
+				locator.bindComponent( luminance_pc, "Luminance_pc" );
+				locator.bindComponent( saturation_pc, "Saturation_pc" );
+				locator.bindComponent( hue_pc, "Hue_pc" );
+				locator.bindComponent( contrast_pc, "Contrast_pc" );
+				locator.bindComponent( lineCounter, "LineCounter" );
+				if( locator.findComponent( "TriggerControls" ) != INVALID_ID )
+				{
+					locator.bindSearchBase( locator.searchbase_id(), "TriggerControls" );
+					ComponentIterator it(locator.searchbase_id());
+					if( it.isValid() )
+					{
+						it = it.firstChild();
+						while( it.isValid() )
+						{
+							m_triggerControls.push_back( new TriggerControl(it) );
+							++it;
+						}
+					}
+				}
+			}
+			virtual ~CameraSettingsFrameGrabber()
+			{
+				TriggerControlVector::size_type vSize = m_triggerControls.size();
+				for( TriggerControlVector::size_type i=0; i<vSize; i++ )
+				{
+					delete m_triggerControls[i];
+				}
+			}
+			/// \brief Returns the number of <b>mvIMPACT::acquire::TriggerControl</b>s available for this device.
+			///
+			/// This might be 0 if the device either does not support this feature.
+			unsigned int getTriggerControlCount( void ) const { return static_cast<unsigned int>(m_triggerControls.size()); }
+			/// \brief Returns a const pointer to a <b>mvIMPACT::acquire::TriggerControl</b> object.
+			///
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// If \a nr references an invalid pin a STL out_of_range exception
+			/// will be thrown.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			const TriggerControl* triggerControl(	/// The number of the trigger control
+													unsigned int nr ) const { return m_triggerControls.at( nr ); }
+			/// \brief Returns a const pointer to a <b>mvIMPACT::acquire::TriggerControl</b> object or NULL if the name passed to the function
+			/// does not specify a valid trigger control.
+			const TriggerControl* triggerControl(	/// The name of the trigger control
+													const std::string& name ) const
+			{
+				const TriggerControlVector::size_type cnt = m_triggerControls.size();
+				for( TriggerControlVector::size_type i=0; i<cnt; i++ )
+				{
+					const TriggerControl* p = triggerControl( static_cast<unsigned int>(i) );
+					if( p->getDescription() == name )
+					{
+						return p;
+					}
+				}
+				return 0;
+			}
+		PYTHON_ONLY(%immutable;)
+			/// \brief An enumerated integer property defining the camera description used for the 
+			/// image acquisition.
+			///
+			/// This property <b>ALWAYS</b> defines a translation dictionary containing a string representation
+			/// and a numerical value for the camera descriptions available for the device. The string
+			/// representation of the camera description will be build from the property name of the class this
+			/// camera description belongs to (e.g. \a 'Standard', \a 'NonStandard' or \a 'CameraLink') and
+			/// the name of the camera description itself. Assuming a the device can handle standard
+			/// video cameras and a description for a camera named \a 'MyCCIRCamera' will therefore
+			/// add \a 'Standard_MyCCIRCamera' and a unique numerical representation to the properties
+			/// translation dictionary.
+			PropertyI type;
+			/// \brief An enumerated integer property defining the used AOI mode for the image capture.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraAoiMode</b>.
+			PropertyICameraAoiMode aoiMode;
+			/// \brief A float property defining the gain in dB.
+			///
+			/// This is the gain applied during the analogue to digital conversion inside the frame
+			/// grabber, not applied inside the camera.
+			/// 
+			/// \note
+			/// This property will not be available for every frame grabber, so before using it, check
+			/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
+			/// an invalid property will raise an exception!
+			PropertyF gain_dB;
+			/// \brief An integer property defining the offset in milli-Volt.
+			///
+			/// This is the analogue offset applied during the analogue to digital conversion inside the frame
+			/// grabber, not applied inside the camera.
+			/// 
+			/// \note
+			/// This property will not be available for every frame grabber, so before using it, check
+			/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
+			/// an invalid property will raise an exception!
+			PropertyI offset_mV;
+			/// \brief An enumerated integer property defining the scan clock mode used for the current acquisition.
+			///
+			/// Valid modes are defined by the enumeration <b>mvIMPACT::acquire::TScanClock</b>.
+			///
+			/// \note
+			/// This property will not be available for every frame grabber, so before using it, check
+			/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
+			/// an invalid property will raise an exception! Digital frame grabbers will however <b>NOT</b> support
+			/// this property.
+			PropertyIScanClock scanClock;
+			/// \brief An enumerated integer property defining the behaviour of the frame grabbers trigger input.
+			///
+			/// \note 
+			/// All trigger modes are defined by <b>mvIMPACT::acquire::TDeviceTriggerMode</b>. However
+			/// not every device will offer all these trigger modes but a subset of them. Valid trigger modes therefore 
+			/// can be found by reading the properties translation dictionary.
+			///
+			/// \note
+			/// This property will not be available for every frame grabber, so before using it, check
+			/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
+			/// an invalid property will raise an exception!
+			PropertyIDeviceTriggerMode triggerMode;
+			/// \brief An integer property defining the software simulated trigger period.
+			///
+			/// When <b>mvIMPACT::acquire::CameraSettingsFrameGrabber::triggerMode</b> is set to
+			/// <b>mvIMPACT::acquire::dtmPeriodically</b> this property defines the
+			/// interval between two consecutive external trigger events simulated by the driver.
+			///
+			/// Currently this property is only available for <b>mvTITAN</b> and <b>mvGAMMA</b> frame grabbers.
+			///
+			/// \note
+			/// This property will not be available for every frame grabber, so before using it, check
+			/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
+			/// an invalid property will raise an exception!
+			PropertyI softwareTriggerPeriod_ms;
+			/// \brief An enumerated integer property defining the baud rate of the serial communication port
+			/// between frame grabber and camera.
+			///
+			/// Currently this property is only available for CameraLink&reg; frame grabbers.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraSerialPortBaudRate</b>.
+			///
+			/// \note
+			/// This property will not be available for every frame grabber, so before using it, check
+			/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
+			/// an invalid property will raise an exception!
+			PropertyICameraSerialPortBaudRate serialPortBaudrate;
+			/// \brief An enumerated integer property defining how the image from the camera shall be captured.
+			///
+			/// If a video signal is transmitted to the capture device in an interlaced format, the device
+			/// can either capture each individual frame, or merge two frames together into a complete image.
+			///
+			/// This property will be invisible when the camera description selected by the property
+			/// <b>mvIMPACT::acquire::CameraSettingsFrameGrabber::type</b> does define it property 
+			/// <b>mvIMPACT::acquire::CameraDescriptionBase::interlacedType</b> to be <b>mvIMPACT::acquire::citNone</b>
+			/// as the decision whether an interlaced image shall be reconstructed from frames or left 
+			/// as individual frame is redundant if the video source transmitts full frames only.
+			///
+			/// The visibility of a property can be checked by calling <b>mvIMPACT::acquire::Component::isVisible</b>
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TInterlacedMode</b>.
+			///
+			/// \note
+			/// This property will not be available for every frame grabber, so before using it, check
+			/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
+			/// an invalid property will raise an exception!
+			PropertyIInterlacedMode interlacedMode;
+			/// \brief An enumerated integer property defining which frame(s) of an interlaced video signal 
+			/// will be digitised or triggers the start of the acquisition.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAcquisitionField</b>.
+			///
+			/// \note
+			/// This property will not be available for every frame grabber, so before using it, check
+			/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
+			/// an invalid property will raise an exception!
+			PropertyIAcquisitionField acquisitionField;
+			/// \brief An enumerated integer property defining the scan rate mode for this setting.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDeviceScanRateMode</b>.
+			///
+			/// \note
+			/// This property will not be available for every frame grabber, so before using it, check
+			/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
+			/// an invalid property will raise an exception!
+			PropertyIDeviceScanRateMode scanRateMode;
+			/// \brief An integer property defining the current scan frequency of the capture device.
+			///
+			/// This property is only visible if the <b>mvIMPACT::acquire::CameraSettingsFrameGrabber::scanRateMode</b>
+			/// property is <b>NOT</b> in an auto mode.
+			/// \note
+			/// This property will not be available for every frame grabber, so before using it, check
+			/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
+			/// an invalid property will raise an exception!
+			PropertyI scanRate_kHz;
+			/// \brief An integer property defining the luminance value to be applied to the image data by the
+			/// frame grabber in per cent.
+			///
+			/// \note
+			/// This property will not be available for every frame grabber, so before using it, check
+			/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
+			/// an invalid property will raise an exception!
+			PropertyI luminance_pc;
+			/// \brief An integer property defining the saturation value to be applied to the image data by the
+			/// frame grabber in per cent.
+			///
+			/// \note
+			/// This property will not be available for every frame grabber, so before using it, check
+			/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
+			/// an invalid property will raise an exception!
+			PropertyI saturation_pc;
+			/// \brief An integer property defining the hue value to be applied to the image data by the
+			/// frame grabber in per cent.
+			///
+			/// \note
+			/// This property will not be available for every frame grabber, so before using it, check
+			/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
+			/// an invalid property will raise an exception!
+			PropertyI hue_pc;
+			/// \brief An integer property defining the contrast value to be applied to the image data by the
+			/// frame grabber in per cent.
+			///
+			/// \note
+			/// This property will not be available for every frame grabber, so before using it, check
+			/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
+			/// an invalid property will raise an exception!
+			PropertyI contrast_pc;
+			/// \brief An enumerated integer property defining the way line counter information is handled by the 
+			/// device.
+			///
+			/// This is interessting for line scan camera applications. More information can be found a the documentation
+			/// of the enumeration <b>mvIMPACT::acquire::TLineCounter</b>.
+			///
+			/// \note
+			/// This property will not be available for every frame grabber, so before using it, check
+			/// if the property is available at all by calling <b>mvIMPACT::acquire::Component::isValid</b>. Accessing
+			/// an invalid property will raise an exception!
+			PropertyILineCounter lineCounter;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyI getType( void ) const { return type; }
+			PropertyICameraAoiMode getAoiMode( void ) const { return aoiMode; }
+			PropertyF getGain_dB( void ) const { return gain_dB; }
+			PropertyI getOffset_mV( void ) const { return offset_mV; }
+			PropertyIScanClock getScanClock( void ) const { return scanClock; }
+			PropertyIDeviceTriggerMode getTriggerMode( void ) const { return triggerMode; }
+			PropertyI getSoftwareTriggerPeriod_ms( void ) const { return softwareTriggerPeriod_ms; }
+			PropertyICameraSerialPortBaudRate getSerialPortBaudRate( void ) const { return serialPortBaudrate; }
+			PropertyIInterlacedMode getInterlacedMode( void ) const { return interlacedMode; }
+			PropertyIAcquisitionField getAcquisitionField( void ) const { return acquisitionField; }
+			PropertyIDeviceScanRateMode getScanRateMode( void ) const { return scanRateMode; }
+			PropertyI getScanRate_kHz( void ) const { return scanRate_kHz; }
+			PropertyI getLuminance_pc( void ) const { return luminance_pc; }
+			PropertyI getSaturation_pc( void ) const { return saturation_pc; }
+			PropertyI getHue_pc( void ) const { return hue_pc; }
+			PropertyI getContrast_pc( void ) const { return contrast_pc; }
+			PropertyILineCounter getLineCounter( void ) const { return lineCounter; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+
+		//-----------------------------------------------------------------------------
+		/// \brief A base class to describe a camera(<b>Device specific interface layout only</b>).
+		///
+		/// A camera description object provides an abstract way to prepare the capture 
+		/// device (e.g. a frame grabber) for the connected imaging device (e.g. a camera).
+		/// 
+		/// By selecting one of the available camera descriptions the underlying hardware 
+		/// will use the information provided in the camera description to prepare the
+		/// image capture. Therefore it is crucial to select a camera description
+		/// that matches the connected video signal as close as possible. If no description
+		/// for the camera or imaging device connected is available a new description
+		/// should be generated from one of the existing ones. This can be achieved by calling
+		/// the function <b>mvIMPACT::acquire::CameraDescriptionBase::copyDescription</b>. A new
+		/// camera description with the name that is passed to the function will be created.
+		///
+		/// \note
+		/// The name must be unique. There can't be two descriptions with the same name
+		/// belonging to the same generic class (i.e. \a 'Standard' or \a 'CameraLink'&reg;). However
+		/// it's perfectly legal to have a camera description for standard analogue video signals
+		/// and one for e.g. CameraLink&reg; signals with the same name.
+		///
+		/// This new description will be an exact copy of the one the copy function has been 
+		/// executed for. After creation this description can be selected e.g. by setting the
+		/// property <b>mvIMPACT::acquire::CameraSettingsFrameGrabber::type</b> to the name of the
+		/// new description.
+		///
+		/// \note
+		/// Please note that the name passed to the property <b>mvIMPACT::acquire::CameraSettingsFrameGrabber::type</b>
+		/// does <b>NOT</b> exactly correspond to the name assigned to the new camera description.
+		/// It is a combination of the class the camera is belonging to (e.g. \a 'Standard') and the actual name.
+		/// So to select a camera description the name must be build from teh return value of a call to
+		/// <b>mvIMPACT::acquire::CameraDescriptionBase::getClassName</b>, an underscore ('_') and the
+		/// actual name of the description: &lt;class name&gt;_&lt;desc. name&gt;
+		///
+		/// Example: For a standard description with the name \a 'MyCam' the full name would be \a 'Standard_MyCam'.
+		/// 
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		///
+		/// <b>EXAMPLE:</b>
+		///
+		///\code
+		/// #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
+		/// #include <iostream>
+		///
+		/// using namespace std;
+		///
+		/// //-----------------------------------------------------------------------------
+		/// int main(int argc, char* argv[])
+		/// //-----------------------------------------------------------------------------
+		/// {
+		///   mvIMPACT::acquire::DeviceManager devMgr;
+		///   mvIMPACT::acquire::Device* pDev = devMgr[0];
+		///   if( !pDev )
+		///   {
+		///     cout << "No device found" << endl;
+		///     return 0;
+		///   }
+		/// 
+		///   try
+		///   {
+		///     // the next line will raise an exception if this device does not
+		///     // support camera descriptions (e.g. if it is a USB camera rather than a frame grabber)
+		///     mvIMPACT::acquire::CameraDescriptionManager cdm(pDev);
+		///     mvIMPACT::acquire::CameraDescriptionStandard* pCam = cdm.cameraDescriptionStandard( "Generic" );
+		///     pCam->copyDescription( "MyCam" );
+		///     // Get access to the newly created description
+		///     mvIMPACT::acquire::CameraDescriptionStandard* pMyCam = cdm.cameraDescriptionStandard( "MyCam" );
+		///     // Modify something
+		///     pMyCam->videoStandard.write( vsRS170 );
+		///     pMyCam->scanStandard.write( ssITU601 );
+		///     // now save the description to make it available in all future sessions
+		///     pMyCam->exportDescription();
+		///     // select the newly created description
+		///     mvIMPACT::acquire::CameraSettingsFrameGrabber cs(pDev);
+		///     // the name for this property is always a combination of the class the camera
+		///     // description is belonging to and the actual name:
+		///     cs.type.writeS( pMyCam->getClassName() + "_" + pMyCam->name.read() );
+		///   }
+		///   catch( const ImpactAcquireException& e )
+		///   {
+		///     cout << "An exception occurred: " << e.getErrorString() << endl;
+		///   }
+		///   return 0;
+		/// }
+		///\endcode
+		///\htmlinclude code_fragment_end.html
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class CameraDescriptionBase : public ComponentCollection
+		//-----------------------------------------------------------------------------
+		{
+			HDRV m_hDrv;
+		protected:
+			explicit CameraDescriptionBase( HDRV hDrv, HLIST hList ) : ComponentCollection(hList), m_hDrv(hDrv), name(), 
+			  videoOutput(), interlacedType(), aoiHeight(), aoiStartX(), aoiStartY(), aoiWidth()
+			{
+				ComponentLocator locator(m_hRoot);
+				locator.bindComponent( name, "Name" );
+				locator.bindComponent( videoOutput, "VideoOutput" );
+				locator.bindComponent( interlacedType, "InterlacedType" );
+				locator.bindSearchBase( locator.searchbase_id(), "ActiveVideoAoi" );
+				locator.bindComponent( aoiHeight, "H" );
+				locator.bindComponent( aoiStartX, "X" );
+				locator.bindComponent( aoiStartY, "Y" );
+				locator.bindComponent( aoiWidth, "W" );
+			}
+		public:
+			/// \brief Returns the class this description is belonging to.
+			/// \return The class this description is belonging to.
+			std::string getClassName( void ) const { return ComponentList(m_hRoot).contentDescriptor(); }
+			/// \brief Creates a new camera description list as a copy of the current one.
+			///
+			/// This function can be used to create a new camera description list. It will create
+			/// a deep copy of the list referenced by \a hCameraDescList and will append it
+			/// to the list of camera descriptions.
+			///
+			/// \note
+			/// This will <b>NOT</b> store the new description permanently. After the driver has been 
+			/// closed, this data will be lost. To store the new list in a way, that it will be available
+			/// the next time the driver/device is opened again <b>mvIMPACT::acquire::CameraDescriptionBase::exportDescription</b> must
+			/// be called with the handle of the newly created description after this function.
+			/// \sa
+			/// <b>mvIMPACT::acquire::CameraDescriptionBase::exportDescription,<br>
+			///    mvIMPACT::acquire::CameraDescriptionBase::importDescription</b>
+			/// \return
+			/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
+			/// - <b>mvIMPACT::acquire::DEV_INPUT_PARAM_INVALID</b> if new name matches a description that is already
+			/// existing.
+			/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> or <b>mvIMPACT::acquire::TPROPHANDLING_ERROR</b> otherwise.
+			int copyDescription(	/// The name for the newly created camera description. This name
+									/// <b>MUST NOT</b> match a description already existing.
+									const std::string& newName ) const { return DMR_CopyCameraDescription( m_hDrv, m_hRoot, newName.c_str() ); }
+			/// \brief Stores the current camera description on disc.
+			///
+			/// This function can be used to store the current settings of a camera description
+			/// permanently so that the next time the driver is initialised these settings are restored.
+			///
+			/// When exporting a camera description a file in XML format will be written to disc. Under 
+			/// Windows&reg; camera descriptions will be stored under 
+			/// <b>%ALLUSERS%\\Documents\\MATRIX VISION\\mvIMPACT acquire\\CameraFiles</b>, under Linux&reg;
+			/// this directory will be <b>/etc/matrix-vision/mvimpact-acquire/camerafiles</b> while under
+			/// other platforms these files will end up in the current working directory. This behaviour can be modified
+			/// by writing the the property <b>mvIMPACT::acquire::Device::customDataDirectory</b> before initialising the
+			/// device.
+			///
+			/// \sa
+			/// <b>mvIMPACT::acquire::CameraDescriptionBase::copyDescription,<br>
+			///    mvIMPACT::acquire::CameraDescriptionBase::importDescription</b>
+			/// \return
+			/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
+			/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> or <b>mvIMPACT::acquire::TPROPHANDLING_ERROR</b> otherwise.
+			int exportDescription( void ) const { return DMR_ExportCameraDescription( m_hDrv, m_hRoot ); }
+			/// \brief Updates a camera description with the data stored in a previous session or
+			/// with the original default data.
+			///
+			/// When importing a camera description the device driver will try to retrieve the parameters
+			/// needed from a XML file. Under Windows&reg; camera descriptions MUST be stored under 
+			/// <b>%ALLUSERS%\\Documents\\MATRIX VISION\\mvIMPACT acquire\\CameraFiles</b>, under Linux&reg;
+			/// this directory will be <b>/etc/matrix-vision/mvimpact-acquire/camerafiles</b> while under
+			/// other platforms these files MUST be located in the current working directory.
+			/// This behaviour can be modified by writing the the property <b>mvIMPACT::acquire::Device::customDataDirectory</b> before initialising the device.
+			/// To get access to a XML description file within the application, these file must be copied to
+			/// this directory <b>BEFORE</b> the device is initialised. During the init process the
+			/// device driver will process every file located under this location and will add them to
+			/// the internal list of descriptions. Every camera located during this process and also descriptions
+			/// created later on during the program operation can be selected via the property
+			/// <b>mvIMPACT::acquire::CameraSettingsFrameGrabber::type</b>.
+			///
+			/// \note
+			/// In order not to bloat the device driver with redundant data it's wise only to store the
+			/// descripitions needed for the application to run under this location.
+			///
+			/// \note
+			/// Only camera descripitions supported by the capture device will be added to the device
+			/// drivers internal list and will therefore be accessible via the
+			/// <b>mvIMPACT::acquire::CameraDescriptionManager</b>.
+			///
+			/// To restore the default values valid during the driver was initialised the function 
+			/// <b>mvIMPACT::acquire::ComponentCollection::restoreDefault</b> can be used as well.
+			///
+			/// \sa
+			/// <b>mvIMPACT::acquire::CameraDescriptionBase::exportDescription,<br>
+			///    mvIMPACT::acquire::CameraDescriptionBase::copyDescription</b>
+			/// \return
+			/// - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
+			/// - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> or <b>mvIMPACT::acquire::TPROPHANDLING_ERROR</b> otherwise.
+			int importDescription( void ) const { return DMR_ImportCameraDescription( m_hDrv, m_hRoot ); }
+		PYTHON_ONLY(%immutable;)
+			/// \brief A string property containing the name of this camera description list.
+			PropertyS name;
+			/// \brief An enumerated integer property defining the type of video outputs this camera offers
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraOutput</b>.
+			PropertyICameraOutput videoOutput;
+			/// \brief An enumerated integer property defining how the camera transmits image data.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraInterlacedType</b>.
+			PropertyICameraInterlacedType interlacedType;
+			/// \brief An integer property defining the number of active lines to capture from the camera.
+			PropertyI aoiHeight;
+			/// \brief An integer property defining the X-offset in pixels to the first active pixel to capture.
+			PropertyI aoiStartX;
+			/// \brief An integer property defining the Y-offset.
+			PropertyI aoiStartY;
+			/// \brief An integer property defining the number of active pixels to capture per line.
+			PropertyI aoiWidth;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyS getName( void ) const { return name; }
+			PropertyICameraOutput getVideoOutput( void ) const { return videoOutput; }
+			PropertyICameraInterlacedType getInterlacedType( void ) const { return interlacedType; }
+			PropertyI getAoiHeight( void ) const { return aoiHeight; }
+			PropertyI getAoiStartX( void ) const { return aoiStartX; }
+			PropertyI getAoiStartY( void ) const { return aoiStartY; }
+			PropertyI getAoiWidth( void ) const { return aoiWidth; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+
+		//-----------------------------------------------------------------------------
+		/// \brief A base class to describe an arbitrary digital camera signal(<b>Device specific interface layout only</b>).
+		///
+		/// This class provides access to all settings specific for digital video signals.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class CameraDescriptionDigitalBase : public CameraDescriptionBase
+		//-----------------------------------------------------------------------------
+		{
+		protected:
+			explicit CameraDescriptionDigitalBase( HDRV hDrv, HLIST hList ) : CameraDescriptionBase(hDrv, hList), bitsPerPixel(),
+			  format(), bayerParity()
+			{
+				ComponentLocator locator(m_hRoot);
+				locator.bindComponent( bitsPerPixel, "BitsPerPixel" );
+				locator.bindComponent( format, "Format" );
+				locator.bindComponent( bayerParity, "BayerParity" );
+			}
+		public:
+		PYTHON_ONLY(%immutable;)
+			/// \brief An integer property defining the number of bits per pixel currently transmitted by this camera.
+			PropertyI bitsPerPixel;
+			/// \brief An enumerated integer property defining the data format the camera is sending image data.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraDataFormat</b>.
+			PropertyICameraDataFormat format;
+			/// \brief An enumerated integer property defining the start pixel for a camera delivering an unconverted
+			/// bayer image.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBayerMosaicParity</b>.
+			PropertyIBayerMosaicParity bayerParity;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyI getBitsPerPixel( void ) const { return bitsPerPixel; }
+			PropertyICameraDataFormat getFormat( void ) const { return format; }
+			PropertyIBayerMosaicParity getBayerParity( void ) const { return bayerParity; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+
+		//-----------------------------------------------------------------------------
+		/// \brief A base class to describe a SDI(Serial Digital Interface) camera signal
+		/// (<b>Device specific interface layout only</b>).
+		///
+		/// This class provides access to all settings specific for SDI video signals.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class CameraDescriptionSDI : public CameraDescriptionDigitalBase
+		//-----------------------------------------------------------------------------
+		{
+			friend class CameraDescriptionManager;
+			explicit CameraDescriptionSDI( HDRV hDrv, HLIST hList ) : CameraDescriptionDigitalBase(hDrv, hList), videoStandard()
+			{
+				ComponentLocator locator(m_hRoot);
+				locator.bindComponent( videoStandard, "VideoStandard" );
+			}
+		public:
+		PYTHON_ONLY(%immutable;)
+			/// \brief An enumerated integer property for defining the video standard this camera
+			/// is compliant with.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TVideoStandard</b>.
+			PropertyIVideoStandard videoStandard;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyIVideoStandard getVideoStandard( void ) const { return videoStandard; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+
+		//-----------------------------------------------------------------------------
+		/// \brief A base class to describe an arbitrary digital camera signal(<b>Device specific interface layout only</b>).
+		///
+		/// This class provides access to all settings specific for digital video signals.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class CameraDescriptionDigitalBase2 : public CameraDescriptionDigitalBase
+		//-----------------------------------------------------------------------------
+		{
+		protected:
+			explicit CameraDescriptionDigitalBase2( HDRV hDrv, HLIST hList ) : CameraDescriptionDigitalBase(hDrv, hList),
+			  pixelsPerCycle(), scanMode()
+			{
+				ComponentLocator locator(m_hRoot);
+				locator.bindComponent( pixelsPerCycle, "PixelsPerCycle" );
+				locator.bindComponent( scanMode, "ScanMode" );
+			}
+		public:
+		PYTHON_ONLY(%immutable;)
+			/// \brief An integer property defining the number of pixels per clock cycle transmitted by this camera.
+			///
+			/// This corresponds the number of taps used by the camera in the described configuration.
+			PropertyI pixelsPerCycle;
+			/// \brief An enumerated integer property providing information about the sensor of this camera.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraScanMode</b>.
+			PropertyICameraScanMode scanMode;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyI getPixelsPerCycle( void ) const { return pixelsPerCycle; }
+			PropertyICameraScanMode getScanMode( void ) const { return scanMode; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+
+		//-----------------------------------------------------------------------------
+		/// \brief A class to describe a CameraLink&reg; compliant camera(<b>Device specific interface layout only</b>).
+		///
+		/// This class provides access to all settings specific for CameraLink&reg; compliant cameras.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class CameraDescriptionCameraLink : public CameraDescriptionDigitalBase2
+		//-----------------------------------------------------------------------------
+		{
+			friend class CameraDescriptionManager;
+			explicit CameraDescriptionCameraLink( HDRV hDrv, HLIST hList ) : CameraDescriptionDigitalBase2(hDrv, hList), dataValid(),
+				tapsXGeometry(), tapsYGeometry()
+			{
+				ComponentLocator locator(m_hRoot);
+				locator.bindComponent( dataValid, "DataValid" );
+				locator.bindComponent( tapsXGeometry, "TapsXGeometry" );
+				locator.bindComponent( tapsYGeometry, "TapsYGeometry" );
+			}
+		public:
+		PYTHON_ONLY(%immutable;)
+			/// \brief An enumerated integer property defining the way this camera transmits the data valid (<b>DVAL</b>)
+			/// signal.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraLinkDataValidMode</b>.
+			PropertyICameraLinkDataValidMode dataValid;
+			/// \brief An enumerated integer property defining the way this camera transmits the pixel data in X direction.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraTapsXGeometry</b>.
+			PropertyICameraTapsXGeometry tapsXGeometry;
+			/// \brief An enumerated integer property defining the way this camera transmits the pixel data in Y direction.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraTapsYGeometry</b>.
+			PropertyICameraTapsYGeometry tapsYGeometry;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyICameraLinkDataValidMode getDataValid( void ) const { return dataValid; }
+			PropertyICameraTapsXGeometry getTapsXGeometry( void ) const { return tapsXGeometry; }
+			PropertyICameraTapsYGeometry getTapsYGeometry( void ) const { return tapsYGeometry; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+
+		//-----------------------------------------------------------------------------
+		/// \brief A class to describe a non-standard digital video signal(<b>Device specific interface layout only</b>).
+		///
+		/// This class provides access to all settings specific for non-standard digital video signals.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class CameraDescriptionDigital : public CameraDescriptionDigitalBase2
+		//-----------------------------------------------------------------------------
+		{
+			friend class CameraDescriptionManager;
+			explicit CameraDescriptionDigital( HDRV hDrv, HLIST hList ) : CameraDescriptionDigitalBase2(hDrv, hList),
+			  frameSync(), lineSync(), pixelClk()
+			{
+				ComponentLocator locator(m_hRoot);
+				locator.bindComponent( frameSync, "FrameSync" );
+				locator.bindComponent( lineSync, "LineSync" );
+				locator.bindComponent( pixelClk, "PixelClk" );
+			}
+		public:
+		PYTHON_ONLY(%immutable;)
+			/// \brief An enumerated integer property defining the edge valid for the frame sync signal of this camera.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraExternalSyncEdge</b>.
+			///
+			/// \note
+			/// Not every value defined by this enumeration will be supported by this property. Check which values
+			/// are available by reading the properties translation dictionary with
+			/// the functions <b>mvIMPACT::acquire::PropertyICameraExternalSyncEdge::getTranslationDictString</b> and
+			/// <b>mvIMPACT::acquire::PropertyICameraExternalSyncEdge::getTranslationDictValue</b>
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyICameraExternalSyncEdge::getTranslationDict</b>
+			/// in addition to the functions mentioned above.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			PropertyICameraExternalSyncEdge frameSync;
+			/// \brief An enumerated integer property defining the edge valid for the line sync. of this camera.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraExternalSyncEdge</b>.
+			///
+			/// \note
+			/// Not every value defined by this enumeration will be supported by this property. Check which values
+			/// are available by reading the properties translation dictionary with
+			/// the functions <b>mvIMPACT::acquire::PropertyICameraExternalSyncEdge::getTranslationDictString</b> and
+			/// <b>mvIMPACT::acquire::PropertyICameraExternalSyncEdge::getTranslationDictValue</b>
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyICameraExternalSyncEdge::getTranslationDict</b>
+			/// in addition to the functions mentioned above.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			PropertyICameraExternalSyncEdge lineSync;
+			/// \brief An enumerated integer property defining the edge valid for the pixel clock of this camera.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraExternalSyncEdge</b>.
+			///
+			/// \note
+			/// Not every value defined by this enumeration will be supported by this property. Check which values
+			/// are available by reading the properties translation dictionary with
+			/// the functions <b>mvIMPACT::acquire::PropertyICameraExternalSyncEdge::getTranslationDictString</b> and
+			/// <b>mvIMPACT::acquire::PropertyICameraExternalSyncEdge::getTranslationDictValue</b>
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// C++ offers the more efficient function <b>mvIMPACT::acquire::PropertyICameraExternalSyncEdge::getTranslationDict</b>
+			/// in addition to the functions mentioned above.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			PropertyICameraExternalSyncEdge pixelClk;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyICameraExternalSyncEdge	getFrameSync( void ) const { return frameSync; }
+			PropertyICameraExternalSyncEdge	getLineSync( void ) const { return lineSync; }
+			PropertyICameraExternalSyncEdge	getPixelClk( void ) const { return pixelClk; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+
+		//-----------------------------------------------------------------------------
+		/// \brief An internal base class to describe standard analogue video cameras(<b>Device specific interface layout only</b>).
+		///
+		/// Instances of this class can't be constructed directly. Use one of the derived types.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class CameraDescriptionStandardBase : public CameraDescriptionBase
+		//-----------------------------------------------------------------------------
+		{
+		protected:
+			explicit CameraDescriptionStandardBase( HDRV hDrv, HLIST hList ) : CameraDescriptionBase(hDrv, hList), videoStandard(),
+			  scanStandard(), scanRate_kHz(), startField()
+			{
+				ComponentLocator locator(m_hRoot);
+				locator.bindComponent( videoStandard, "VideoStandard" );
+				locator.bindComponent( scanStandard, "ScanStandard" );
+				locator.bindComponent( scanRate_kHz, "ScanRate_kHz" );
+				locator.bindComponent( startField, "StartField" );
+			}
+		public:
+		PYTHON_ONLY(%immutable;)
+			/// \brief An enumerated integer property for defining the video standard this camera
+			/// is compliant with.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TVideoStandard</b>.
+			PropertyIVideoStandard videoStandard;
+			/// \brief An enumerated integer property defining the scan standard this camera is compliant with.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TScanStandard</b>.
+			PropertyIScanStandard scanStandard;
+			/// \brief An integer property containing the scan rate in kHz needed to driver the AD converter 
+			/// of the capture device with to convert the video signal properly.
+			PropertyI scanRate_kHz;
+			/// \brief An enumerated integer property containing information about the first field transmitted
+			/// by a camera.
+			///
+			/// A camera might transmit either the odd or the even field of an interlaced video signal first.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TAcquisitionField</b>.
+			PropertyIAcquisitionField startField;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyIVideoStandard getVideoStandard( void ) const { return videoStandard; }
+			PropertyIScanStandard getScanStandard( void ) const { return scanStandard; }
+			PropertyI getScanRate_kHz( void ) const { return scanRate_kHz; }
+			PropertyIAcquisitionField getStartField( void ) const { return startField; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+
+		//-----------------------------------------------------------------------------
+		/// \brief A class describing analogue standard compliant video cameras(<b>Device specific interface layout only</b>).
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class CameraDescriptionStandard : public CameraDescriptionStandardBase
+		//-----------------------------------------------------------------------------
+		{
+			friend class CameraDescriptionManager;
+			explicit CameraDescriptionStandard( HDRV hDrv, HLIST hList ) : CameraDescriptionStandardBase(hDrv, hList) {}
+		};
+
+		//-----------------------------------------------------------------------------
+		/// \brief A class describing non-standard video cameras(<b>Device specific interface layout only</b>).
+		///
+		/// This class can be used to describe a non-standard analogue video camera. A camera
+		/// considered as non-standard when it is not compliant with one of the defined 
+		/// video standards like e.g. CCIR.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class CameraDescriptionNonStandard : public CameraDescriptionStandardBase
+		//-----------------------------------------------------------------------------
+		{
+			friend class CameraDescriptionManager;
+			explicit CameraDescriptionNonStandard( HDRV hDrv, HLIST hList ) : CameraDescriptionStandardBase(hDrv, hList), lineFrequency_Hz(),
+			  VDOutput(), HDOutput(), syncOutput(), pixelClockOutput(), fieldGateMode(), fieldGateStart(), fieldGateWidth(),
+			  clampMode(), clampStart_us()
+			{
+				ComponentLocator locator(m_hRoot);
+				locator.bindComponent( lineFrequency_Hz, "LineFrequency_Hz" );
+				locator.bindComponent( VDOutput, "VDOutput" );
+				locator.bindComponent( HDOutput, "HDOutput" );
+				locator.bindComponent( syncOutput, "SyncOutput" );
+				locator.bindComponent( pixelClockOutput, "PixelClockOutput" );
+				locator.bindComponent( fieldGateMode, "FieldGateMode" );
+				locator.bindComponent( fieldGateStart, "FieldGateStart" );
+				locator.bindComponent( fieldGateWidth, "FieldGateWidth" );
+				locator.bindComponent( clampMode, "ClampMode" );
+				locator.bindComponent( clampStart_us, "ClampStart_us" );
+			}
+		public:
+		PYTHON_ONLY(%immutable;)
+			/// \brief An integer property containing the line frequency of this camera in Hertz.
+			PropertyI lineFrequency_Hz;
+			/// \brief An enumerated integer property defining whether the vertical sync. information is part of the 
+			/// video signal or transmitted via a separate wire.
+			/// 
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraExternalSyncEdge</b>.
+			PropertyICameraExternalSyncEdge VDOutput;
+			/// \brief An enumerated integer property defining whether the horizontal sync. information is part of the 
+			/// video signal or transmitted via a separate wire.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraExternalSyncEdge</b>.
+			PropertyICameraExternalSyncEdge HDOutput;
+			/// \brief An enumerated integer property for RGB cameras containing information where the sync. information is transmitted.
+			///
+			/// This can either be within one of the three color components or on a separate wire.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraExternalSyncOutput</b>.
+			PropertyICameraExternalSyncOutput syncOutput;
+			/// \brief An enumerated integer property containing information whether the pixel clock is part of the video signal or
+			/// not.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TCameraExternalSyncEdge</b>.
+			PropertyICameraExternalSyncEdge pixelClockOutput;
+			/// \brief An enumerated integer property defining the clamp mode for this camera description.
+			///
+			/// This defines how the field detection(ODD/EVEN) is done.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TFieldGateMode</b>.
+			PropertyIFieldGateMode fieldGateMode;
+			/// \brief An integer property defining the start position (in pixel clocks) of the field gate detection
+			/// area.
+			/// 
+			/// This will only need modification in very rare cases.
+			PropertyI fieldGateStart;
+			/// \brief An integer property defining the width (in pixel clocks) of the field gate detection
+			/// area.
+			/// 
+			/// This will only need modification in very rare cases.
+			PropertyI fieldGateWidth;
+			/// \brief An enumerated integer property defining the clamp mode for this camera description.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TClampMode</b>.
+			PropertyIClampMode clampMode;
+			/// \brief The clamp start position defines where in each line of the video signal the frame grabber
+			/// assumes the black level position.
+			///
+			/// This will only need modification in very rare cases.
+			PropertyI clampStart_us;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyI							getLineFrequency_Hz( void ) const { return lineFrequency_Hz; }
+			PropertyICameraExternalSyncEdge		getVDOutput( void ) const { return VDOutput; }
+			PropertyICameraExternalSyncEdge		getHDOutput( void ) const { return HDOutput; }
+			PropertyICameraExternalSyncOutput	getSyncOutput( void ) const { return syncOutput; }
+			PropertyICameraExternalSyncEdge		getPixelClockOutput( void ) const { return pixelClockOutput; }
+			PropertyIFieldGateMode				getFieldGateMode( void ) const { return fieldGateMode; }
+			PropertyI							getFieldGateStart( void ) const { return fieldGateStart; }
+			PropertyI							getFieldGateWidth( void ) const { return fieldGateWidth; }
+			PropertyIClampMode					getClampMode( void ) const { return clampMode; }
+			PropertyI							getClampStart_us( void ) const { return clampStart_us; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+
+		//-----------------------------------------------------------------------------
+		/// \brief Grants access to camera description objects(<b>Device specific interface layout only</b>).
+		///
+		/// This class provides access to the various camera description objects. Each
+		/// device recognizes a different set of camera descriptions. E.g. a digital
+		/// frame grabber will not be able to work with analogue cameras. Each camera description
+		/// class will be derived from <b>mvIMPACT::acquire::CameraDescriptionBase</b>.
+		///
+		/// \note
+		/// Please note that instances of this class will <b>ONLY</b> list camera descriptions
+		/// that have once been selected by the property <b>mvIMPACT::acquire::CameraSettingsFrameGrabber::type</b>
+		/// at runtime. This is to save memory. A complete list of camera descriptions
+		/// available for the current device therefore can only be queried by reading the
+		/// the translation dictionary of the property <b>mvIMPACT::acquire::CameraSettingsFrameGrabber::type</b>.
+		///
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		///
+		/// <b>EXAMPLE</b>(lists all available camera descriptions for a certain device):
+		///\code
+		/// #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
+		/// #include <algorithm>
+		/// #include <iostream>
+		///
+		/// using namespace std;
+		/// using namespace mvIMPACT::acquire;
+		///
+		/// //-----------------------------------------------------------------------------
+		/// template<class T>
+		/// class DisplayDictEntry : public unary_function<pair<string, T>, void>
+		/// //-----------------------------------------------------------------------------
+		/// {
+		/// public:
+		///   void operator()( const pair<string, T>& data ) const
+		///   {
+		///     cout << "  [" << data.second << "]: " << data.first << endl;
+		///   }
+		/// };
+		///
+		/// //-----------------------------------------------------------------------------
+		/// int main(int argc, char* argv[])
+		/// //-----------------------------------------------------------------------------
+		/// {
+		///   DeviceManager devMgr;
+		///   Device* pDev = devMgr[0];
+		///   if( !pDev )
+		///   {
+		///     cout << "No device found" << endl;
+		///     return 0;
+		///   }
+		///
+		///   // display the name of every camera descripiton available for this device.
+		///   // this might be less then the number of camera descriptions available on the system as e.g.
+		///   // an analog frame grabber can't use descriptions for digital cameras
+		///   IntDict vAvailableDescriptions;
+		///   cs.type.getTranslationDict( vAvailableDescriptions );
+		///   cout << endl << "Available camera descriptions: " << vAvailableDescriptions.size() << endl
+		///        << "----------------------------------" << endl;
+		///   for_each( vAvailableDescriptions.begin(), vAvailableDescriptions.end(), DisplayDictEntry<int>() )
+		///
+		///   // list all descriptions that already have been selected at least once
+		///   CameraDescriptionManager camMgr(pDev);
+		///   unsigned int camCnt = camMgr.getCLCameraDescriptionCount();
+		///   cout << "Available CL descriptions: " << camCnt << endl;
+		///   for( unsigned int a=0; a<camCnt; a++ )
+		///   {
+		///     cout << "  " << camMgr.cameraDescriptionCameraLink(a)->name.read() << endl;
+		///   }
+		///   camCnt = camMgr.getStandardCameraDescriptionCount();
+		///   cout << "Available Std descriptions: " << camCnt << endl;
+		///   for( unsigned int b=0; b<camCnt; b++ )
+		///   {
+		///     cout << "  " << camMgr.cameraDescriptionStandard(b)->name.read() << endl;
+		///   }
+		///   camCnt = camMgr.getNonStandardCameraDescriptionCount();
+		///   cout << "Available NonStd descriptions: " << camCnt << endl;
+		///   for( unsigned int c=0; c<camCnt; c++ )
+		///   {
+		///     cout << "  " << camMgr.cameraDescriptionNonStandard(c)->name.read() << endl;
+		///   }
+		///   return 0;
+		/// }
+		///\endcode
+		///\htmlinclude code_fragment_end.html
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///
+		/// \note
+		/// This class will only be available for frame grabber devices. For other devices
+		/// the class constructor will raise an exception.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class CameraDescriptionManager
+		//-----------------------------------------------------------------------------
+		{
+			typedef std::map<std::string, unsigned int> StringUIntMap;
+#			ifndef DOXYGEN_SHOULD_SKIP_THIS
+				//-----------------------------------------------------------------------------
+				struct ReferenceCountedData
+				//-----------------------------------------------------------------------------
+				{
+					HDRV                                               m_hDrv;
+					HLIST                                              m_hListCameraDescriptions;
+					mutable unsigned int                               m_lastListSize;
+					mutable std::vector<CameraDescriptionStandard*>    m_vStdDescriptions;
+					mutable std::vector<CameraDescriptionNonStandard*> m_vNonStdDescriptions;
+					mutable std::vector<CameraDescriptionSDI*>         m_vSDIDescriptions;
+					mutable std::vector<CameraDescriptionCameraLink*>  m_vCLDescriptions;
+					mutable std::vector<CameraDescriptionDigital*>     m_vDigitalDescriptions;
+					mutable StringUIntMap                              m_mListNameToDescription;
+					mutable StringUIntMap                              m_mStdNameToDescription;
+					mutable StringUIntMap                              m_mNonStdNameToDescription;
+					mutable StringUIntMap                              m_mSDINameToDescription;
+					mutable StringUIntMap                              m_mCLNameToDescription;
+					mutable StringUIntMap                              m_mDigitalNameToDescription;
+					unsigned int                                       m_refCnt;
+					ReferenceCountedData( HDRV hDrv, HLIST hList ) : m_hDrv(hDrv), m_hListCameraDescriptions(hList),
+						m_lastListSize(0),m_vStdDescriptions(), m_vNonStdDescriptions(), m_vSDIDescriptions(), m_vCLDescriptions(),
+						m_vDigitalDescriptions(), m_mListNameToDescription(), m_mStdNameToDescription(),
+						m_mNonStdNameToDescription(), m_mCLNameToDescription(), m_mDigitalNameToDescription(),
+						m_refCnt(1) {}
+					~ReferenceCountedData()
+					{
+						std::vector<CameraDescriptionStandard*>::size_type vStdSize = m_vStdDescriptions.size();
+						for( std::vector<CameraDescriptionStandard*>::size_type a=0; a<vStdSize; a++ )
+						{
+							delete m_vStdDescriptions[a];
+						}
+						std::vector<CameraDescriptionStandard*>::size_type vNonStdSize = m_vNonStdDescriptions.size();
+						for( std::vector<CameraDescriptionStandard*>::size_type b=0; b<vNonStdSize; b++ )
+						{
+							delete m_vNonStdDescriptions[b];
+						}
+						std::vector<CameraDescriptionSDI*>::size_type vSDISize = m_vSDIDescriptions.size();
+						for( std::vector<CameraDescriptionSDI*>::size_type c=0; c<vSDISize; c++ )
+						{
+							delete m_vSDIDescriptions[c];
+						}
+						std::vector<CameraDescriptionStandard*>::size_type vCLSize = m_vCLDescriptions.size();
+						for( std::vector<CameraDescriptionStandard*>::size_type d=0; d<vCLSize; d++ )
+						{
+							delete m_vCLDescriptions[d];
+						}
+						std::vector<CameraDescriptionStandard*>::size_type vDigSize = m_vDigitalDescriptions.size();
+						for( std::vector<CameraDescriptionStandard*>::size_type e=0; e<vDigSize; e++ )
+						{
+							delete m_vDigitalDescriptions[e];
+						}
+					}
+				} *m_pRefData;
+#			endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
+			//-----------------------------------------------------------------------------
+			void dealloc( void )
+			//-----------------------------------------------------------------------------
+			{
+				--(m_pRefData->m_refCnt);
+				if( m_pRefData->m_refCnt == 0 )
+				{
+					delete m_pRefData;
+				}
+			}
+			//-----------------------------------------------------------------------------
+			bool locateDescription( const StringUIntMap& m, const std::string& name, unsigned int& index ) const
+			//-----------------------------------------------------------------------------
+			{
+				update();
+				StringUIntMap::const_iterator it = m_pRefData->m_mListNameToDescription.find( name );
+				if( it != m_pRefData->m_mListNameToDescription.end() )
+				{
+					index = it->second;
+					return true;
+				}
+				else
+				{
+					it = m.find( name );
+					if( it != m.end() )
+					{
+						index = it->second;
+						return true;
+					}
+				}
+				return false;
+			}
+			//-----------------------------------------------------------------------------	
+			void update( void ) const
+			//-----------------------------------------------------------------------------
+			{
+				ComponentList camDescList(m_pRefData->m_hListCameraDescriptions);
+				unsigned int curSize = camDescList.size();
+				if( m_pRefData->m_lastListSize != curSize )
+				{
+					// new cameras at runtime can only appear at the end of the list
+					ComponentIterator it(m_pRefData->m_hListCameraDescriptions);
+					it = it.firstChild();
+					// move to the old end
+					for( unsigned int i=0; ( i<m_pRefData->m_lastListSize ) && it.isValid(); i++ )
+					{
+						++it;
+					}
+					// start to add new descriptions
+					while( it.isValid() )
+					{
+						ComponentList list(it);
+						const std::string contentDescriptor(list.contentDescriptor());
+						if( contentDescriptor == "CameraLink" )
+						{
+							CameraDescriptionCameraLink* p = new CameraDescriptionCameraLink(m_pRefData->m_hDrv, list);
+							unsigned int index = static_cast<unsigned int>(m_pRefData->m_vCLDescriptions.size()); // do not change order of this and the next line!
+							m_pRefData->m_vCLDescriptions.push_back( p );
+							m_pRefData->m_mListNameToDescription.insert( std::make_pair( list.name(), index ) );
+							m_pRefData->m_mCLNameToDescription.insert( std::make_pair( p->name.read(), index ) );
+						}
+						else if( contentDescriptor == "SDI" )
+						{
+							CameraDescriptionSDI* p = new CameraDescriptionSDI(m_pRefData->m_hDrv, list);
+							unsigned int index = static_cast<unsigned int>(m_pRefData->m_vCLDescriptions.size()); // do not change order of this and the next line!
+							m_pRefData->m_vSDIDescriptions.push_back( p );
+							m_pRefData->m_mListNameToDescription.insert( std::make_pair( list.name(), index ) );
+							m_pRefData->m_mSDINameToDescription.insert( std::make_pair( p->name.read(), index ) );
+						}
+						else if( contentDescriptor == "Digital" )
+						{
+							CameraDescriptionDigital* p = new CameraDescriptionDigital(m_pRefData->m_hDrv, list);
+							unsigned int index = static_cast<unsigned int>(m_pRefData->m_vDigitalDescriptions.size()); // do not change order of this and the next line!
+							m_pRefData->m_vDigitalDescriptions.push_back( p );
+							m_pRefData->m_mListNameToDescription.insert( std::make_pair( list.name(), index ) );
+							m_pRefData->m_mDigitalNameToDescription.insert( std::make_pair( p->name.read(), index ) );
+						}
+						else if( contentDescriptor == "Standard" )
+						{
+							CameraDescriptionStandard* p = new CameraDescriptionStandard(m_pRefData->m_hDrv, list);
+							unsigned int index = static_cast<unsigned int>(m_pRefData->m_vStdDescriptions.size()); // do not change order of this and the next line!
+							m_pRefData->m_vStdDescriptions.push_back( p );
+							m_pRefData->m_mListNameToDescription.insert( std::make_pair( list.name(), index ) );
+							m_pRefData->m_mStdNameToDescription.insert( std::make_pair( p->name.read(), index ) );
+						}
+						else if( contentDescriptor == "NonStandard" )
+						{
+							CameraDescriptionNonStandard* p = new CameraDescriptionNonStandard(m_pRefData->m_hDrv, list);
+							unsigned int index = static_cast<unsigned int>(m_pRefData->m_vNonStdDescriptions.size()); // do not change order of this and the next line!
+							m_pRefData->m_vNonStdDescriptions.push_back( p );
+							m_pRefData->m_mListNameToDescription.insert( std::make_pair( list.name(), index ) );
+							m_pRefData->m_mNonStdNameToDescription.insert( std::make_pair( p->name.read(), index ) );
+						}
+						else
+						{
+							; // NOT recognized....
+						}
+						++it;
+					}
+					m_pRefData->m_lastListSize = curSize;
+				}
+			}
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::CameraDescriptionManager</b> object.
+			explicit CameraDescriptionManager(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::>DeviceManager</b> object.
+												Device* pDev ) : m_pRefData(0)
+			{
+				if( !pDev->isOpen() )
+				{
+					pDev->open();
+				}
+
+				TDMR_ERROR result;
+				HLIST hList;
+				if( ( result = DMR_FindList( pDev->hDrv(), 0, dmltCameraDescriptions, 0, &hList ) ) != DMR_NO_ERROR )
+				{
+					ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, INVALID_ID, "Couldn't find camera description list (is this a frame grabber?)" );
+				}
+				m_pRefData = new ReferenceCountedData(pDev->hDrv(), hList);
+			}
+			/// \brief Constructs a new <b>mvIMPACT::acquire::CameraDescriptionManager</b> from
+			/// and exisiting one.
+			explicit CameraDescriptionManager(	/// A constant reference to the <b>mvIMPACT::acquire::CameraDescriptionManager</b> object, this object shall be created from
+												const CameraDescriptionManager& src ) : m_pRefData(src.m_pRefData)
+			{
+				++(m_pRefData->m_refCnt);
+			}
+			/// \brief Class destructor
+			~CameraDescriptionManager()
+			{
+				dealloc();
+			}
+#			ifndef WRAP_PYTHON
+				/// \brief Allows assignments of <b>mvIMPACT::acquire::CameraDescriptionManager</b> objects
+				CameraDescriptionManager& operator=( const CameraDescriptionManager& rhs )
+				{
+					if( this != &rhs )
+					{
+						dealloc();
+						m_pRefData = rhs.m_pRefData;
+						// inc. the NEW reference count
+						++m_pRefData->m_refCnt;
+					}
+					return *this;
+				}
+#			endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
+			/// \brief Returns the number of CameraLink&reg; camera descriptions currently available for the device
+			/// that constructed this instance of the class.
+			unsigned int getCLCameraDescriptionCount( void ) const
+			{
+				update();
+				return static_cast<unsigned int>(m_pRefData->m_vCLDescriptions.size());
+			}
+			/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionCameraLink</b> object specifying the camera
+			/// description found at the given index in the camera description managers internal list.
+			///
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// If the index is either equal or higher than the number of CameraLink&reg; camera descriptions<br>
+			/// detected for this device a STL out_of_range exception will be thrown.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			CameraDescriptionCameraLink* cameraDescriptionCameraLink(	/// The index of the camera description to return
+																		unsigned int index ) const
+			{
+				update();
+				return m_pRefData->m_vCLDescriptions.at( index );
+			}
+			/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionCameraLink</b> object specifying the camera
+			/// description with the given name in the camera description managers internal list.
+			///
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// If \a nr is invalid(too large) a STL out_of_range exception
+			/// will be thrown.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///
+			/// \return
+			/// - a pointer to a <b>mvIMPACT::acquire::CameraDescriptionCameraLink</b> object specifying the camera
+			/// description with the given name in the camera description managers internal list if a camera
+			/// description with \a name is available.
+			/// - an invalid pointer or reference otherwise.
+			CameraDescriptionCameraLink* cameraDescriptionCameraLink(	/// The name of the camera description. This can either be 
+																		/// the name of the list like e.g. 'CameraLink_Generic' or the 
+																		/// value of the property 'name' of this description like
+																		/// e.g. 'Generic'.
+																		const std::string& name ) const
+			{
+				unsigned int index = 0;
+				return ( ( locateDescription( m_pRefData->m_mCLNameToDescription, name, index ) == true ) ? m_pRefData->m_vCLDescriptions.at( index ) : 0 );
+			}
+			/// \brief Returns the number of SDI camera descriptions currently available for the device
+			/// that constructed this instance of the class.
+			unsigned int getSDICameraDescriptionCount( void ) const
+			{
+				update();
+				return static_cast<unsigned int>(m_pRefData->m_vSDIDescriptions.size());
+			}
+			/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionSDI</b> object specifying the camera
+			/// description found at the given index in the camera description managers internal list.
+			///
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// If the index is either equal or higher than the number of SDI camera descriptions<br>
+			/// detected for this device a STL out_of_range exception will be thrown.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			CameraDescriptionSDI* cameraDescriptionSDI(	/// The index of the camera description to return
+														unsigned int index ) const
+			{
+				update();
+				return m_pRefData->m_vSDIDescriptions.at( index );
+			}
+			/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionSDI</b> object specifying the camera
+			/// description with the given name in the camera description managers internal list.
+			///
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// If \a nr is invalid(too large) a STL out_of_range exception
+			/// will be thrown.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///
+			/// \return
+			/// - a pointer to a <b>mvIMPACT::acquire::CameraDescriptionSDI</b> object specifying the camera
+			/// description with the given name in the camera description managers internal list if a camera
+			/// description with \a name is available.
+			/// - an invalid pointer or reference otherwise.
+			CameraDescriptionSDI* cameraDescriptionSDI(	/// The name of the camera description. This can either be 
+														/// the name of the list like e.g. 'CameraLink_Generic' or the 
+														/// value of the property 'name' of this description like
+														/// e.g. 'Generic'.
+														const std::string& name ) const
+			{
+				unsigned int index = 0;
+				return ( ( locateDescription( m_pRefData->m_mSDINameToDescription, name, index ) == true ) ? m_pRefData->m_vSDIDescriptions.at( index ) : 0 );
+			}
+			/// \brief Returns the number of non-standard digital camera descriptions currently available for the device
+			/// that constructed this instance of the class.
+			unsigned int getDigitalCameraDescriptionCount( void ) const 
+			{
+				update();
+				return static_cast<unsigned int>(m_pRefData->m_vDigitalDescriptions.size());
+			}
+			/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionDigital</b> object specifying the camera
+			/// description found at the given index in the camera description managers internal list.
+			///
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// If the index is either equal or higher than the number of non-standard digital camera descriptions<br>
+			/// detected for this device a STL out_of_range exception will be thrown.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			CameraDescriptionDigital* cameraDescriptionDigital(	/// \brief The index of the camera description to return
+																unsigned int index ) const
+			{
+				update();
+				return m_pRefData->m_vDigitalDescriptions.at( index );
+			}
+			/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionDigital</b> object specifying the camera
+			/// description with the given name in the camera description managers internal list.
+			///
+			/// \return
+			/// - a pointer to a <b>mvIMPACT::acquire::CameraDescriptionDigital</b> object specifying the camera
+			/// description with the given name in the camera description managers internal list if a camera
+			/// description with \a name is available.
+			/// - an invalid pointer or reference otherwise.
+			CameraDescriptionDigital* cameraDescriptionDigital(	/// The name of the camera description. This can either be 
+																/// the name of the list like e.g. 'Digital_Generic' or the 
+																/// value of the property 'name' of this description like
+																/// e.g. 'Generic'.
+																const std::string& name ) const
+			{
+				unsigned int index = 0;
+				return ( ( locateDescription( m_pRefData->m_mDigitalNameToDescription, name, index ) == true ) ? m_pRefData->m_vDigitalDescriptions.at( index ) : 0 );
+			}
+			/// \brief Returns the number of standard camera descriptions currently available for the device
+			/// that constructed this instance of the class.
+			unsigned int getStandardCameraDescriptionCount( void ) const 
+			{
+				update();
+				return static_cast<unsigned int>(m_pRefData->m_vStdDescriptions.size());
+			}
+			/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionStandard</b> object specifying the camera
+			/// description found at the given index in the camera description managers internal list.
+			///
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// If the index is either equal or higher than the number of standard camera descriptions<br>
+			/// detected for this device a STL out_of_range exception will be thrown.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			CameraDescriptionStandard* cameraDescriptionStandard(	/// \brief The index of the camera description to return
+																	unsigned int index ) const
+			{
+				update();
+				return m_pRefData->m_vStdDescriptions.at( index );
+			}
+			/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionStandard</b> object specifying the camera
+			/// description with the given name in the camera description managers internal list.
+			///
+			/// \return
+			/// - a pointer to a <b>mvIMPACT::acquire::CameraDescriptionStandard</b> object specifying the camera
+			/// description with the given name in the camera description managers internal list if a camera
+			/// description with \a name is available.
+			/// - an invalid pointer or reference otherwise.
+			CameraDescriptionStandard* cameraDescriptionStandard(	/// The name of the camera description. This can either be 
+																	/// the name of the list like e.g. 'Standard_Generic' or the 
+																	/// value of the property 'name' of this description like
+																	/// e.g. 'Generic'.
+																	const std::string& name ) const
+			{
+				unsigned int index = 0;
+				return ( ( locateDescription( m_pRefData->m_mStdNameToDescription, name, index ) == true ) ? m_pRefData->m_vStdDescriptions.at( index ) : 0 );
+			}
+			/// \brief Returns the number of non-standard camera descriptions currently available for the device
+			/// that constructed this instance of the class.
+			unsigned int getNonStandardCameraDescriptionCount( void ) const 
+			{
+				update();
+				return static_cast<unsigned int>(m_pRefData->m_vNonStdDescriptions.size());
+			}
+			/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionNonStandard</b> object specifying the camera
+			/// description found at the given index in the camera description managers internal list.
+			///
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+			///\endxmlonly
+			///\htmlinclude code_fragment_start_cpp.html
+			/// If the index is either equal or higher than the number of non-standard camera descriptions<br>
+			/// detected for this device a STL out_of_range exception will be thrown.
+			///\htmlinclude code_fragment_end.html
+			///\xmlonly
+			/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+			///\endxmlonly
+			CameraDescriptionNonStandard* cameraDescriptionNonStandard(	/// \brief The index of the camera description to return
+																		unsigned int index ) const
+			{
+				update();
+				return m_pRefData->m_vNonStdDescriptions.at( index );
+			}
+			/// \brief Returns a pointer to a <b>mvIMPACT::acquire::CameraDescriptionNonStandard</b> object specifying the camera
+			/// description with the given name in the camera description managers internal list.
+			///
+			/// \return
+			/// - a pointer to a <b>mvIMPACT::acquire::CameraDescriptionNonStandard</b> object specifying the camera
+			/// description with the given name in the camera description managers internal list if a camera
+			/// description with \a name is available.
+			/// - an invalid pointer or reference otherwise.
+			CameraDescriptionNonStandard* cameraDescriptionNonStandard(	/// The name of the camera description. This can either be 
+																		/// the name of the list like e.g. 'NonStandard_Generic' or the 
+																		/// value of the property 'name' of this description like
+																		/// e.g. 'Generic'.
+																		const std::string& name ) const
+			{
+				unsigned int index = 0;
+				return ( ( locateDescription( m_pRefData->m_mNonStdNameToDescription, name, index ) == true ) ? m_pRefData->m_vNonStdDescriptions.at( index ) : 0 );
+			}
+		};
+#	endif // #ifndef #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+#	ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+		//-----------------------------------------------------------------------------
+		/// \brief Properties for accessing features belonging to the I2C control(<b>Device specific interface layout only</b>).
+		///
+		/// Properties in this class will only be available if a device has a local I2C
+		/// bus and this is configured for access from an application. Right now this is only
+		/// the case for mvBlueFOX-MLC devices.
+		///
+		/// \if BUILD_MVBLUEFOX_DOCUMENTATION
+		/// For mvBlueFOX devices
+		/// - clock stretching ist supported
+		/// - bus master is supported
+		///
+		/// The following I2C addresses will be blocked for access from an application:
+		/// <table>
+		/// <tr><td class="header">i2c address</td><td class="header">remark</td></tr>
+		/// <tr><td class="indexvalue">0x20-0x3F</td><td class="indexvalue">-</td></tr>
+		/// <tr><td class="indexvalue">0x66-0x67</td><td class="indexvalue">-</td></tr>
+		/// <tr><td class="indexvalue">0x90-0x91</td><td class="indexvalue">mvBlueFOX-200w only</td></tr>
+		/// <tr><td class="indexvalue">0xA0-0xA3</td><td class="indexvalue">-</td></tr>
+		/// <tr><td class="indexvalue">0xA6-0xA7</td><td class="indexvalue">-</td></tr>
+		/// <tr><td class="indexvalue">0xBA-0xBB</td><td class="indexvalue">mvBlueFOX-202a and mvBlueFOX-205 only</td></tr>
+		/// </table>
+		/// \endif
+		///
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		/// <b>EXAMPLE:</b>
+		///
+		///\code
+		/// I2CControl i2cc(pBF);
+		/// if( i2cc.I2COperationMode.isValid() )
+		/// {
+		///   // direct property access
+		///   i2cc.I2CBufferLength.write( 0 );
+		///   i2cc.I2COperationMode.write( I2ComRead );
+		///   assert( ( i2cc.I2COperationExecute.call() == DMR_INVALID_PARAMETER ) && "Unexpected driver behaviour" );
+		///   assert( ( i2cc.I2COperationStatus.read() == I2CosNotEnoughData ) && "Unexpected driver behaviour" );
+		///   i2cc.I2COperationMode.write( I2ComWrite );
+		///   i2cc.I2CBuffer.writeBinary( string() );
+		///   assert( ( i2cc.I2COperationExecute.call() == DMR_INVALID_PARAMETER ) && "Unexpected driver behaviour" );
+		///   assert( ( i2cc.I2COperationStatus.read() == I2CosNotEnoughData ) && "Unexpected driver behaviour" );
+		///   // Write some data. This will only work if serveral conditions are met:
+		///   // - there is a device that can be written to at address 0xA6
+		///   // - the sub-address 0x04 is valid
+		///   // - the device is designed to work with 8 bit sub-addresses
+		///   // - the device can deal with 9 bytes in a single command
+		///   i2cc.I2CDeviceAddress.write( 0xA6 );
+		///   i2cc.I2CDeviceSubAddress.write( 0x04 );
+		///   i2cc.I2CDeviceSubAddressWidth.write( 8 );
+		///   char binData[9] = { 'D', 'E', 'A', 'D', ' ', 'B', 'E', 'E', 'F' };
+		///   i2cc.I2CBuffer.writeBinary( string(binData, sizeof(binData)) );
+		///   i2cc.I2COperationMode.write( I2ComWrite );
+		///   int I2COperationExecuteResult = i2cc.I2COperationExecute.call();
+		///   if( I2COperationExecuteResult != DMR_NO_ERROR )
+		///   {
+		///     printf( "'I2COperationExecute' write failed. Return value: %s(%d).\n", ImpactAcquireException::getErrorCodeAsString( I2COperationExecuteResult ).c_str(), I2COperationExecuteResult );
+		///   }
+		///   printf( "'I2COperationStatus' after write: %s.\n", i2cc.I2COperationStatus.readS().c_str() );
+		///   // Read some data. Similar condition as for write apply
+		///   const int bytesToRead = 4;
+		///   i2cc.I2CDeviceAddress.write( 0xA8 );
+		///   i2cc.I2CDeviceSubAddress.write( 0x00 );
+		///   i2cc.I2CDeviceSubAddressWidth.write( 8 );
+		///   i2cc.I2CBufferLength.write( bytesToRead ); // read 'bytesToRead' bytes
+		///   i2cc.I2COperationMode.write( I2ComRead );
+		///   i2cc.I2COperationExecute.call();
+		///   I2COperationExecuteResult = i2cc.I2COperationExecute.call();
+		///   if( I2COperationExecuteResult != DMR_NO_ERROR )
+		///   {
+		///     printf( "'I2COperationExecute' read failed. Return value: %s(%d).\n", ImpactAcquireException::getErrorCodeAsString( I2COperationExecuteResult ).c_str(), I2COperationExecuteResult );
+		///   }
+		///   printf( "'I2COperationStatus' after read: %s.\n", i2cc.I2COperationStatus.readS().c_str() );
+		///   if( i2cc.I2CBuffer.binaryDataBufferSize() != bytesToRead )
+		///   {
+		///     printf( "'I2CBuffer' reports %d bytes of data while %d bytes where expected.\n", i2cc.I2CBuffer.binaryDataBufferSize(), bytesToRead );
+		///   }
+		///   // usage of the convenience functions
+		///   i2cc.I2CWrite( 0xA4, 0x00, 8, string("TEST") );
+		///   const string i2cReadBuffer = i2cc.I2CRead( 0xA4, 0x00, 8, 4 );
+		/// }
+		/// else
+		/// {
+		///   printf( "I2CControl not available.\n" );
+		/// }
+		///\endcode
+		///\htmlinclude code_fragment_end.html
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class I2CControl : public ComponentCollection
+		//-----------------------------------------------------------------------------
+		{
+		private:
+			void prepareI2CAccess( int deviceAddress, int deviceSubAddress, int deviceSubAddressWidth, TI2COperationMode mode )
+			{
+				I2CDeviceAddress.write( deviceAddress );
+				I2CDeviceSubAddress.write( deviceSubAddress );
+				I2CDeviceSubAddressWidth.write( deviceSubAddressWidth );
+				I2COperationMode.write( mode );
+			}
+		public:
+			/// brief Constructs a new <b>mvIMPACT::acquire::I2CControl</b> object.
+			explicit I2CControl(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+									Device* pDev ): ComponentCollection(pDev), I2COperationMode(), I2COperationExecute(), I2COperationStatus(),
+									  I2CDeviceAddress(), I2CDeviceSubAddress(), I2CDeviceSubAddressWidth(), I2CBuffer(), I2CBufferLength()
+			{
+				DeviceComponentLocator locator(pDev, dltIOSubSystem);
+				HLIST hList = locator.findComponent( "I2CControl" );
+				if( hList != INVALID_ID )
+				{
+					locator.bindSearchBase( locator.searchbase_id(), "I2CControl" );
+					m_hRoot = locator.searchbase_id();
+					locator.bindComponent( I2COperationMode, "I2COperationMode" );
+					locator.bindComponent( I2COperationExecute, "I2COperationExecute@i" );
+					locator.bindComponent( I2COperationStatus, "I2COperationStatus" );
+					locator.bindComponent( I2CDeviceAddress, "I2CDeviceAddress" );
+					locator.bindComponent( I2CDeviceSubAddress, "I2CDeviceSubAddress" );
+					locator.bindComponent( I2CDeviceSubAddressWidth, "I2CDeviceSubAddressWidth" );
+					locator.bindComponent( I2CBuffer, "I2CBuffer" );
+					locator.bindComponent( I2CBufferLength, "I2CBufferLength" );
+				}
+			}
+		PYTHON_ONLY(%immutable;)
+			/// \brief An enumerated integer property to select the I2C operation.
+			///
+			/// The selected operation is executed when <b>mvIMPACT::acquire::I2CControl::I2COperationExecute</b> is called.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TI2COperationMode</b>.
+			PropertyII2COperationMode I2COperationMode;
+			/// \brief Calling this function will execute the operation selected by <b>mvIMPACT::acquire::I2CControl::I2COperationMode</b>.
+			Method I2COperationExecute;
+			/// \brief Represents the I2C operation execution status.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TI2COperationStatus</b>.
+			PropertyII2COperationStatus I2COperationStatus;
+			/// \brief An integer property storing the address of the I2C device to communicate with.
+			PropertyI I2CDeviceAddress;
+			/// \brief An integer property storing the sub-address of the I2C device to communicate with.
+			PropertyI I2CDeviceSubAddress;
+			/// \brief An enumerated integer property storing the sub-address width(in bits) of the I2C device to communicate with.
+			///
+			/// Valid values for this property are:
+			///
+			/// - 8
+			/// - 16
+			PropertyI I2CDeviceSubAddressWidth;
+			/// \brief Defines the intermediate access buffer that allows the exchange of data between the I2C device and the application.
+			///
+			/// This property can store binary data.
+			PropertyS I2CBuffer;
+			/// \brief An integer property controlling the length of the mapping between the I2C device and the <b>mvIMPACT::acquire::I2CControl::I2CBuffer</b> property.
+			PropertyI I2CBufferLength;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyII2COperationMode getI2COperationMode( void ) const { return I2COperationMode; }
+			Method getI2COperationExecute( void ) const { return I2COperationExecute; }
+			PropertyII2COperationStatus getI2COperationStatus( void ) const { return I2COperationStatus; }
+			PropertyI getI2CDeviceAddress( void ) const { return I2CDeviceAddress; }
+			PropertyI getI2CDeviceSubAddress( void ) const { return I2CDeviceSubAddress; }
+			PropertyI getI2CDeviceSubAddressWidth( void ) const { return I2CDeviceSubAddressWidth; }
+			PropertyS getI2CBuffer( void ) const { return I2CBuffer; }
+			PropertyI getI2CBufferLength( void ) const { return I2CBufferLength; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+			/// \brief Read data from an I2C device.
+			///
+			/// This is a convenience function that wraps the property access a little.
+			/// In order to find out if the command has been executed successfully
+			/// <b>mvIMPACT::acquire::I2CControl::I2COperationStatus</b> should be checked afterwards.
+			std::string I2CRead(	/// The address of the I2C device to communicate with.
+									int deviceAddress,
+									/// The sub-address of the I2C device to communicate with.
+									int deviceSubAddress,
+									/// The sub-address width(in bits) of the I2C device to communicate with.
+									int deviceSubAddressWidth,
+									/// The amount of bytes to read.
+									int byteCnt )
+			{
+				prepareI2CAccess( deviceAddress, deviceSubAddress, deviceSubAddressWidth, I2ComRead );
+				I2CBufferLength.write( byteCnt );
+				I2COperationExecute.call();
+				return I2CBuffer.readBinary();
+			}
+			/// \brief Write data to a I2C device.
+			///
+			/// This is a convenience function that wraps the property access a little.
+			/// In order to find out if the command has been executed successfully
+			/// <b>mvIMPACT::acquire::I2CControl::I2COperationStatus</b> should be checked afterwards.
+			void I2CWrite(	/// The address of the I2C device to communicate with.
+							int deviceAddress,
+							/// The sub-address of the I2C device to communicate with.
+							int deviceSubAddress,
+							/// The sub-address width(in bits) of the I2C device to communicate with.
+							int deviceSubAddressWidth,
+							/// The data to write to the I2C device.
+							const std::string& data )
+			{
+				prepareI2CAccess( deviceAddress, deviceSubAddress, deviceSubAddressWidth, I2ComWrite );
+				I2CBuffer.writeBinary( data );
+				I2COperationExecute.call();
+			}
+		};
+#	endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+
+	//-----------------------------------------------------------------------------
+	/// \brief Properties for configuring settings belonging to the motor focus control
+	/// (<b>Device specific interface layout only</b>).
+	///
+	/// Properties in this class will only be available if a device is fitted with
+	/// a focus motor.
+	///
+	/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+	/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+	class MotorFocusControl : public ComponentCollection
+	//-----------------------------------------------------------------------------
+	{
+	public:
+		/// brief Constructs a new <b>mvIMPACT::acquire::MotorFocusControl</b> object.
+		explicit MotorFocusControl(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+									Device* pDev ): ComponentCollection(pDev), motorFocusSendBuffer(), motorFocusReceiveBuffer(), motorFocusSend(),
+									  motorFocusIncrement(), motorFocusNear(), motorFocusFar(), motorFocusAbsolutePositionCurrent(),
+									  motorFocusAbsolutePositionDesired(), motorFocusMoveToAbsolutePositionDesired()
+		{
+			DeviceComponentLocator locator(pDev, dltIOSubSystem);
+			HLIST hList = locator.findComponent( "MotorFocusControl" );
+			if( hList != INVALID_ID )
+			{
+				locator.bindSearchBase( locator.searchbase_id(), "MotorFocusControl" );
+				m_hRoot = locator.searchbase_id();
+				locator.bindComponent( motorFocusSendBuffer, "MotorFocusSendBuffer" );
+				locator.bindComponent( motorFocusReceiveBuffer, "MotorFocusReceiveBuffer" );
+				locator.bindComponent( motorFocusSend, "MotorFocusSend@i" );
+				locator.bindComponent( motorFocusIncrement, "MotorFocusIncrement" );
+				locator.bindComponent( motorFocusNear, "MotorFocusNear@i" );
+				locator.bindComponent( motorFocusFar, "MotorFocusFar@i" );
+				locator.bindComponent( motorFocusAbsolutePositionCurrent, "MotorFocusAbsolutePositionCurrent" );
+				locator.bindComponent( motorFocusAbsolutePositionDesired, "MotorFocusAbsolutePositionDesired" );
+				locator.bindComponent( motorFocusMoveToAbsolutePositionDesired, "MotorFocusMoveToAbsolutePositionDesired@i" );
+			}
+		}
+	PYTHON_ONLY(%immutable;)
+		/// \brief A string property storing a command to be send to the motor focus.
+		///
+		/// To actually send the command, the function <b>mvIMPACT::acquire::MotorFocusControl::motorFocusSend</b> must be executed.
+		PropertyS motorFocusSendBuffer;
+		/// \brief A string property <b>(read-only)</b> that will contain answers sent by the motor focus controller.
+		PropertyS motorFocusReceiveBuffer;
+		/// \brief Calling this function will send the value of <b>mvIMPACT::acquire::MotorFocusControl::motorFocusSendBuffer</b> to the hardware.
+		///
+		/// Afterwards <b>mvIMPACT::acquire::MotorFocusControl::motorFocusReceiveBuffer</b> will contain the hardwares answer.
+		Method motorFocusSend;
+		/// \brief An integer property storing an increment(in encoder counts) that will be used by subsequent calls to <b>mvIMPACT::acquire::MotorFocusControl::motorFocusNear</b> and <b>mvIMPACT::acquire::MotorFocusControl::motorFocusFar</b> commands.
+		PropertyI motorFocusIncrement;
+		/// \brief Calling this function will cause the motor focus to move forward by <b>mvIMPACT::acquire::MotorFocusControl::motorFocusIncrement</b> encoder units.
+		Method motorFocusNear;
+		/// \brief Calling this function will cause the motor focus to move backward by <b>mvIMPACT::acquire::MotorFocusControl::motorFocusIncrement</b> encoder units.
+		Method motorFocusFar;
+		/// \brief An integer property <b>(read-only)</b> storing the current absolute position(in encoder counts).
+		PropertyI motorFocusAbsolutePositionCurrent;
+		/// \brief An integer property storing an absolute position(in encoder counts) that will be used by subsequent calls to the <b>mvIMPACT::acquire::MotorFocusControl::motorFocusMoveToAbsolutePositionDesired</b> command.
+		PropertyI motorFocusAbsolutePositionDesired;
+		/// \brief Calling this function will cause the motor focus to move to the position defined by the value of <b>mvIMPACT::acquire::MotorFocusControl::motorFocusAbsolutePositionDesired</b>.
+		Method motorFocusMoveToAbsolutePositionDesired;
+	PYTHON_ONLY(%mutable;)
+#	ifdef DOTNET_ONLY_CODE
+		PropertyS getMotorFocusSendBuffer( void ) const { return motorFocusSendBuffer; }
+		PropertyS getMotorFocusReceiveBuffer( void ) const { return motorFocusReceiveBuffer; }
+		Method getMotorFocusSend( void ) const { return motorFocusSend; }
+		PropertyI getMotorFocusIncrement( void ) const { return motorFocusIncrement; }
+		Method getMotorFocusNear( void ) const { return motorFocusNear; }
+		Method getMotorFocusFar( void ) const { return motorFocusFar; }
+		PropertyI getMotorFocusAbsolutePositionCurrent( void ) const { return motorFocusAbsolutePositionCurrent; }
+		PropertyI getMotorFocusAbsolutePositionDesired( void ) const { return motorFocusAbsolutePositionDesired; }
+		Method getMotorFocusMoveToAbsolutePositionDesired( void ) const { return motorFocusMoveToAbsolutePositionDesired; }
+#	endif // #ifdef DOTNET_ONLY_CODE
+	};
+
+#	ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+		//-----------------------------------------------------------------------------
+		/// \brief Properties for configuring settings belonging to the digital I/O measurement(<b>Device specific interface layout only</b>).
+		///
+		/// Properties in this class will only be available if a device offers digital I/O measurement features.
+		///
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_start_cpp.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///\htmlinclude code_fragment_start_cpp.html
+		/// <b>EXAMPLE:</b>
+		///
+		///\code
+		/// // This code fragment will print result of measurement using all modes on all sources
+		/// // to the standard output.
+		/// DigitalIOMeasurementControl iomc(getDevicePointerFromSomewhere());
+		/// if( iomc.digitalIOMeasurementMode.isValid() && iomc.digitalIOMeasurementSource.isValid() )
+		/// {
+		///   vector<pair<string, TDigitalIOMeasurementMode> > modeDict;
+		///   iomc.digitalIOMeasurementMode.getTranslationDict( modeDict );
+		///   const unsigned int modeCnt = iomc.digitalIOMeasurementMode.dictSize();
+		///   vector<pair<string, TDigitalIOMeasurementSource> > srcDict;
+		///   iomc.digitalIOMeasurementSource.getTranslationDict( srcDict );
+		///   const unsigned int srcCnt = iomc.digitalIOMeasurementSource.dictSize();
+		///   for( unsigned int i=0; i<modeCnt; i++ )
+		///   {
+		///     iomc.digitalIOMeasurementMode.write( modeDict[i].second );
+		///     for( unsigned int j=0; j<srcCnt; j++ )
+		///     {
+		///       iomc.digitalIOMeasurementSource.write( srcDict[j].second );
+		///       printf( "Digital I/O measurement result using mode '%s' at source '%s': %s\n", iomc.digitalIOMeasurementMode.readS().c_str(), iomc.digitalIOMeasurementSource.readS().c_str(), iomc.digitalIOMeasurementResult.readS().c_str() );
+		///     }
+		///   }
+		/// }
+		///\endcode
+		///\htmlinclude code_fragment_end.html
+		///\xmlonly
+		/// <mvWrapperDoc><htmlinclude ref="code_fragment_end.html"/></mvWrapperDoc>
+		///\endxmlonly
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class DigitalIOMeasurementControl : public ComponentCollection
+		//-----------------------------------------------------------------------------
+		{
+		public:
+			/// brief Constructs a new <b>mvIMPACT::acquire::DigitalIOMeasurementControl</b> object.
+			explicit DigitalIOMeasurementControl(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+													Device* pDev ): ComponentCollection(pDev), digitalIOMeasurementMode(), digitalIOMeasurementSource(),
+													digitalIOMeasurementResult()
+			{
+				DeviceComponentLocator locator(pDev, dltIOSubSystem);
+				HLIST hList = locator.findComponent( "DigitalIOMeasurementControl" );
+				if( hList != INVALID_ID )
+				{
+					locator.bindSearchBase( locator.searchbase_id(), "DigitalIOMeasurementControl" );
+					m_hRoot = locator.searchbase_id();
+					locator.bindComponent( digitalIOMeasurementMode, "DigitalIOMeasurementMode" );
+					locator.bindComponent( digitalIOMeasurementSource, "DigitalIOMeasurementSource" );
+					locator.bindComponent( digitalIOMeasurementResult, "DigitalIOMeasurementResult" );
+				}
+			}
+		PYTHON_ONLY(%immutable;)
+			/// \brief An enumerated integer property defining the type of measurement to perform.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDigitalIOMeasurementMode</b>.
+			PropertyIDigitalIOMeasurementMode digitalIOMeasurementMode;
+			/// \brief An enumerated integer property defining where the measurement shall be performed.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDigitalIOMeasurementMode</b>.
+			PropertyIDigitalIOMeasurementSource digitalIOMeasurementSource;
+			/// \brief A float property that will contain the result of the measurement.
+			///
+			/// Reading this property will automatically perform a new measurement.
+			///
+			/// \note
+			/// Please note that the signal connected to the digital input must match the selected digital input
+			/// threshold(see <b>mvIMPACT::acquire::IOSubSystemBlueFOX::digitalInputThreshold</b>) in order to
+			/// obtain valid results.
+			PropertyF digitalIOMeasurementResult;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyIDigitalIOMeasurementMode getDigitalIOMeasurementMode( void ) const { return digitalIOMeasurementMode; }
+			PropertyIDigitalIOMeasurementSource getDigitalIOMeasurementSource( void ) const { return digitalIOMeasurementSource; }
+			PropertyF getDigitalIOMeasurementResult( void ) const { return digitalIOMeasurementResult; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+#	endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+
+	//-----------------------------------------------------------------------------
+	/// \brief A base class that provides access to the most common settings for a
+	/// device(<b>Device specific interface layout only</b>).
+	///
+	/// Use one of the class derived from this class to get access to all the available
+	/// settings.
+	///
+	/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+	/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+	class FullSettingsBase
+	//-----------------------------------------------------------------------------
+	{
+	public:
+		explicit FullSettingsBase(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+									Device* pDev,
+									/// The name of the driver internal setting to access with this instance.
+									/// A list of valid setting names can be obtained by a call to
+									/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
+									/// settings can be created with the function
+									/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
+									const std::string& settingName = "Base" ) : imageProcessing(pDev, settingName), imageDestination(pDev, settingName), basedOn()
+		{
+			DeviceComponentLocator locator(pDev, dltSetting, settingName);
+			locator.bindComponent( basedOn, "BasedOn" );
+		}
+		virtual ~FullSettingsBase() {}
+	PYTHON_ONLY(%immutable;)
+		/// \brief Image processing related properties.
+		ImageProcessing imageProcessing;
+		/// \brief Properties to define the result images format.
+		ImageDestination imageDestination;
+		/// \brief A string property <b>(read-only)</b> containing the name of the setting this setting is based on.
+		PropertyS basedOn;
+	PYTHON_ONLY(%mutable;)
+#	ifdef DOTNET_ONLY_CODE
+		ImageProcessing& getImageProcessing( void ) { return imageProcessing; }
+		ImageDestination& getImageDestination( void ) { return imageDestination; }
+		PropertyS getBasedOn( void ) const { return basedOn; }
+#	endif // #ifdef DOTNET_ONLY_CODE
+};
+
+#	ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+		//-----------------------------------------------------------------------------
+		/// \brief This class provides access to general settings as well as to settings
+		/// which are unique for the <b>mvBlueFOX</b>(<b>Device specific interface layout only</b>).
+		///
+		/// To see a small code example on how you can work with object of this class see
+		/// the detailed description of the class <b>mvIMPACT::acquire::FunctionInterface</b> as well.
+		/// Statements made for the use of the class <b>mvIMPACT::acquire::FullSettingsBase</b> apply for
+		/// this class as well.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class SettingsBlueFOX : public FullSettingsBase
+		//-----------------------------------------------------------------------------
+		{
+		public:
+			explicit SettingsBlueFOX(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+										Device* pDev,
+										/// The name of the driver internal setting to access with this instance.
+										/// A list of valid setting names can be obtained by a call to
+										/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
+										/// settings can be created with the function
+										/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
+										const std::string& name = "Base" ) : FullSettingsBase(pDev, name), cameraSetting(pDev, name) {}
+		PYTHON_ONLY(%immutable;)
+			/// \brief Camera related settings.
+			CameraSettingsBlueFOX cameraSetting;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			CameraSettingsBlueFOX& getCameraSetting( void ) { return cameraSetting; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+		};
+#	endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+
+#	ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+		//-----------------------------------------------------------------------------
+		/// \brief This class provides access to general settings as well as to settings
+		/// which are unique for frame grabber devices(<b>Device specific interface layout only</b>).
+		///
+		/// To see a small code example on how you can work with object of this class see
+		/// the detailed description of the class <b>mvIMPACT::acquire::FunctionInterface</b> as well.
+		/// Statements made for the use of the class <b>mvIMPACT::acquire::FullSettingsBase</b> apply for
+		/// this class as well.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class SettingsFrameGrabber : public FullSettingsBase
+		//-----------------------------------------------------------------------------
+		{
+		public:
+			explicit SettingsFrameGrabber(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+											Device* pDev,
+											/// The name of the driver internal setting to access with this instance.
+											/// A list of valid setting names can be obtained by a call to
+											/// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
+											/// settings can be created with the function
+											/// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
+											const std::string& name = "Base" ) : FullSettingsBase(pDev, name), cameraSetting(pDev, name), connector(pDev, name), imageProcessing(pDev, name) {}
+		PYTHON_ONLY(%immutable;)
+			/// \brief Camera related settings.
+			CameraSettingsFrameGrabber cameraSetting;
+			/// \brief Input channel related properties.
+			Connector connector;
+			/// \brief Image processing related properties.
+			ImageProcessing imageProcessing;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			CameraSettingsFrameGrabber& getCameraSetting( void ) { return cameraSetting; }
+			Connector& getConnector( void ) { return connector; }
+			ImageProcessing& getImageProcessing( void ) { return imageProcessing; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+	};
+#	endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+#	ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
+		/// \brief <b>deprecated</b>. Use the class <b>mvIMPACT::acquire::SystemSettings</b> instead(<b>Device specific interface layout only</b>).
+		///
+		/// \note
+		/// This class has been declared <b>deprecated</b> and might not be available in future releases.
+		/// All features of this class are now available in <b>mvIMPACT::acquire::SystemSettings</b> as well, so please use
+		/// this class instead.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+#		ifndef WRAP_PYTHON
+			typedef SystemSettings MVIMPACT_DEPRECATED_CPP(SystemBlueCOUGAR);
+#		endif // #	ifndef WRAP_PYTHON
+#	endif // #ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
+
+#	ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+		//-----------------------------------------------------------------------------
+		/// \brief A class containing <b>mvBlueFOX</b> specific settings to control the overall
+		/// behaviour of the driver(<b>Device specific interface layout only</b>).
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class SystemBlueFOX : public SystemBase
+		//-----------------------------------------------------------------------------
+		{
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::SystemBlueFOX</b> object.
+			explicit SystemBlueFOX(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+										Device* pDev ) : SystemBase(pDev), transferSize(), footerMode(), footerCheckEnable(), powerMode()
+			{
+				DeviceComponentLocator locator(pDev, dltSystemSettings);
+				locator.bindComponent( powerMode, "PowerMode" );
+				locator.bindSearchBase( locator.searchbase_id(), "Camera" );
+				locator.bindComponent( transferSize, "TransferSize" );
+				locator.bindComponent( footerMode, "FooterMode" );
+				locator.bindComponent( footerCheckEnable, "FooterCheckEnable" );
+			}
+		PYTHON_ONLY(%immutable;)
+			/// \brief An enumerated integer property defining the block size of the
+			/// image data blocks transferred from the device.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBlueFOXTransferSize</b>.
+			PropertyIBlueFOXTransferSize transferSize;
+			/// \brief An enumerated integer property defining the footer mode of the
+			/// device.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBlueFOXFooterMode</b>.
+			PropertyIBlueFOXFooterMode footerMode;
+			/// \brief An enumerated integer property allowing to switch on/off the check of the image footer.
+			///
+			/// The image footer contains certain additional data as e.g. the exposure time as used by the image
+			/// sensor. To debug transfer related problems it sometimes can be useful to disable all internal
+			/// data consistency checks by the driver.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
+			PropertyIBoolean footerCheckEnable;
+			/// \brief An enumerated integer property defining the power mode of the
+			/// device.
+			///
+			/// \note
+			/// This property requires at least firmware version 39! See <b>mvIMPACT::acquire::Device::firmwareVersion</b> to find
+			/// out which firmware is currently running on the device or use <b>mvIMPACT::acquire::Device::updateFirmware()</b>
+			/// to update the firmware to the state compiled into the driver.
+			///
+			/// \note
+			/// Do <b>NOT</b> modify this property when images are acquired in parallel. Switching off or on the power
+			/// for a device that is capturing images at the same time will result in incorrect images! Therefore
+			/// always make sure to stop image acquisition <b>BEFORE</b> modifying this property.
+			///
+			/// Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TDevicePowerMode</b>.
+			PropertyIDevicePowerMode powerMode;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyIBlueFOXTransferSize getTransferSize( void ) const { return transferSize; }
+			PropertyIBlueFOXFooterMode getFooterMode( void ) const { return footerMode; }
+			PropertyIDevicePowerMode getPowerMode( void ) const { return powerMode; }
+			PropertyIBoolean getFooterCheckEnable( void ) const { return footerCheckEnable; }
+#	endif // #ifdef DOTNET_ONLY_CODE
+	};
+#	endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+
+#	ifndef IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
+		//-----------------------------------------------------------------------------
+		/// \brief A class containing <b>mvV4L2</b> specific settings to control the overall
+		/// behaviour of the driver(<b>Device specific interface layout only</b>).
+		///
+		/// \note UNDER CONSTRUCTION! Subject to change.
+		///
+		/// \note This class will only be available if <b>mvIMPACT::acquire::Device::interfaceLayout</b> is set to
+		/// <b>mvIMPACT::acquire::dilDeviceSpecific</b> before the device is opened.
+		class SystemV4L2 : public SystemBase
+		//-----------------------------------------------------------------------------
+		{
+		public:
+			/// \brief Constructs a new <b>mvIMPACT::acquire::SystemV4L2</b> object.
+			explicit SystemV4L2(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+									Device* pDev ) : SystemBase(pDev), volume(), balance(), bass(), treble(), mute(), loudness()
+			{
+				DeviceComponentLocator locator(pDev, dltSystemSettings);
+				locator.bindSearchBase( locator.searchbase_id(), "V4L-Audio" );
+				locator.bindComponent( volume, "Volume" );
+				locator.bindComponent( balance, "Balance" );
+				locator.bindComponent( bass, "Bass" );
+				locator.bindComponent( treble, "Treble" );
+				locator.bindComponent( mute, "Mute" );
+				locator.bindComponent( loudness, "Loudness" );
+			}
+		PYTHON_ONLY(%immutable;)
+			/// \brief If V4L2 device supports audio, this integer property adjusts the audio volume.
+			///
+			/// This property represents a V4L2-audio-control ID.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
+			/// values too large or too small will raise an exception.
+			PropertyI volume;
+			/// \brief If V4L2 device supports audio, this integer property adjusts the audio balance.
+			///
+			/// This property represents a V4L2-audio-control ID.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
+			/// values too large or too small will raise an exception.
+			PropertyI balance;
+			/// \brief If V4L2 device supports audio, this integer property adjusts the audio bass.
+			///
+			/// This property represents a V4L2-audio-control ID.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
+			/// values too large or too small will raise an exception.
+			PropertyI bass;
+			/// \brief If V4L2 device supports audio, this integer property adjusts the audio treble.
+			///
+			/// This property represents a V4L2-audio-control ID.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			/// If supported, a minimum value, a maximum value and step width will be defined. Thus, invalid values may be tuned after writing to fit within the step size,
+			/// values too large or too small will raise an exception.
+			PropertyI treble;
+			/// \brief If V4L2 device supports audio, this enumerated integer property sets audio mute on/off
+			///
+			/// This property represents a boolean-valued V4L2-control ID. Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			PropertyIBoolean mute;
+			/// \brief If V4L2 device supports audio, this enumerated integer property sets audio loudness on/off.
+			///
+			/// This property represents a boolean-valued V4L2-control ID. Valid values for this property are defined by the enumeration <b>mvIMPACT::acquire::TBoolean</b>.
+			///
+			/// \note This property is not supported by every device.
+			/// Therefore always call the function <b>mvIMPACT::acquire::Component::isValid</b> to check if this property is available or not.
+			PropertyIBoolean loudness;
+		PYTHON_ONLY(%mutable;)
+#		ifdef DOTNET_ONLY_CODE
+			PropertyI getVolume( void ) const { return volume; }
+			PropertyI getBalance( void ) const { return balance; }
+			PropertyI getBass( void ) const { return bass; }
+			PropertyI getTreble( void ) const { return treble; }
+			PropertyIBoolean getMute( void ) const { return mute; }
+			PropertyIBoolean getLoudness( void ) const { return loudness; }
+#		endif // #ifdef DOTNET_ONLY_CODE
+	};
+#	endif // #ifndef IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
+
+/// @}
+
+#endif // #ifndef IGNORE_MVDEVICE_SPECIFIC_INTERFACE_DOCUMENTATION
 
 #ifndef WRAP_DOTNET
 	inline void ExceptionFactory::raiseException( const char* pFunctionName, int lineNumber, int errorCode, HOBJ objectHandle /* = INVALID_ID*/, const std::string& additionalInfo /*= ""*/ )

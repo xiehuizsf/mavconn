@@ -30,14 +30,12 @@ private:
 		ALL_IMAGES_AVAILABLE  = 0x03
 	};
 
-	void leftImageHandler(void);
-	void rightImageHandler(void);
+	void stereoImageHandler(void);
 
 	std::tr1::shared_ptr<PxBluefoxCamera> cameraLeft;
 	std::tr1::shared_ptr<PxBluefoxCamera> cameraRight;
 
-	Glib::Thread* leftImageThread;
-	Glib::Thread* rightImageThread;
+	Glib::Thread* stereoImageThread;
 	int imageAvailable;
 	Glib::Mutex imageMutex;
 	std::tr1::shared_ptr<Glib::Cond> imageAvailableCond;
@@ -52,6 +50,7 @@ private:
 
 	PxCameraConfig::Mode mode;
 	bool externalTrigger;
+	int maxRequests;
 };
 
 #endif

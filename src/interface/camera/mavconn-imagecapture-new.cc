@@ -173,6 +173,10 @@ static void image_writer (void)
 
 		++imgNum;
 		if (debug) printf("image written. \n");
+
+		data->imgLeft.release();
+		data->imgRight.release();
+		free(data);
 	}
 }
 
@@ -236,6 +240,8 @@ void image_handler(const lcm_recv_buf_t* rbuf, const char* channel, const mavcon
 
 			if (!success)
 			{
+				data->imgLeft.release();
+				data->imgRight.release();
 				delete data;
 				continue;
 			}
@@ -248,7 +254,9 @@ void image_handler(const lcm_recv_buf_t* rbuf, const char* channel, const mavcon
 			//if imuid is not 200 take yaw from there
 			if (imuid != 200)
 			{
-				data->yaw = backupYaw;
+                            data->roll = backupRoll;
+                            data->pitch = backupPitch;
+                            data->yaw = backupYaw;
 			}
 			client.getLocalHeight(msg, data->ground_dist);
 			client.getGroundTruth(msg, data->gx, data->gy, data->gz);
@@ -308,7 +316,7 @@ string createCaptureDirectory( string baseDir, struct tm* timeinfo )
 	strftime( dateBuf, 80, "%Y%m%d_%H%M%S\0", timeinfo );
 
 	// create directory where to safe the images and data file
-	string dir = baseDir + string(dateBuf) + "/";
+	std::string dir = baseDir + string(dateBuf) + "/";
 	try
 	{
 		bfs::create_directories( bfs::path(dir) );
@@ -322,7 +330,8 @@ string createCaptureDirectory( string baseDir, struct tm* timeinfo )
 		if (calibStrDirection0.length() > 0)
 		{
 			bfs::create_directories( bfs::path(dir + std::string(DIRECTUION_0_DIR) + std::string("config/")) );
-			ofstream calibInfoFile(dir + std::string(DIRECTUION_0_DIR) + std::string("calibInfo.txt"));
+			std::string calibInfoFilePath = dir + std::string(DIRECTUION_0_DIR) + std::string("calibInfo.txt");
+			ofstream calibInfoFile(calibInfoFilePath.c_str());
 			calibInfoFile << "Original calibration file names:" << endl << calibStrDirection0 << endl << calibStrLeftDirection0 << endl << calibStrRightDirection0;
 			calibInfoFile.close();
 
@@ -365,7 +374,7 @@ string createCaptureDirectory( string baseDir, struct tm* timeinfo )
 		if (calibStrDirection1.length() > 0)
 		{
 			bfs::create_directories( bfs::path(dir + std::string(DIRECTUION_1_DIR) + std::string("config/")) );
-			ofstream calibInfoFile(dir + std::string(DIRECTUION_1_DIR) + std::string("calibInfo.txt"));
+			ofstream calibInfoFile(std::string(dir + std::string(DIRECTUION_1_DIR) + std::string("calibInfo.txt")).c_str());
 			calibInfoFile << "Original calibration file names:" << endl << calibStrDirection1 << endl << calibStrLeftDirection1 << endl << calibStrRightDirection1;
 			calibInfoFile.close();
 
@@ -448,6 +457,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 		{
 			mavlink_command_long_t command;
 			mavlink_msg_command_long_decode(msg, &command);
+			if (command.target_system != sysid && command.target_system != 0) break;
 			if (command.command == MAV_CMD_DO_CONTROL_VIDEO)
 			{
 				if (command.param4 == 1 || command.param4 == 2)

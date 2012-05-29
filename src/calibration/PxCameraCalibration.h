@@ -37,8 +37,9 @@ This file is part of the PIXHAWK project
 #ifndef _PX_CAMERA_CALIBRATION_H_
 #define _PX_CAMERA_CALIBRATION_H_
 
-#include <opencv/cv.h>
-#include <PxMatrix.h>
+#include <opencv2/core/core.hpp>
+
+#include "PxMatrix.h"
 
 /**
  * @brief The superclass for calibration data wrapper classes.

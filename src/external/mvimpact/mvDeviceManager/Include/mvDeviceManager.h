@@ -26,6 +26,7 @@
 
 #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
 #	ifdef _WIN32
+#		define MVDMR_API
 #		define DMR_CALL __stdcall
 #		ifdef __BORLANDC__ // is Borland compiler?
 #			pragma option push -b // force enums to size of integer
@@ -40,6 +41,11 @@
 #			endif // __BORLANDC__
 #		endif // NO_MV_DEVICE_MANAGER_AUTOLINK
 #	else // not _WIN32
+#		if __GNUC__ >= 4
+#			define MVDMR_API __attribute__ ((visibility ("default")))
+#		else
+#			define MVDMR_API
+#		endif // #if __GNUC__ >= 4
 #		define DMR_CALL
 #	endif // _WIN32
 #endif // DOXYGEN_SHOULD_SKIP_THIS && WRAP_ANY
@@ -283,7 +289,7 @@ struct ImageBuffer
 
 //-----------------------------------------------------------------------------
 /// \brief A structure containing information about an event that has been
-/// reported by the device driver and has been succesfully waited for.
+/// reported by the device driver and has been successfully waited for(<b>deprecated</b>).
 struct EventData
 //-----------------------------------------------------------------------------
 {
@@ -334,7 +340,7 @@ enum TImpactBufferFlag
 	ibfNone = 0x0,
 	/// \brief If set no new memory will be allocated for the creation of the <b>mvIMPACT</b> buffer.
 	///
-	/// This way of creating the images is fast, but modifying the image data with an image processing 
+	/// This way of creating the images is fast, but modifying the image data with an image processing
 	/// function will always modify the image data associated with the underlying <b>mvIMPACT::acquire::Request</b>
 	/// object.
 	///
@@ -348,7 +354,7 @@ enum TImpactBufferFlag
 	/// Whenever a new image is acquired from a device the device might be using the memory already associated
 	/// with another image thus you might end up with to IMPACT images that internally reference the
 	/// same buffer. However a large DMA memory will (at least twice the size of one image) will allow
-	/// to work with a double buffering sceme.
+	/// to work with a double buffering scheme.
 	ibfUseRequestMemory = 0x1,
 	/// \brief If an exisiting <b>IPL_BUFHANDLE</b> is passed to a function it will try to copy
 	/// data in this buffer instead of freeing it.
@@ -375,7 +381,7 @@ typedef int HLIST;
 typedef int HOBJ;
 
 #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY) && !defined(DOTNET_ONLY_CODE)
-	typedef struct EventData MVIMPACT_DEPRECATED_C( EventData );
+	typedef struct EventData EventData;
 	typedef struct ImageBuffer ImageBuffer;
 	typedef struct RequestInfo RequestInfo;
 	typedef struct RequestResult RequestResult;
@@ -407,10 +413,10 @@ typedef int HOBJ;
 	enum TOBJ_HandleCheckMode // no_managed_type
 	//-----------------------------------------------------------------------------
 	{
-		/// \brief Only the owner list of the current HOBJ is checked. 
-		hcmOwnerList	= 0x1,
+		/// \brief Only the owner list of the current HOBJ is checked.
+		hcmOwnerList	= 1,
 		/// \brief The owner list and the object referenced by the HOBJ parameter is checked.
-		hcmFull			= 0x2
+		hcmFull			= 2
 	};
 
 	//-----------------------------------------------------------------------------
@@ -512,7 +518,34 @@ typedef int HOBJ;
 	};
 
 	//-----------------------------------------------------------------------------
-	/// \brief Defines valid interface list types, which can be located using the function 
+	/// \brief Defines valid info query types, which can be passed to the function
+	/// <b>DMR_GetDeviceInfoEx()</b>.
+	enum TDMR_DeviceInfoType // no_managed_type
+	//-----------------------------------------------------------------------------
+	{
+		/// \brief Used to query a small structure containing some informations about the device.
+		///
+		/// <b>DMR_GetDeviceInfoEx()</b> will expect a pointer to a <b>TDMR_DeviceInfo</b>
+		/// structure when called with <b>TDMR_DeviceInfoType::dmditDeviceInfoStructure</b>.
+		dmditDeviceInfoStructure	= 0,
+		/// \brief Checks if the device is in use by an application.
+		///
+		/// The output value will be a 4 byte unsigned integer. A value different from 0
+		/// indicates the device is already in use. In this case the device might be in
+		/// use either by the current process, by another process running on this machine
+		/// or even by a process running on a different machine(e.g. when talking to a
+		/// network device).
+		dmditDeviceIsInUse			= 1,
+		/// \brief Returns a handle providing access to device driver library specific features.
+		///
+		/// The output value will be a HOBJ.
+		/// This list does exist only once per device driver library. Changes in this list will affect all
+		/// devices that are operated using this device driver library.
+		dmdithDeviceDriver			= 2
+	};
+
+	//-----------------------------------------------------------------------------
+	/// \brief Defines valid interface list types, which can be located using the function
 	/// <b>DMR_FindList()</b>.
 	enum TDMR_ListType // no_managed_type
 	//-----------------------------------------------------------------------------
@@ -571,7 +604,7 @@ typedef int HOBJ;
 		/// \note This feature currently is only available for frame grabber devices.
 		dmltDeviceSpecificData = 9,
 		/// \brief Specifies the driver interface list providing access to the device specific event type
-		/// settings lists.
+		/// settings lists(<b>deprecated</b>).
 		///
 		/// \note Every device will support a different set of events that can be waited for by the user.
 		///
@@ -579,7 +612,7 @@ typedef int HOBJ;
 		/// all properties that can be describe the current mode an event is operated in user can be found.
 		dmltEventSubSystemSettings = 10,
 		/// \brief Specifies the driver interface list providing access to the device specific event type
-		/// results lists.
+		/// results lists(<b>deprecated</b>).
 		///
 		/// \note Every device will support a different set of events that can be waited for by the user.
 		///
@@ -595,7 +628,7 @@ typedef int HOBJ;
 		/// here.
 		///
 		/// \note
-		/// Properties in this list sholud only be modified by advanced users.
+		/// Properties in this list should only be modified by advanced users.
 		dmltImageMemoryManager = 12
 	};
 
@@ -603,101 +636,103 @@ typedef int HOBJ;
 		typedef enum TOBJ_HandleCheckMode TOBJ_HandleCheckMode;
 		typedef enum TOBJ_StringQuery TOBJ_StringQuery;
 		typedef struct TDMR_DeviceInfo TDMR_DeviceInfo;
+		typedef enum TDMR_DeviceInfoType TDMR_DeviceInfoType;
 		typedef enum TDMR_ListType TDMR_ListType;
 		typedef enum TDMR_DeviceSearchMode TDMR_DeviceSearchMode;
 	#endif // DOXYGEN_SHOULD_SKIP_THIS
 
 	// general library functions
-	TDMR_ERROR DMR_CALL DMR_Init( HDMR* pHDmr );
-	TDMR_ERROR DMR_CALL DMR_Close( void );
-	TDMR_ERROR DMR_CALL DMR_GetDevice( HDEV* pHDev, TDMR_DeviceSearchMode searchMode, const char* pSearchString, unsigned int devNr, char wildcard );
-	TDMR_ERROR DMR_CALL DMR_GetDeviceCount( unsigned int* pDevCnt );
-	TDMR_ERROR DMR_CALL DMR_OpenDevice( HDEV hDev, HDRV* pHDrv );
-	TDMR_ERROR DMR_CALL DMR_CloseDevice( HDRV hDrv, HDEV hDev );
-	TDMR_ERROR DMR_CALL DMR_GetDeviceInfo( unsigned int devNr, TDMR_DeviceInfo* pInfo, size_t infoSize );
-	TDMR_ERROR DMR_CALL DMR_GetDriverHandle( HDEV hDev, HDRV* pHDrv );
-	TDMR_ERROR DMR_CALL DMR_UpdateDeviceList( unsigned int reserved, int reserved2 );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_Init( HDMR* pHDmr );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_Close( void );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_GetDevice( HDEV* pHDev, TDMR_DeviceSearchMode searchMode, const char* pSearchString, unsigned int devNr, char wildcard );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_GetDeviceCount( unsigned int* pDevCnt );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_OpenDevice( HDEV hDev, HDRV* pHDrv );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_CloseDevice( HDRV hDrv, HDEV hDev );
+	MVIMPACT_DEPRECATED_C( MVDMR_API TDMR_ERROR DMR_CALL DMR_GetDeviceInfo( unsigned int devNr, TDMR_DeviceInfo* pInfo, size_t infoSize ) );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_GetDeviceInfoEx( HDEV hDev, TDMR_DeviceInfoType infoType, void* pInfo, size_t* pInfoSize );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_GetDriverHandle( HDEV hDev, HDRV* pHDrv );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_UpdateDeviceList( unsigned int reserved, int reserved2 );
 	// device specific functions. These function require a handle to an initialised device
 	// basic operations
-	TDMR_ERROR DMR_CALL DMR_CreateSetting( HDRV hDrv, const char* pName, const char* pParentName, HLIST* pNewID );
-	TDMR_ERROR DMR_CALL DMR_CreateRequestControl( HDRV hDrv, const char* pName, const char* pParentName, HLIST* pNewID, int* pRequestCtrl );
-	TDMR_ERROR DMR_CALL DMR_DeleteList( HDRV hDrv, const char* pName, TDMR_ListType type );
-	TDMR_ERROR DMR_CALL DMR_FindList( HDRV hDrv, const char* pName, TDMR_ListType type, unsigned int flags, HLIST* phDevList );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_CreateSetting( HDRV hDrv, const char* pName, const char* pParentName, HLIST* pNewID );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_CreateRequestControl( HDRV hDrv, const char* pName, const char* pParentName, HLIST* pNewID, int* pRequestCtrl );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_DeleteList( HDRV hDrv, const char* pName, TDMR_ListType type );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_FindList( HDRV hDrv, const char* pName, TDMR_ListType type, unsigned int flags, HLIST* phDevList );
 	// image acquisition functions
-	TDMR_ERROR DMR_CALL DMR_AcquisitionStart( HDRV hDrv );
-	TDMR_ERROR DMR_CALL DMR_AcquisitionStop( HDRV hDrv );
-	TDMR_ERROR DMR_CALL DMR_ImageRequestReset( HDRV hDrv, int requestCtrl, int mode );
-	TDMR_ERROR DMR_CALL DMR_ImageRequestSingle( HDRV hDrv, int requestCtrl, int* pRequestUsed );
-	TDMR_ERROR DMR_CALL DMR_ImageRequestUnlock( HDRV hDrv, int requestNr );
-	TDMR_ERROR DMR_CALL DMR_ImageRequestConfigure( HDRV hDrv, int requestNr, int reserved, void* pReserved );
-	TDMR_ERROR DMR_CALL DMR_ImageRequestWaitFor( HDRV hDrv, int timeout_ms, int queueNr, int* requestNr );
-	TDMR_ERROR DMR_CALL DMR_GetImageRequestBuffer( HDRV hDrv, int requestNr, ImageBuffer** ppBuffer );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_AcquisitionStart( HDRV hDrv );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_AcquisitionStop( HDRV hDrv );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_ImageRequestReset( HDRV hDrv, int requestCtrl, int mode );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_ImageRequestSingle( HDRV hDrv, int requestCtrl, int* pRequestUsed );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_ImageRequestUnlock( HDRV hDrv, int requestNr );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_ImageRequestConfigure( HDRV hDrv, int requestNr, int reserved, void* pReserved );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_ImageRequestWaitFor( HDRV hDrv, int timeout_ms, int queueNr, int* requestNr );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_GetImageRequestBuffer( HDRV hDrv, int requestNr, ImageBuffer** ppBuffer );
 	// functions only needed to query certain information from other languages such as VB.
-	TDMR_ERROR DMR_CALL DMR_GetImageRequestBufferData( HDRV hDrv, int requestNr, int* pBytesPerPixel, int* pChannelCount, int* pHeight, int* pWidth, int* pSize, TImageBufferPixelFormat* pPixelFormat, void** ppData );
-	TDMR_ERROR DMR_CALL DMR_GetImageRequestBufferChannelData( HDRV hDrv, int requestNr, int channelNr, int* pChannelOffset, int* pLinePitch, int* pPixelPitch, char* pChannelDesc, size_t channelDescSize );
-	TDMR_ERROR DMR_CALL DMR_GetImageRequestBufferImageData( HDRV hDrv, int requestNr, int xOff, int yOff, int width, int height, char* pBuf, size_t bufSize );
-	TDMR_ERROR DMR_CALL DMR_SetImageRequestBufferImageData( HDRV hDrv, int requestNr, int xOff, int yOff, int width, int height, char* pBuf, size_t bufSize );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_GetImageRequestBufferData( HDRV hDrv, int requestNr, int* pBytesPerPixel, int* pChannelCount, int* pHeight, int* pWidth, int* pSize, TImageBufferPixelFormat* pPixelFormat, void** ppData );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_GetImageRequestBufferChannelData( HDRV hDrv, int requestNr, int channelNr, int* pChannelOffset, int* pLinePitch, int* pPixelPitch, char* pChannelDesc, size_t channelDescSize );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_GetImageRequestBufferImageData( HDRV hDrv, int requestNr, int xOff, int yOff, int width, int height, char* pBuf, size_t bufSize );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_SetImageRequestBufferImageData( HDRV hDrv, int requestNr, int xOff, int yOff, int width, int height, char* pBuf, size_t bufSize );
 	// functions only needed to query certain information from other languages such as VB END.
 #ifdef __vl_base_h__
-	TDMR_ERROR DMR_CALL DMR_GetImpactRequestBufferEx( HDRV hDrv, int requestNr, IPL_BUFHANDLE* pBuffer, TImpactBufferFlag flags, unsigned int reserved );
-	TDMR_ERROR DMR_CALL DMR_BuildImpactImage( const ImageBuffer* pBuffer, IPL_BUFHANDLE* pBufHandle, TImpactBufferFlag flags, void* pReserved, size_t reservedSize );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_GetImpactRequestBufferEx( HDRV hDrv, int requestNr, IPL_BUFHANDLE* pBuffer, TImpactBufferFlag flags, unsigned int reserved );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_BuildImpactImage( const ImageBuffer* pBuffer, IPL_BUFHANDLE* pBufHandle, TImpactBufferFlag flags, void* pReserved, size_t reservedSize );
 #endif // __vl_base_h__
-	TDMR_ERROR DMR_CALL DMR_GetImageRequestInfoEx( HDRV hDrv, int requestNr, RequestInfo* pInfo, size_t infoSize, int reserved, int reserved2 );
-	TDMR_ERROR DMR_CALL DMR_GetImageRequestResultEx( HDRV hDrv, int requestNr, RequestResult* pResult, size_t resultSize, int reserved, int reserved2 );
-	TDMR_ERROR DMR_CALL DMR_GetImageRequestParamS( HDRV hDrv, int requestNr, TImageRequestParam param, char* pBuf, size_t bufSize );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_GetImageRequestInfoEx( HDRV hDrv, int requestNr, RequestInfo* pInfo, size_t infoSize, int reserved, int reserved2 );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_GetImageRequestResultEx( HDRV hDrv, int requestNr, RequestResult* pResult, size_t resultSize, int reserved, int reserved2 );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_GetImageRequestParamS( HDRV hDrv, int requestNr, TImageRequestParam param, char* pBuf, size_t bufSize );
 	// file I/O functions
-	TDMR_ERROR DMR_CALL DMR_LoadRTCtrProgram( HDRV hDrv, HLIST hRTCtrList );
-	TDMR_ERROR DMR_CALL DMR_SaveRTCtrProgram( HDRV hDrv, HLIST hRTCtrList );
-	TDMR_ERROR DMR_CALL DMR_LoadSetting( HDRV hDrv, const char* pName, TStorageFlag storageflags, TScope scope );
-	TDMR_ERROR DMR_CALL DMR_SaveSetting( HDRV hDrv, const char* pName, TStorageFlag storageflags, TScope scope );
-	TDMR_ERROR DMR_CALL DMR_LoadSettingFromDefault( HDRV hDrv, TScope scope );
-	TDMR_ERROR DMR_CALL DMR_SaveSettingToDefault( HDRV hDrv, TScope scope );
-	TDMR_ERROR DMR_CALL DMR_SaveSystemToDefault( HDRV hDrv, TScope scope );
-	TDMR_ERROR DMR_CALL DMR_ExportCameraDescription( HDRV hDrv, HLIST hCameraDescList );
-	TDMR_ERROR DMR_CALL DMR_ImportCameraDescription( HDRV hDrv, HLIST hCameraDescList );
-	TDMR_ERROR DMR_CALL DMR_CopyCameraDescription( HDRV hDrv, HLIST hCameraDescList, const char* pNewName );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_LoadRTCtrProgram( HDRV hDrv, HLIST hRTCtrList );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_SaveRTCtrProgram( HDRV hDrv, HLIST hRTCtrList );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_LoadSetting( HDRV hDrv, const char* pName, TStorageFlag storageflags, TScope scope );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_SaveSetting( HDRV hDrv, const char* pName, TStorageFlag storageflags, TScope scope );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_LoadSettingFromDefault( HDRV hDrv, TScope scope );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_SaveSettingToDefault( HDRV hDrv, TScope scope );
+	MVIMPACT_DEPRECATED_C( MVDMR_API TDMR_ERROR DMR_CALL DMR_SaveSystemToDefault( HDRV hDrv, TScope scope ) );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_ExportCameraDescription( HDRV hDrv, HLIST hCameraDescList );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_ImportCameraDescription( HDRV hDrv, HLIST hCameraDescList );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_CopyCameraDescription( HDRV hDrv, HLIST hCameraDescList, const char* pNewName );
 	// miscellaneous HW specific functions
-	TDMR_ERROR DMR_CALL DMR_SetDeviceID( HDEV hDev, int newID );
-	TDMR_ERROR DMR_CALL DMR_UpdateFirmware( HDEV hDev );
-	TDMR_ERROR DMR_CALL DMR_UpdateDigitalInputs( HDRV hDrv );
-	TDMR_ERROR DMR_CALL DMR_UpgradeDeviceFeatures( HDEV hDev, const char* pLicenceFilename, int reserved, int reserved2 );
-	TDMR_ERROR DMR_CALL DMR_CreateUserDataEntry( HDEV hDev, HLIST* pEntry );
-	TDMR_ERROR DMR_CALL DMR_DeleteUserDataEntry( HDEV hDev, HLIST hEntry );
-	TDMR_ERROR DMR_CALL DMR_WriteUserDataToHardware( HDEV hDev );
-	MVIMPACT_DEPRECATED_C( TDMR_ERROR DMR_CALL DMR_EventWaitFor( HDRV hDrv, int timeout_ms, TDeviceEventType mask, int reserved, int reserved2, TDeviceEventType* pResultType ) );
-	MVIMPACT_DEPRECATED_C( TDMR_ERROR DMR_CALL DMR_EventGetData( HDRV hDrv, TDeviceEventType type, int reserved, int reserved2, EventData* pResult, size_t resultSize ) );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_SetDeviceID( HDEV hDev, int newID );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_UpdateFirmware( HDEV hDev );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_UpdateDigitalInputs( HDRV hDrv );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_UpgradeDeviceFeatures( HDEV hDev, const char* pLicenceFilename, int reserved, int reserved2 );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_CreateUserDataEntry( HDEV hDev, HLIST* pEntry );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_DeleteUserDataEntry( HDEV hDev, HLIST hEntry );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_WriteUserDataToHardware( HDEV hDev );
+	MVIMPACT_DEPRECATED_C( MVDMR_API TDMR_ERROR DMR_CALL DMR_EventWaitFor( HDRV hDrv, int timeout_ms, TDeviceEventType mask, int reserved, int reserved2, TDeviceEventType* pResultType ) );
+	MVIMPACT_DEPRECATED_C( MVDMR_API TDMR_ERROR DMR_CALL DMR_EventGetData( HDRV hDrv, TDeviceEventType type, int reserved, int reserved2, EventData* pResult, size_t resultSize ) );
 
 	// device indepentdent image buffer related functions
-	TDMR_ERROR DMR_CALL DMR_AllocImageRequestBufferDesc( ImageBuffer** ppBuffer, int channelCount );
-	TDMR_ERROR DMR_CALL DMR_ReleaseImageRequestBufferDesc( ImageBuffer** ppBuffer );
-	TDMR_ERROR DMR_CALL DMR_CopyImageRequestBufferDesc( const ImageBuffer* pSrc, ImageBuffer** ppDst, int flags );
-	TDMR_ERROR DMR_CALL DMR_AllocImageBuffer( ImageBuffer** ppBuffer, TImageBufferPixelFormat pixelFormat, int width, int height );
-	TDMR_ERROR DMR_CALL DMR_ReleaseImageBuffer( ImageBuffer** ppBuffer );
-	TDMR_ERROR DMR_CALL DMR_CopyImageBuffer( const ImageBuffer* pSrc, ImageBuffer** ppDst, int flags );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_AllocImageRequestBufferDesc( ImageBuffer** ppBuffer, int channelCount );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_ReleaseImageRequestBufferDesc( ImageBuffer** ppBuffer );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_CopyImageRequestBufferDesc( const ImageBuffer* pSrc, ImageBuffer** ppDst, int flags );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_AllocImageBuffer( ImageBuffer** ppBuffer, TImageBufferPixelFormat pixelFormat, int width, int height );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_ReleaseImageBuffer( ImageBuffer** ppBuffer );
+	MVDMR_API TDMR_ERROR DMR_CALL DMR_CopyImageBuffer( const ImageBuffer* pSrc, ImageBuffer** ppDst, int flags );
 	// miscellaneous functions
-	const char* DMR_CALL DMR_ErrorCodeToString( int errorCode );
+	MVDMR_API const char* DMR_CALL DMR_ErrorCodeToString( int errorCode );
 	// general object specific functions
-	TPROPHANDLING_ERROR DMR_CALL OBJ_IsSettingAvailable( const char* pName, TStorageFlag storageflags, TScope scope );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_DeleteSetting( const char* pName, TStorageFlag storageflags, TScope scope );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_CheckHandle( HOBJ hObj, TOBJ_HandleCheckMode mode );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetChangedCounter( HOBJ hObj, unsigned int* pChangedCounter );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetChangedCounterAttr( HOBJ hObj, unsigned int* pChangedCounter );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetContentDesc( HOBJ hList, char* pBuf, size_t bufSize );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetDocString( HOBJ hObj, char* pBuf, size_t bufSize );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetFlags( HOBJ hObj, TComponentFlag* pFlags );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetFlagsS( HOBJ hObj, const char* pSeparator, char* pBuf, size_t bufSize );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetName( HOBJ hObj, char* pBuf, size_t bufSize );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetDisplayName( HOBJ hObj, char* pBuf, size_t bufSize );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetType( HOBJ hObj, TComponentType* pType );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetTypeS( HOBJ hObj, char* pBuf, size_t bufSize );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetVisibility( HOBJ hObj, TComponentVisibility* pVisibility );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetVisibilityS( HOBJ hObj, char* pBuf, size_t bufSize );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_VisibilityToString( TComponentVisibility visibility, char* pBuf, size_t bufSize );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_IsDefault( HOBJ hObj, unsigned int* pResult );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_RestoreDefault( HOBJ hObj );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetHandle( HLIST hList, const char* pPathAndObjName, HOBJ* phObj );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetSelectedFeatures( HOBJ hObj, int index, HOBJ* pFeatures, size_t* pFeatureCount );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetSelectingFeatures( HOBJ hObj, int index, HOBJ* pFeatures, size_t* pFeatureCount );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_IsSettingAvailable( const char* pName, TStorageFlag storageflags, TScope scope );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_DeleteSetting( const char* pName, TStorageFlag storageflags, TScope scope );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_CheckHandle( HOBJ hObj, TOBJ_HandleCheckMode mode );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetChangedCounter( HOBJ hObj, unsigned int* pChangedCounter );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetChangedCounterAttr( HOBJ hObj, unsigned int* pChangedCounter );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetContentDesc( HOBJ hList, char* pBuf, size_t bufSize );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetDocString( HOBJ hObj, char* pBuf, size_t bufSize );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetFlags( HOBJ hObj, TComponentFlag* pFlags );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetFlagsS( HOBJ hObj, const char* pSeparator, char* pBuf, size_t bufSize );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetName( HOBJ hObj, char* pBuf, size_t bufSize );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetDisplayName( HOBJ hObj, char* pBuf, size_t bufSize );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetType( HOBJ hObj, TComponentType* pType );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetTypeS( HOBJ hObj, char* pBuf, size_t bufSize );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetVisibility( HOBJ hObj, TComponentVisibility* pVisibility );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetVisibilityS( HOBJ hObj, char* pBuf, size_t bufSize );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_VisibilityToString( TComponentVisibility visibility, char* pBuf, size_t bufSize );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_IsDefault( HOBJ hObj, unsigned int* pResult );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_RestoreDefault( HOBJ hObj );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetHandle( HLIST hList, const char* pPathAndObjName, HOBJ* phObj );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetSelectedFeatures( HOBJ hObj, int index, HOBJ* pFeatures, size_t* pFeatureCount );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetSelectingFeatures( HOBJ hObj, int index, HOBJ* pFeatures, size_t* pFeatureCount );
 
 	//-----------------------------------------------------------------------------
 	typedef void (*CBOBJChanged)(	/// The feature which has changed
@@ -707,67 +742,67 @@ typedef int HOBJ;
 									/// Whenever the callback gets executed this data is passed back to the user.
 									void* pUserData );
 	//-----------------------------------------------------------------------------
-	TPROPHANDLING_ERROR DMR_CALL OBJ_CreateCallback( TCallbackType type, CBOBJChanged pMeth, void* pUserData, CallbackHandle* phCallback );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_DeleteCallback( CallbackHandle hCallback );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_AttachCallback( HOBJ hObj, CallbackHandle hCallback );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_DetachCallback( HOBJ hObj, CallbackHandle hCallback );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_CreateCallback( TCallbackType type, CBOBJChanged pMeth, void* pUserData, CallbackHandle* phCallback );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_DeleteCallback( CallbackHandle hCallback );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_AttachCallback( HOBJ hObj, CallbackHandle hCallback );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_DetachCallback( HOBJ hObj, CallbackHandle hCallback );
 	// navigation within object hierachies
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetFirstSibling( HOBJ hObj, HOBJ* pFirstSibling );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetNextSibling( HOBJ hObj, HOBJ* pNextSibling );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetLastSibling( HOBJ hObj, HOBJ* pLastSibling );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetFirstChild( HOBJ hObj, HOBJ* pFirstChild );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetParent( HOBJ hObj, HOBJ* pParent );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetFirstSibling( HOBJ hObj, HOBJ* pFirstSibling );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetNextSibling( HOBJ hObj, HOBJ* pNextSibling );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetLastSibling( HOBJ hObj, HOBJ* pLastSibling );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetFirstChild( HOBJ hObj, HOBJ* pFirstChild );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetParent( HOBJ hObj, HOBJ* pParent );
 	// property specific object functions
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetMaxValCount( HOBJ hProp, unsigned int* pValCount );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetValCount( HOBJ hProp, unsigned int* pValCount );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_SetValCount( HOBJ hProp, unsigned int valCount );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetBinary( HOBJ hProp, char* pBuf, unsigned int bufSize, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_SetBinary( HOBJ hProp, const char* pBuf, unsigned int bufSize, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetBinaryBufferSize( HOBJ hProp, unsigned int* pBufSize, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetBinaryBufferMaxSize( HOBJ hProp, unsigned int* pBufSize );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetF( HOBJ hProp, double* pVal, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetFArray( HOBJ hProp, double* pVal, unsigned int valCount, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_SetF( HOBJ hProp, double val, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_SetFArray( HOBJ hProp, const double* pVal, unsigned int valCount, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetFDictEntry( HOBJ hProp, char* pTranslationString, size_t translationStringBufSize, double* pValue, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetFDictEntries( HOBJ hProp, char** pTranslationArray, size_t sizePerTranslationBuf, double* pValArray, size_t arraySizes );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetI( HOBJ hProp, int* pVal, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetIArray( HOBJ hProp, int* pVal, unsigned int valCount, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_SetI( HOBJ hProp, int val, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_SetIArray( HOBJ hProp, const int* pVal, unsigned int valCount, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetIDictEntry( HOBJ hProp, char* pTranslationString, size_t translationStringBufSize, int* pValue, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetIDictEntries( HOBJ hObj, char** pTranslationArray, size_t sizePerTranslationBuf, int* pValArray, size_t arraySizes );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetI64( HOBJ hProp, int64_type* pVal, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetI64Array( HOBJ hProp, int64_type* pVal, unsigned int valCount, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_SetI64( HOBJ hProp, int64_type val, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_SetI64Array( HOBJ hProp, const int64_type* pVal, unsigned int valCount, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetI64DictEntry( HOBJ hProp, char* pTranslationString, size_t translationStringBufSize, int64_type* pValue, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetI64DictEntries( HOBJ hObj, char** pTranslationArray, size_t sizePerTranslationBuf, int64_type* pValArray, size_t arraySizes );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetP( HOBJ hProp, void** pVal, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_SetP( HOBJ hProp, void* val, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetS( HOBJ hProp, char* pVal, size_t bufSize, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_SetS( HOBJ hProp, const char* pVal, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetSFormattedEx( HOBJ hProp, char* pBuf, size_t* pBufSize, const char* pFormat, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetSArrayFormattedEx( HOBJ hProp, char* pBuf, size_t* pBufSize, const char* pFormat, const char* pDelimiters, int startIndex, int endIndex, int mode );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_RemoveVal( HOBJ hProp, int index );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_IsConstantDefined( HOBJ hProp, int constant, unsigned int* pResult );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetDictSize( HOBJ hProp, unsigned int* pDictSize );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetFormatString( HOBJ hProp, char* pBuf, size_t bufSize );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetMaxValCount( HOBJ hProp, unsigned int* pValCount );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetValCount( HOBJ hProp, unsigned int* pValCount );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_SetValCount( HOBJ hProp, unsigned int valCount );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetBinary( HOBJ hProp, char* pBuf, unsigned int bufSize, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_SetBinary( HOBJ hProp, const char* pBuf, unsigned int bufSize, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetBinaryBufferSize( HOBJ hProp, unsigned int* pBufSize, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetBinaryBufferMaxSize( HOBJ hProp, unsigned int* pBufSize );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetF( HOBJ hProp, double* pVal, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetFArray( HOBJ hProp, double* pVal, unsigned int valCount, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_SetF( HOBJ hProp, double val, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_SetFArray( HOBJ hProp, const double* pVal, unsigned int valCount, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetFDictEntry( HOBJ hProp, char* pTranslationString, size_t translationStringBufSize, double* pValue, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetFDictEntries( HOBJ hProp, char** pTranslationArray, size_t sizePerTranslationBuf, double* pValArray, size_t arraySizes );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetI( HOBJ hProp, int* pVal, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetIArray( HOBJ hProp, int* pVal, unsigned int valCount, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_SetI( HOBJ hProp, int val, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_SetIArray( HOBJ hProp, const int* pVal, unsigned int valCount, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetIDictEntry( HOBJ hProp, char* pTranslationString, size_t translationStringBufSize, int* pValue, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetIDictEntries( HOBJ hObj, char** pTranslationArray, size_t sizePerTranslationBuf, int* pValArray, size_t arraySizes );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetI64( HOBJ hProp, int64_type* pVal, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetI64Array( HOBJ hProp, int64_type* pVal, unsigned int valCount, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_SetI64( HOBJ hProp, int64_type val, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_SetI64Array( HOBJ hProp, const int64_type* pVal, unsigned int valCount, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetI64DictEntry( HOBJ hProp, char* pTranslationString, size_t translationStringBufSize, int64_type* pValue, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetI64DictEntries( HOBJ hObj, char** pTranslationArray, size_t sizePerTranslationBuf, int64_type* pValArray, size_t arraySizes );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetP( HOBJ hProp, void** pVal, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_SetP( HOBJ hProp, void* val, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetS( HOBJ hProp, char* pVal, size_t bufSize, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_SetS( HOBJ hProp, const char* pVal, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetSFormattedEx( HOBJ hProp, char* pBuf, size_t* pBufSize, const char* pFormat, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetSArrayFormattedEx( HOBJ hProp, char* pBuf, size_t* pBufSize, const char* pFormat, const char* pDelimiters, int startIndex, int endIndex, int mode );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_RemoveVal( HOBJ hProp, int index );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_IsConstantDefined( HOBJ hProp, int constant, unsigned int* pResult );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetDictSize( HOBJ hProp, unsigned int* pDictSize );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetFormatString( HOBJ hProp, char* pBuf, size_t bufSize );
 	// list specific object functions
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetElementCount( HLIST hList, unsigned int* pElementCount );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetElementCount( HLIST hList, unsigned int* pElementCount );
 	// method specific object functions
-	TPROPHANDLING_ERROR DMR_CALL OBJ_Execute( HOBJ hMeth, const char* pCallParams, const char* pDelimiters, int* pResult );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetSParamList( HOBJ hMeth, char* pBuf, size_t bufSize );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_Execute( HOBJ hMeth, const char* pCallParams, const char* pDelimiters, int* pResult );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetSParamList( HOBJ hMeth, char* pBuf, size_t bufSize );
 	// advanced object specific functions
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetHandleEx( HLIST hList, const char* pObjName, HOBJ* phObj, unsigned int searchmode, int maxSearchDepth );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetHandleEx( HLIST hList, const char* pObjName, HOBJ* phObj, unsigned int searchmode, int maxSearchDepth );
 	/// \brief A prototype for a function pointer used for in place string construction
 	///
 	/// This function pointer can be used to prototype advanced efficient calls to interface functions.
 	/// \sa
 	/// <b>OBJ_GetSWithInplaceConstruction()</b>
-	typedef char*(SCF)(const char* pBuf, size_t bufSize);
-	TPROPHANDLING_ERROR DMR_CALL OBJ_GetSWithInplaceConstruction( HOBJ hObj, TOBJ_StringQuery sq, char** pResult, SCF constructionFunc, int mode, int reserved );
-	TPROPHANDLING_ERROR DMR_CALL OBJ_FreeSMemory( char* pBuffer );
+	typedef char*(*SCF)(const char* pBuf, size_t bufSize);
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetSWithInplaceConstruction( HOBJ hObj, TOBJ_StringQuery sq, char** pResult, SCF constructionFunc, int mode, int reserved );
+	MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_FreeSMemory( char* pBuffer );
 
 #endif // DOXYGEN_CPP_DOCUMENTATION && WRAP_ANY
 

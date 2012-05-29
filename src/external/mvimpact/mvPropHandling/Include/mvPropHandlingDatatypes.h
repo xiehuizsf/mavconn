@@ -95,20 +95,231 @@
 //========================= enumerations ======================================
 //=============================================================================
 //-----------------------------------------------------------------------------
+/// \brief Defines the type of callback to register.
+enum TCallbackType
+//-----------------------------------------------------------------------------
+{
+	/// \brief Execute callback whenever this component has been modified.
+	ctOnChanged = 0,
+	/// \brief Executed when a properties value is read. The callback is executed
+	/// before the value is returned to the user. This allows i.e. a driver to
+	/// determine the value for this property only if the user is interested in
+	/// in it's data.
+	ctOnReadData = 1,
+	/// \brief Executed when a properties value is written. The callback is executed
+	/// before the value is actually assigned. This allows i.e. a driver to
+	/// validate if this is a valid value for the property.
+	ctOnWriteData = 2
+};
+
+//-----------------------------------------------------------------------------
+/// \enum TComponentFlag
+/// \brief Flags defining access rights and other component properties
+///
+/// Flags defining access rights and other component properties
+enum TComponentFlag // flags_attribute, uint_type
+//-----------------------------------------------------------------------------
+{
+	/// \brief This is used to define an inconsistent/invalid flag.
+	///
+	/// This e.g. can be used as a return value for a function, that could not
+	/// calculate a valid flag mask.
+	cfUndefined = 0x0,
+	/// \brief This component can be accessed for reading.
+	///
+	/// If this flag is set this component can be accessed for reading. This 
+	/// involves reading a properties data, reading a component lists elements 
+	/// reading the size of a component list and so on.
+	cfReadAccess = 0x1,
+	/// \brief This component can be accessed for writing.
+	/// 
+	/// If this flag is set this component can be accessed for writing or modifying it's data.
+	/// This involves writing values to a property, adding components to a list and so on.
+	cfWriteAccess = 0x2,
+	/// \brief This component can be accessed for both reading and writing.
+	///
+	/// This just combines <b>mvIMPACT::acquire::cfReadAccess</b> and 
+	/// <b>mvIMPACT::acquire::cfWriteAccess</b>
+	cfRWAccess = cfReadAccess | cfWriteAccess,
+	/// \brief This components element count can be modified.
+	/// 
+	/// If this flag is set this components element count can't be modified. For a list this would mean,
+	/// that the number of elements stored in this list can't be modified. For a property this means,
+	/// that the number of values stored in the property can't be modified.
+	cfFixedSize = 0x4,
+	/// \brief The component uses memory managed by the caller.
+	///
+	/// If this flag is set this component uses user allocated memory for data storage (only implemented for
+	/// properties). If this is the case the property behaves slightly different:
+	/// - cloning still uses the same memory for property values instead of making it's own copy
+	///   of the values
+	/// - a string property can't be assigned using other types like int or float.
+	/// - if a property is not \e <b>mvIMPACT::acquire::cfFixedSize</b> and is assigned a different 
+	///   number of values no check for sufficient memory is performed and <b>NO</b> new memory is allocated.
+	/// - the memory used by the property is never free, moved or modified in size by the property.
+	///   At all times the user is responsible for this.
+	///
+	/// \note
+	/// If this flag is specified for a component, which is not a property, it will have no
+	/// effect on the behaviour of the component.
+	cfUserAllocatedMemory = 0x8,
+	/// \brief The component is shadowed by other settings currently if set.
+	///
+	/// This flag is used to specify that this component currently has no effect on the behaviour
+	/// of the system. This flag is just meant as a hint for the user. The property module
+	/// itself does <b>NOT</b> use this flag for anything.
+	cfInvisible = 0x10,
+	/// \brief Allows combinations of translation dictionary entry as valid values.
+	///
+	/// If this flag is set for a property that defines a translation dictionary not
+	/// only values, which are registered in the translation dictionary are allowed
+	/// values for this property, but also values logical OR-ed together with values from
+	/// the translation dictionary (these obviously can't be set as strings).
+	///
+	/// A property defines two entries ("one", 1) and ("two", 2) then 1 | 2 = 3 will be a
+	/// valid value as well, but "three" obviously won't.
+	///
+	/// In a GUI application a property specifying this flag should be displayed
+	/// as a set of check-box controls (one for each dictionary entry) or something
+	/// similar.
+	///
+	/// \note
+	/// If this flag is specified for a component, which is not a property, it will have no
+	/// effect on the behaviour of the component. Only integer properties can use this feature
+	cfAllowValueCombinations = 0x20,
+	/// \brief Informs a displaying GUI that this component should be displayed as a list.
+	///
+	/// This flag e.g. can be set for an array property to inform a displaying GUI, that
+	/// this property is best displayed as a list with a entry for each element.
+	/// This flag is just meant as a hint for the user. The property module
+	/// itself does <b>NOT</b> use this flag for anything.
+	cfShouldBeDisplayedAsList = 0x40,
+	/// \brief If set this component or derived components can't be stored as external data.
+	cfDisallowSerialize = 0x80,
+	/// \brief If set this component is always cloned completely.
+	///
+	/// This results in the component being completely independent from it's parent no matter
+	/// whether it has been built while deriving or cloning a list and thus the components
+	/// within this list and it's sub-lists.
+	///
+	/// This will change the behaviour to that effect that changing the parent component
+	/// will no longer affect the 'derived' component. However this allows to define
+	/// different default values, constants and translation dictionaries for properties
+	/// within an inheritance hierarchy.
+	///
+	/// \note
+	/// This feature is currently only supported for components of type
+	/// <b>mvIMPACT::acquire::ctPropInt</b>, <b>mvIMPACT::acquire::ctPropInt64</b>
+	/// and <b>mvIMPACT::acquire::ctPropFloat</b>.
+	cfAlwaysForceClone = 0x100,
+	/// \brief If set, this component is currently not available due to the setting of another feature.
+	///
+	/// In this case this feature can't be written to nor can it be read.
+	cfNotAvailable = 0x200,
+	/// \brief If set, this feature has been defined, but so far has not been implemented.
+	cfNotImplemented = 0x400,
+	/// \brief Specifies a property, which contains binary data.
+	///
+	/// This flag is used to specify a property that contains data in binary format
+	cfContainsBinaryData = 0x800,
+	/// \brief Informs a displaying GUI that this component should be displayed as an enumeration(e.g. with a combo box).
+	///
+	/// This flag e.g. can be set for a property to inform a displaying GUI, that
+	/// this property is best displayed as a combo box or something similar.
+	/// This flag is just meant as a hint for the user. The property module
+	/// itself does <b>NOT</b> use this flag for anything.
+	cfShouldBeDisplayedAsEnumeration = 0x1000
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+	, cfLast = cfShouldBeDisplayedAsEnumeration
+#endif // DOXYGEN_SHOULD_SKIP_THIS
+};
+
+//-----------------------------------------------------------------------------
+/// \brief Allowed values types for property objects
+enum TValueType // flags_attribute, uint_type, internal_attribute
+//-----------------------------------------------------------------------------
+{
+	/// \brief Defines a property for 32 bit integer types.
+	vtInt = 0x1,
+	/// \brief Defines a property for float types.
+	vtFloat,
+	/// \brief Defines a property for pointer types.
+	vtPtr,
+	/// \brief Defines a property for strings.
+	vtString,
+	/// \brief Defines a property for 64 bit integer types.
+	vtInt64
+};
+
+//-----------------------------------------------------------------------------
+/// \brief Allowed components handled by this module.
+///
+/// This module can handle the types listed in this enumeration only.
+enum TComponentType // flags_attribute, uint_type
+//-----------------------------------------------------------------------------
+{
+	/// \brief A property type.
+	///
+	/// This type will never occur in a real world application. It's just used
+	/// to build up the other types. Properties can be used to store user specific
+	/// data in a structured way.
+	ctProp = 0x00010000,
+	/// \brief A list object.
+	///
+	/// Lists can contain other components like lists, methods and properties.
+	/// Thus lists can be used to build up hierarchical structures of different
+	/// components.
+	ctList = 0x00020000,
+	/// \brief A method object.
+	///
+	/// Method objects provide the possibility to organise functions in lists.
+	ctMeth = 0x00040000,
+	/// \brief Defines a property for 32 bit integer values.
+	ctPropInt = ctProp | vtInt,
+	/// \brief Defines a property for floating point values.
+	ctPropFloat = ctProp | vtFloat,
+	/// \brief Defines a property for string values.
+	ctPropString = ctProp | vtString,
+	/// \brief Defines a property for pointer values.
+	ctPropPtr = ctProp | vtPtr,
+	/// \brief Defines a property for 64 bit integer values.
+	ctPropInt64 = ctProp | vtInt64
+};
+
+//-----------------------------------------------------------------------------
+enum TComponentVisibility
+//-----------------------------------------------------------------------------
+{
+	/// \brief Defines a feature that should be visible for all users via the GUI
+	/// and API. This is the default visibility if no visibility has been specified
+	/// for a particular component.
+	cvBeginner = 0,
+	/// \brief Defines a feature that requires a more in-depth knowledge of the functionality.
+	/// This is the preferred visibility level for all advanced features.
+	cvExpert = 1,
+	/// \brief Defines an advanced feature that if not configured correctly might result in
+	/// unexpected behaviour.
+	cvGuru = 2,
+	/// \brief Defines a feature that should not be displayed in a GUI but is still accessible
+	/// via API function calls.
+	cvInvisible = 3
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+	, cvLast
+#endif // DOXYGEN_SHOULD_SKIP_THIS
+};
+
+//-----------------------------------------------------------------------------
 /// \brief Errorcodes of the module handling everything related to properties.
 enum TPROPHANDLING_ERROR
 //-----------------------------------------------------------------------------
 {
 	/// \brief The operation has been executed successfully.
 	PROPHANDLING_NO_ERROR = 0,
-	/// \brief A dummy constant to mark the first valid error code for property module
-	/// related errors.
-	PROPHANDLING_FIRST_ERROR_CODE = -2000,
 	/// \brief This component is not a list.
 	///
 	/// A list operation for this component has been called but this
 	/// component does not reference a list.
-	PROPHANDLING_NOT_A_LIST = PROPHANDLING_FIRST_ERROR_CODE,
+	PROPHANDLING_NOT_A_LIST = -2000,
 	/// \brief This component is not a property.
 	///
 	/// A property operation for this component has been called but
@@ -226,7 +437,7 @@ enum TPROPHANDLING_ERROR
 	/// \brief A too small value has been passed.
 	///
 	/// One or more of the values the caller tried to write to the
-	/// property are smaller then the min. allowed value for this property.
+	/// property are smaller than the min. allowed value for this property.
 	PROPHANDLING_PROP_VAL_TOO_SMALL = -2018,
 	/// \brief The specified component could not be found.
 	PROPHANDLING_COMPONENT_NOT_FOUND = -2019,
@@ -308,7 +519,6 @@ enum TPROPHANDLING_ERROR
 	/// arise e.g. when a string property doesn't allow the string to contain numbers. In this
 	/// case trying to set the properties value to 'blabla7bla' would cause this error.
 	PROPHANDLING_PROP_VALIDATION_FAILED = -2038,
-
 	// If new error codes must be added this happens HERE!
 	// When adding a new value here NEVER forget to update the internal string AND exception table!
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -325,201 +535,12 @@ enum TPROPHANDLING_ERROR
 };
 
 //-----------------------------------------------------------------------------
-/// \enum TComponentFlag
-/// \brief Flags defining access rights and other component properties
-///
-/// Flags defining access rights and other component properties
-enum TComponentFlag
-//-----------------------------------------------------------------------------
-{
-	/// \brief This is used to define an inconsistent/invalid flag.
-	///
-	/// This e.g. can be used as a return value for a function, that could not
-	/// calculate a valid flag mask.
-	cfUndefined = 0x0,
-	/// \brief This component can be accessed for reading.
-	///
-	/// If this flag is set this component can be accessed for reading. This 
-	/// involves reading a properties data, reading a component lists elements 
-	/// reading the size of a component list and so on.
-	cfReadAccess = 0x1,
-	/// \brief This component can be accessed for writing.
-	/// 
-	/// If this flag is set this component can be accessed for writing or modifying it's data.
-	/// This involves writing values to a property, adding components to a list and so on.
-	cfWriteAccess = 0x2,
-	/// \brief This component can be accessed for both reading and writing.
-	///
-	/// This just combines <b>mvIMPACT::acquire::cfReadAccess</b> and 
-	/// <b>mvIMPACT::acquire::cfWriteAccess</b>
-	cfRWAccess = cfReadAccess | cfWriteAccess,
-	/// \brief This components element count can be modified.
-	/// 
-	/// If this flag is set this components element count can't be modified. For a list this would mean,
-	/// that the number of elements stored in this list can't be modified. For a property this means,
-	/// that the number of values stored in the property can't be modified.
-	cfFixedSize = 0x4,
-	/// \brief The component uses memory managed by the caller.
-	///
-	/// If this flag is set this component uses user allocated memory for data storage (only implemented for
-	/// properties). If this is the case the property behaves slightly different:
-	/// - cloning still uses the same memory for property values instead of making it's own copy
-	///   of the values
-	/// - a string property can't be assigned using other types like int or float.
-	/// - if a property is not \e <b>mvIMPACT::acquire::cfFixedSize</b> and is assigned a different 
-	///   number of values no check for sufficient memory is performed and <b>NO</b> new memory is allocated.
-	/// - the memory used by the property is never free, moved or modified in size by the property.
-	///   At all times the user is responsible for this.
-	///
-	/// \note
-	/// If this flag is specified for a component, which is not a property, it will have no
-	/// effect on the behaviour of the component.
-	cfUserAllocatedMemory = 0x8,
-	/// \brief The component is shadowed by other settings currently if set.
-	///
-	/// This flag is used to specify that this component currently has no effect on the behaviour
-	/// of the system. This flag is just meant as a hint for the user. The property module
-	/// itself does <b>NOT</b> use this flag for anything.
-	cfInvisible = 0x10,
-	/// \brief Allows combinations of translation dictionary entry as valid values.
-	///
-	/// If this flag is set for a property that defines a translation dictionary not
-	/// only values, which are registered in the translation dictionary are allowed
-	/// values for this property, but also values logical OR-ed together with values from
-	/// the translation dictionary (these obviously can't be set as strings).
-	///
-	/// A property defines two entries ("one", 1) and ("two", 2) then 1 | 2 = 3 will be a
-	/// valid value as well, but "three" obviously won't.
-	///
-	/// In a GUI application a property specifying this flag should be displayed
-	/// as a set of check-box controls (one for each dictionary entry) or something
-	/// similar.
-	///
-	/// \note
-	/// If this flag is specified for a component, which is not a property, it will have no
-	/// effect on the behaviour of the component. Only integer properties can use this feature
-	cfAllowValueCombinations = 0x20,
-	/// \brief Informs a displaying GUI that this component should be displayed as a list.
-	///
-	/// This flag e.g. can be set for an array property to inform a displaying GUI, that
-	/// this property is best displayed as a list with a entry for each element.
-	/// This flag is just meant as a hint for the user. The property module
-	/// itself does <b>NOT</b> use this flag for anything.
-	cfShouldBeDisplayedAsList = 0x40,
-	/// \brief If set this component or derived components can't be stored as external data.
-	cfDisallowSerialize = 0x80,
-	/// \brief If set this component is always cloned completely.
-	///
-	/// This results in the component being completely independent from it's parent no matter
-	/// whether it has been built while deriving or cloning a list and thus the components
-	/// within this list and it's sub-lists.
-	///
-	/// This will change the behaviour to that effect that changing the parent component
-	/// will no longer affect the 'derived' component. However this allows to define
-	/// different default values, constants and translation dictionaries for properties
-	/// within an inheritance hierarchy.
-	///
-	/// \note
-	/// This feature is currently only supported for components of type
-	/// <b>mvIMPACT::acquire::ctPropInt</b>, <b>mvIMPACT::acquire::ctPropInt64</b>
-	/// and <b>mvIMPACT::acquire::ctPropFloat</b>.
-	cfAlwaysForceClone = 0x100,
-	/// \brief If set, this component is currently not available due to the setting of another feature.
-	///
-	/// In this case this feature can't be written to nor can it be read.
-	cfNotAvailable = 0x200,
-	/// \brief If set, this feature has been defined, but so far has not been implemented.
-	cfNotImplemented = 0x400,
-	/// \brief Specifies a property, which contains binary data.
-	///
-	/// This flag is used to specify a property that contains data in binary format
-	cfContainsBinaryData = 0x800
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-	, cfLast = cfContainsBinaryData
-#endif // DOXYGEN_SHOULD_SKIP_THIS
-};
-
-//-----------------------------------------------------------------------------
-enum TComponentVisibility
-//-----------------------------------------------------------------------------
-{
-	/// \brief Defines a feature that should be visible for all users via the GUI
-	/// and API. This is the default visibility if no visibility has been specified
-	/// for a particular component.
-	cvBeginner = 0,
-	/// \brief Defines a feature that requires a more in-depth knowledge of the functionality.
-	/// This is the preferred visibility level for all advanced features.
-	cvExpert = 1,
-	/// \brief Defines an advanced feature that if not configured correctly might result in
-	/// unexpected behaviour.
-	cvGuru = 2,
-	/// \brief Defines a feature that should not be displayed in a GUI but is still accessible
-	/// via API function calls.
-	cvInvisible = 3
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-	, cvLast
-#endif // DOXYGEN_SHOULD_SKIP_THIS
-};
-
-//-----------------------------------------------------------------------------
-/// \brief Allowed values types for property objects
-enum TValueType
-//-----------------------------------------------------------------------------
-{
-	/// \brief Defines a property for 32 bit integer types.
-	vtInt = 0x1,
-	/// \brief Defines a property for float types.
-	vtFloat,
-	/// \brief Defines a property for pointer types.
-	vtPtr,
-	/// \brief Defines a property for strings.
-	vtString,
-	/// \brief Defines a property for 64 bit integer types.
-	vtInt64
-};
-
-//-----------------------------------------------------------------------------
-/// \brief Allowed components handled by this module.
-///
-/// This module can handle the types listed in this enumeration only.
-enum TComponentType
-//-----------------------------------------------------------------------------
-{
-	/// \brief A property type.
-	///
-	/// This type will never occur in a real world application. It's just used
-	/// to build up the other types. Properties can be used to store user specific
-	/// data in a structured way.
-	ctProp = 0x00010000,
-	/// \brief A list object.
-	///
-	/// Lists can contain other components like lists, methods and properties.
-	/// Thus lists can be used to build up hierarchical structures of different
-	/// components.
-	ctList = 0x00020000,
-	/// \brief A method object.
-	///
-	/// Method objects provide the possibility to organise functions in lists.
-	ctMeth = 0x00040000,
-	/// \brief Defines a property for 32 bit integer values.
-	ctPropInt = ctProp | vtInt,
-	/// \brief Defines a property for floating point values.
-	ctPropFloat = ctProp | vtFloat,
-	/// \brief Defines a property for string values.
-	ctPropString = ctProp | vtString,
-	/// \brief Defines a property for pointer values.
-	ctPropPtr = ctProp | vtPtr,
-	/// \brief Defines a property for 64 bit integer values.
-	ctPropInt64 = ctProp | vtInt64
-};
-
-//-----------------------------------------------------------------------------
 /// \brief Defines the way component lists are imported and exported.
 ///
 /// component lists can be imported and exported from/to XML files and 
 /// (under Windows&copy;) from/into the Registry. These flags define how
 /// this is done.
-enum TStorageFlag
+enum TStorageFlag // flags_attribute, uint_type
 //-----------------------------------------------------------------------------
 {
 	/// \brief A dummy flag to specify the default behaviour.
@@ -662,33 +683,15 @@ enum TScope
 	sUser = 1
 };
 
-//-----------------------------------------------------------------------------
-/// \brief Defines the type of callback to register.
-enum TCallbackType
-//-----------------------------------------------------------------------------
-{
-	/// \brief Execute callback whenever this component has been modified.
-	ctOnChanged = 0,
-	/// \brief Executed when a properties value is read. The callback is executed
-	/// before the value is returned to the user. This allows i.e. a driver to
-	/// determine the value for this property only if the user is interested in
-	/// in it's data.
-	ctOnReadData = 1,
-	/// \brief Executed when a properties value is written. The callback is executed
-	/// before the value is actually assigned. This allows i.e. a driver to
-	/// validate if this is a valid value for the property.
-	ctOnWriteData = 2
-};
-
 #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
-	typedef enum TPROPHANDLING_ERROR TPROPHANDLING_ERROR;
+	typedef enum TCallbackType TCallbackType;
 	typedef enum TComponentFlag TComponentFlag;
-	typedef enum TComponentVisibility TComponentVisibility;
 	typedef enum TValueType TValueType;
 	typedef enum TComponentType TComponentType;
+	typedef enum TComponentVisibility TComponentVisibility;
+	typedef enum TPROPHANDLING_ERROR TPROPHANDLING_ERROR;
 	typedef enum TStorageFlag TStorageFlag;
 	typedef enum TScope TScope;
-	typedef enum TCallbackType TCallbackType;
 #endif // DOXYGEN_SHOULD_SKIP_THIS && WRAP_ANY
 
 /// \brief A type to create a unique identifier for a callback.

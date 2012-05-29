@@ -15,6 +15,8 @@
 #include <iostream>
 #include <vector>
 
+#include <pixhawk/mavlink.h>
+
 #include "PxVector3.h"
 
 #include "mavconn.h"
@@ -29,6 +31,7 @@ mavconn_mavlink_msg_container_t_subscription_t* comm_sub;
 
 bool debug;             	///< boolean for debug output or behavior
 bool verbose;           	///< boolean for verbose output
+bool nosetpointonhold;		///< boolean to stop sending setpoints while in HOLD state
 std::string configFile;		///< Configuration file for parameters
 
 //=== struct for storing the current destination ===
@@ -61,10 +64,15 @@ typedef struct _sweep_parameters
 	float v2;
 } sweep_parameters;
 
+//==== variables for reading from files ===
+std::vector<std::string> _image_list;
+std::vector<std::string>* image_list = &_image_list;
+
 //==== variables for the planner ====
 uint16_t current_active_wp_id = -1;		///< id of current waypoint
 uint16_t next_wp_id = -1;				///< id of next waypoint, after current is reached.
 bool ready_to_continue = false;			///< this marker is set "true" when all necessary conditions of the current waypoint are fulfilled and wpp is ready to proceed to the next waypoint.
+bool valid_destination_available = false;
 uint64_t timestamp_lastoutside_orbit = 0;///< timestamp when the MAV was last outside the orbit or had the wrong yaw value
 uint64_t timestamp_firstinside_orbit = 0;///< timestamp when the MAV was the first time after a waypoint change inside the orbit and had the correct yaw value
 uint64_t timestamp_delay_started = 0;	 ///< timestamp when the current delay command was initiated
@@ -80,11 +88,11 @@ std::vector<mavlink_mission_item_t*>* waypoints = &waypoints1;					///< pointer 
 std::vector<mavlink_mission_item_t*>* waypoints_receive_buffer = &waypoints2;	///< pointer to the receive buffer waypoint vector
 
 //==== variables for the search thread ====
+pid_t patternrec_pid = -1; ///< process id of patternrec. -1 until initialized by fork()
 mavlink_local_position_ned_t search_success_pos; ///< position of MAV when it succeeded in search
 mavlink_attitude_t search_success_att;		 ///< attitude of MAV when it succeeded in search
 mavlink_pattern_detected_t last_detected_pattern; ///< latest successful pattern detection
 float min_conf = 0;                        ///< minimum confidence for pattern to be detected successfully.
-//static GString* SEARCH_PIC = g_string_new("media/sweep_images/mona.jpg");	///< relative path of the search image
 
 //==== variables for the sweep thread ====
 mavlink_mission_item_t* next_sweep_wp = NULL;
@@ -138,24 +146,16 @@ enum PX_WAYPOINTPLANNER_SWEEP_STATES
 	PX_WPP_SWEEP_RUNNING,
 	PX_WPP_SWEEP_FINISHED
 };
-
+/*
 enum PX_WAYPOINT_CMD_ID
 {
-	//These are unofficial waypoint types, defined especially for PixHawk project
+	//These are unofficial waypoint types, defined specially for PixHawk project
 	MAV_CMD_DO_START_SEARCH = 237,
 	MAV_CMD_DO_FINISH_SEARCH = 238,
 	MAV_CMD_DO_SEND_MESSAGE = 239,
-	MAV_CMD_DO_SWEEP = 240
+	//MAV_CMD_DO_SWEEP = 82
 };
-
-enum PX_CMD_MESSAGE_ID
-{
-	//These are unofficial id's of Command(#75) mavlink message
-
-	CMD_SET_AUTOCONTINUE = 50,
-	CMD_HALT = 51,
-	CMD_CONTINUE = 52
-};
+*/
 
 PX_WAYPOINTPLANNER_STATES wpp_state = PX_WPP_IDLE;
 PX_WAYPOINTPLANNER_COMMUNICATION_STATES comm_state = PX_WPP_COMM_IDLE;
@@ -169,6 +169,136 @@ uint8_t protocol_current_partner_compid = 0;
 uint64_t protocol_timestamp_lastaction = 0;
 uint64_t timestamp_last_send_setpoint = 0;
 uint64_t timestamp_last_handle_mission = 0;
+
+
+uint16_t load_mission_from_file(std::string waypointfile)
+{
+        std::ifstream wpfile;
+        wpfile.open(waypointfile.c_str());
+        if (!wpfile)
+        {
+            printf("Unable to open waypoint file\n");
+            return 1; // terminate with error
+        }
+        if (!wpfile.eof())
+        {
+            std::string check;
+			int ver;
+			bool good = false;
+			wpfile >> check;
+			if (!strcmp(check.c_str(),"QGC"))
+			{
+				wpfile >> check;
+				if (!strcmp(check.c_str(),"WPL"))
+				{
+					wpfile >> ver;
+
+					char c = (char)wpfile.peek();
+					if(c == '\r' || c == '\n')
+					{
+						good = true; //the structure of the first line in the file is correct: QGC WPL ###
+					}
+				}
+			}
+
+            if (!good)
+            {
+            	printf("Invalid waypoint file\n");
+            	return 1;
+            }
+            if (verbose) printf("Version: %u\n", ver);
+            switch (ver)
+            {
+            case 120:
+             {
+             	printf("Loading waypoint file...\n");
+             	while (!wpfile.eof())
+ 	            {
+ 	                mavlink_mission_item_t *wp = new mavlink_mission_item_t();
+
+ 	                uint16_t temp;
+
+ 	                wpfile >> wp->seq; //waypoint id
+ 	                wpfile >> temp; wp->current = temp;
+ 	                wpfile >> temp; wp->frame = temp;
+ 	                wpfile >> temp; wp->command = temp;
+ 	                wpfile >> wp->param1;
+ 	                wpfile >> wp->param2;
+ 	                wpfile >> wp->param3; //old "orbit"
+ 	                wpfile >> wp->param4; //old "yaw"
+ 	                wpfile >> wp->x;
+ 	                wpfile >> wp->y;
+ 	                wpfile >> wp->z;
+ 	                wpfile >> temp; wp->autocontinue = temp;
+
+ 	                char c = (char)wpfile.peek();
+ 	                if(c != '\r' && c != '\n')
+ 	                {
+ 	                    delete wp;
+ 	                    break;
+ 	                }
+
+ 	                printf("WP %3u%s: Frame: %u\tCommand: %3u\tparam1: %6.2f\tparam2: %7.2f\tparam3: %6.2f\tparam4: %7.2f\tX: %7.2f\tY: %7.2f\tZ: %7.2f\tAuto-Cont: %u\t\n", wp->seq, (wp->current?"*":" "), wp->frame, wp->command, wp->param1, wp->param2, wp->param3, wp->param4, wp->x, wp->y, wp->z, wp->autocontinue);
+ 	                waypoints->push_back(wp);
+ 	            } //end while
+               	break;
+             }
+             default:
+             {
+                 printf("Waypoint file version %u is not supported!\n",ver);
+                 return 1; // terminate with error
+             }
+
+            } //end version switch
+        } // end reading file
+        else
+        {
+            printf("Empty waypoint file!\n");
+            //return 1; // terminate with error
+        }
+        wpfile.close();
+        return 0;
+}
+
+uint16_t load_imagelist_from_file(std::string imagelistfile)
+{
+std::ifstream ilfile;
+ilfile.open(imagelistfile.c_str());
+if (!ilfile) {
+    printf("Unable to open image list file\n");
+    return 1; // terminate with error
+}
+
+if (!ilfile.eof())
+{
+    printf("Loading image list file...\n");
+    std::string image_path;
+    while (!ilfile.eof())
+    {
+    	getline(ilfile,image_path);
+    	if (image_path.size() > 0)
+    	{
+    		if(verbose) printf("%s\n", image_path.c_str());
+    		image_list->push_back(image_path);
+    	}
+    	else
+    	{
+    		break;
+    	}
+    }
+}
+else
+{
+    printf("Empty image list file!\n");
+}
+ilfile.close();
+//Test if filenames have been saved correctly
+//printf("Number of lines: %u\n", image_list->size());
+//std::string temp;
+//temp = image_list->at(1);
+//printf("Second line: %s\n", temp.c_str());
+return 0;
+}
 
 void handle_mission (uint16_t seq, uint64_t now);
 
@@ -254,11 +384,13 @@ void send_setpoint(void)
 *  @param seq The waypoint sequence number the MAV should fly to.
 */
 {
+	if(valid_destination_available==true)
+	{
         mavlink_message_t msg;
         mavlink_set_local_position_setpoint_t PControlSetPoint;
 
         // send new set point to local IMU
-        if (cur_dest.frame == 1)
+        if (cur_dest.frame ==  MAV_FRAME_LOCAL_NED)
         {
             PControlSetPoint.target_system = systemid;
             PControlSetPoint.target_component = MAV_COMP_ID_IMU;
@@ -282,6 +414,11 @@ void send_setpoint(void)
         gettimeofday(&tv, NULL);
         uint64_t now = ((uint64_t)tv.tv_sec)*1000000 + tv.tv_usec;
         timestamp_last_send_setpoint = now;
+	}
+	else
+	{
+		 if (debug) printf("No new set point sent, because no valid destination available yet\n");
+	}
 }
 
 void send_mission_count(uint8_t target_systemid, uint8_t target_compid, uint16_t count)
@@ -368,6 +505,7 @@ void send_mission_reached(uint16_t seq)
 void set_destination(mavlink_mission_item_t* wp)
 {
 	// Assume MAV_CMD_NAV_WAYPOINT and set parameters
+	valid_destination_available = true;
 	cur_dest.frame = wp->frame;
 	cur_dest.x = wp->x;
 	cur_dest.y = wp->y;
@@ -457,6 +595,7 @@ void check_if_reached_dest(bool* posReached, bool* yawReached, uint16_t next_wp_
 
 	if (dist >= 0.f && dist <= cur_dest.rad)
 	{
+		//if (debug) printf("Check dest_reach: dist = %f, rad = %f\n",dist,cur_dest.rad);
 	    *posReached = true;
 	}
 
@@ -581,30 +720,39 @@ for (i=3;i>0;i--)
 	printf("x1: %f  y1: %f\n", corner[1][0],corner[1][1]);
 	printf("x2: %f  y2: %f\n", corner[2][0],corner[2][1]);
 	printf("x3: %f  y3: %f\n", corner[3][0],corner[3][1]);
-	printf("\nlong: %f  short: %f\n", sw->long_side, sw->short_side);
+
 	printf("\nu1: %f  v1: %f \n", sw->u1,sw->v1);
 	printf("u2: %f  v2: %f \n", sw->u2,sw->v2);
 	*/
-
+	printf("\nlong: %f  short: %f\n", sw->long_side, sw->short_side);
 	return 0;
 }
 
 
+
+
+
 /*
-// FIX ME!!
 void terminate_all_threads() //this fuction should be called every time when a new waypoint list is downloaded, to end threads from the old list.
 {
 	if (verbose) printf("Kill all threads!\n");
 
 	terminate_threads = true;
+
+	// FIX ME!! For some reason g_cond_broadcast is ignored and the thread does not wake up for termination.
+
+	if (verbose) printf("Waking the search thread for termination...\n");
 	g_cond_broadcast(cond_pattern_detected); //fake condition broadcast in order to wake the search thread for termination
+	if (verbose) printf("Waking the sweep thread for termination...\n");
 	g_cond_broadcast(cond_position_received); //fake condition broadcast in order to wake the sweep thread for termination
 	terminate_threads = false;
+	if (verbose) printf("All threads killed!\n");
 }
 */
 
 void* search_thread_func (gpointer n_det)
 {
+	//Manage the output of patternrec
 	uint16_t npic = 0;	                         ///< number of times the picture has been detected
 	float best_conf = 0;
 	search_state = PX_WPP_SEARCH_RUNNING;
@@ -613,8 +761,9 @@ void* search_thread_func (gpointer n_det)
 	if (verbose) printf("here %u.\n", detections_needed);
 	while (1)
 	{
+		if (verbose) printf("here 2\n");
 		g_cond_wait(cond_pattern_detected,main_mutex);
-
+		if (verbose) printf("here 3\n");
 		if (terminate_threads == true || search_state == PX_WPP_SEARCH_END)
 		{
 			search_state = PX_WPP_SEARCH_IDLE;
@@ -667,9 +816,9 @@ void* sweep_thread_func (gpointer sweep_wp)
 		uint16_t fake_next_wp_id = sweep_wp_->seq;  // defined for the sake of "check_if_reached_dest"-function
 		next_sweep_wp = new mavlink_mission_item_t;
 		next_sweep_wp->command = MAV_CMD_NAV_WAYPOINT; // Must be declared
-		next_sweep_wp->frame = 1;
-		next_sweep_wp->param1 = 0.15; // acceptance radius may depend on sw.r, e.g. 0.2*sw.r
-		next_sweep_wp->param2 = 0.5; // MAV should stay 0.5s at each checkpoint within the sweep
+		next_sweep_wp->frame = MAV_FRAME_LOCAL_NED;
+		next_sweep_wp->param1 = 0.5; // MAV should stay 0.5s at each checkpoint within the sweep
+		next_sweep_wp->param2 = 0.15; // acceptance radius may depend on sw.r, e.g. 0.2*sw.r
 		next_sweep_wp->param4 = 0; // Should yaw stay constant all the time?
 		next_sweep_wp->z = sw.z;
 
@@ -684,14 +833,15 @@ void* sweep_thread_func (gpointer sweep_wp)
 			if (verbose) printf("Sweep: next checkpoint: %u\n", sweep_line*2);
 	    	next_sweep_wp->x = sw.x0 + (sw.r + (sweep_line % 2)*sw.d)*sw.u1 + (1+2*sweep_line)*sw.r*sw.u2;
 	    	next_sweep_wp->y = sw.y0 + (sw.r + (sweep_line % 2)*sw.d)*sw.v1 + (1+2*sweep_line)*sw.r*sw.v2;
-	    	if (verbose) printf("Sweep: next dest (%f, %f)",next_sweep_wp->x,next_sweep_wp->y);
 	    	now = ((uint64_t)tv.tv_sec)*1000000 + tv.tv_usec;
 	    	handle_mission(current_active_wp_id,now);
 	    	yawReached = false;						///< boolean for yaw attitude reached
 	    	posReached = false;						///< boolean for position reached
 	    	while (posReached==false || yawReached==false || wpp_state != PX_WPP_RUNNING)
 	    	{
+	    		//if (verbose) printf("...sweep thread going to wait (wp: %u)\n", sweep_line*2);
 	    		g_cond_wait(cond_position_received,main_mutex);
+	    		//if (verbose) printf("...sweep thread active\n");
 				if (current_active_wp_id != sweep_wp_->seq || terminate_threads == true) //terminate thread if current waypoint changed
 				{
 					sweep_state = PX_WPP_SWEEP_IDLE;
@@ -711,14 +861,15 @@ void* sweep_thread_func (gpointer sweep_wp)
 	    	if (verbose) printf("Sweep: next checkpoint: %u\n", sweep_line*2+1);
 	    	next_sweep_wp->x = sw.x0 + (sw.r + ((sweep_line+1) % 2)*sw.d)*sw.u1 + (1+2*sweep_line)*sw.r*sw.u2;
 	    	next_sweep_wp->y = sw.y0 + (sw.r + ((sweep_line+1) % 2)*sw.d)*sw.v1 + (1+2*sweep_line)*sw.r*sw.v2;
-	    	if (verbose) printf("Sweep: next dest (%f, %f)",next_sweep_wp->x,next_sweep_wp->y);
 	    	now = ((uint64_t)tv.tv_sec)*1000000 + tv.tv_usec;
 	    	handle_mission(current_active_wp_id,now);
 	    	yawReached = false;						///< boolean for yaw attitude reached
 	    	posReached = false;						///< boolean for position reached
 	    	while (posReached==false || yawReached==false || wpp_state != PX_WPP_RUNNING)
 	    	{
+	    		//if (verbose) printf("...sweep thread going to wait (wp: %u)\n", sweep_line*2+1);
 	    		g_cond_wait(cond_position_received,main_mutex);
+	    		//if (verbose) printf("...sweep thread active\n");
 				if (current_active_wp_id != sweep_wp_->seq || terminate_threads == true)
 				{
 					sweep_state = PX_WPP_SWEEP_IDLE;
@@ -733,7 +884,70 @@ void* sweep_thread_func (gpointer sweep_wp)
 		    	check_if_reached_dest(&posReached, &yawReached, fake_next_wp_id);
 	    	}
 	    	sweep_line++;
+		} // end while
+
+		if (sw.short_side > 2*sweep_line*sw.r) //The last sweep line was partially covered by the previous one, but should be added for complete cover of sweep area
+		{
+
+			if (verbose) printf("Sweep: proceeding to the last sweep line %u\n", sweep_line);
+
+			// (sweep_line*2)-th chechpoint
+			if (verbose) printf("Sweep: next checkpoint: %u\n", sweep_line*2);
+	    	next_sweep_wp->x = sw.x0 + (sw.r + (sweep_line % 2)*sw.d)*sw.u1 + (sw.short_side - sw.r)*sw.u2;
+	    	next_sweep_wp->y = sw.y0 + (sw.r + (sweep_line % 2)*sw.d)*sw.v1 + (sw.short_side - sw.r)*sw.r*sw.v2;
+	    	now = ((uint64_t)tv.tv_sec)*1000000 + tv.tv_usec;
+	    	handle_mission(current_active_wp_id,now);
+	    	yawReached = false;						///< boolean for yaw attitude reached
+	    	posReached = false;						///< boolean for position reached
+	    	while (posReached==false || yawReached==false || wpp_state != PX_WPP_RUNNING)
+	    	{
+	    		//if (verbose) printf("...sweep thread going to wait (wp: %u)\n", sweep_line*2);
+	    		g_cond_wait(cond_position_received,main_mutex);
+	    		//if (verbose) printf("...sweep thread active\n");
+				if (current_active_wp_id != sweep_wp_->seq || terminate_threads == true) //terminate thread if current waypoint changed
+				{
+					sweep_state = PX_WPP_SWEEP_IDLE;
+					if (verbose && current_active_wp_id != sweep_wp_->seq) printf("Sweep: failed. Current waypoint changed. Thread terminated.\n");
+					if (verbose && terminate_threads == true) printf("Sweep: Thread terminated.\n");
+					g_mutex_unlock(main_mutex);
+					return NULL;
+				}
+
+		    	yawReached = false;						///< boolean for yaw attitude reached
+		    	posReached = false;						///< boolean for position reached
+		    	check_if_reached_dest(&posReached, &yawReached, fake_next_wp_id);
+	    	}
+
+	    	// (sweep_line*2 + 1)-th chechpoint
+
+	    	if (verbose) printf("Sweep: next checkpoint: %u\n", sweep_line*2+1);
+	    	next_sweep_wp->x = sw.x0 + (sw.r + ((sweep_line+1) % 2)*sw.d)*sw.u1 + (sw.short_side - sw.r)*sw.u2;
+	    	next_sweep_wp->y = sw.y0 + (sw.r + ((sweep_line+1) % 2)*sw.d)*sw.v1 + (sw.short_side - sw.r)*sw.v2;
+	    	now = ((uint64_t)tv.tv_sec)*1000000 + tv.tv_usec;
+	    	handle_mission(current_active_wp_id,now);
+	    	yawReached = false;						///< boolean for yaw attitude reached
+	    	posReached = false;						///< boolean for position reached
+	    	while (posReached==false || yawReached==false || wpp_state != PX_WPP_RUNNING)
+	    	{
+	    		//if (verbose) printf("...sweep thread going to wait (wp: %u)\n", sweep_line*2+1);
+	    		g_cond_wait(cond_position_received,main_mutex);
+	    		//if (verbose) printf("...sweep thread active\n");
+				if (current_active_wp_id != sweep_wp_->seq || terminate_threads == true)
+				{
+					sweep_state = PX_WPP_SWEEP_IDLE;
+					if (verbose && current_active_wp_id != sweep_wp_->seq) printf("Sweep: failed. Current waypoint changed. Thread terminated.\n");
+					if (verbose && terminate_threads == true) printf("Sweep: Thread terminated.\n");
+					g_mutex_unlock(main_mutex);
+					return NULL;
+				}
+
+		    	yawReached = false;						///< boolean for yaw attitude reached
+		    	posReached = false;						///< boolean for position reached
+		    	check_if_reached_dest(&posReached, &yawReached, fake_next_wp_id);
+	    	}
 		}
+
+
 		sweep_state = PX_WPP_SWEEP_FINISHED;
 		if (verbose) printf("Sweep: finished. Thread terminated.\n");
 	}
@@ -748,7 +962,7 @@ void* sweep_thread_func (gpointer sweep_wp)
 
 void handle_mission (uint16_t seq, uint64_t now)
 {
-	//if (debug) printf("Started executing waypoint(%u)...\n",seq);
+	if (debug) printf("Started executing waypoint(%u)...\n",seq);
 
 	if (seq < waypoints->size() && wpp_state == PX_WPP_RUNNING)
 	{
@@ -869,6 +1083,7 @@ void handle_mission (uint16_t seq, uint64_t now)
 	    	takeoff_wp->command = MAV_CMD_NAV_WAYPOINT;
 	    	takeoff_wp->param1 = 5.0;	// Per definition, takeoff includes a 5.0 sec delay after reaching desired height.
 	    	takeoff_wp->param2 = 0.15;
+	    	//takeoff_wp->param4 = last_known_att.yaw; // Setting the desired yaw to current yaw for take-off -> care windup!!
 	    	set_destination(takeoff_wp);
 
 	    	bool yawReached = false;						///< boolean for yaw attitude reached
@@ -976,11 +1191,61 @@ void handle_mission (uint16_t seq, uint64_t now)
 	    {
 	    	break;
 	    }
+#ifdef MAVLINK_ENABLED_PIXHAWK
 	    case MAV_CMD_DO_START_SEARCH:
 	    {
 	    	min_conf = cur_wp->param1; // setting minimal confidence
 	    	if (search_state == PX_WPP_SEARCH_IDLE)
 	    	{
+	    		//Start pattern recognition in a fork
+	    		if (patternrec_pid == -1) //means that no patternrec is running yet
+	    		{
+	    			patternrec_pid = fork();
+
+	    			if (patternrec_pid == 0)                // child
+	    			{
+	    				if (verbose) printf("Executing px_patternrec...\n");
+	    				std::string fcn_call = "px_patternrec";
+	    				std::string before_path = " -i '";
+	    				std::string after_path = "'";
+	    				std::string fcn_param = "-v";
+	    				for (uint16_t i = 0; i<image_list->size(); i++)
+	    				{
+	    					std::string pic_path;
+	    					pic_path = image_list->at(i);
+	    					fcn_param = fcn_param + before_path + pic_path + after_path;
+	    				}
+	    				printf("Trying to execute: %s %s\n", fcn_call.c_str(),fcn_param.c_str());
+
+	    		        char* argv[fcn_param.size() + 1]; // +1 for the trailing 0
+	    		        for (unsigned int i = 0; i < fcn_param.size(); ++i)
+	    		            argv[i] = const_cast<char*>(&fcn_param.at(i));
+	    		        argv[fcn_param.size()] = 0;
+
+	    		        if (execvp("px_patternrec",argv))
+	    				{
+	    					if (verbose) std::cerr << "px_patternrec failed." << std::endl;
+	    					return;
+	    				}
+	    	            // We shoulnd't ever reach this line. If we do, exit.
+	    	            _exit(EXIT_FAILURE);
+	    			}
+	    			else if (patternrec_pid < 0)            // failed to fork
+	    			{
+	    				std::cerr << "Failed to fork" << std::endl;
+	    		        exit(1);
+	    			}
+	    			else //parent
+	    			{
+	    				usleep(500000); // give some time to patternrec to initialize
+	    			}
+
+	    		}
+	    		else
+	    		{
+	    			//Kill old patternrec and start a new one, if necessary
+	    		}
+
 		    	if( !g_thread_supported() )
 		    	{
 		    		g_thread_init(NULL); // Only initialize g thread if not already done
@@ -1029,16 +1294,7 @@ void handle_mission (uint16_t seq, uint64_t now)
 				    		next_wp_id = cur_wp->param2;
 				    		if (verbose) printf("Search failed. Proceeding to waypoint %u\n",next_wp_id);
 				    	}
-
-				    	if (cur_wp->param3 > 0)
-				    	{
-				    		search_state = PX_WPP_SEARCH_RESET;
-				    	}
-				    	else
-				    	{
-				    		search_state = PX_WPP_SEARCH_END;
-				    		g_cond_broadcast(cond_pattern_detected); //fake condition broadcast in order to wake the search thread for termination
-				    	}
+				    	search_state = PX_WPP_SEARCH_RESET;
 			    	}
 			    	else
 			    	{
@@ -1063,6 +1319,7 @@ void handle_mission (uint16_t seq, uint64_t now)
 			ready_to_continue = true;
 	    	break;
 	    }
+	    /*
 	    case MAV_CMD_DO_SEND_MESSAGE:
 	    {
 	    	mavlink_message_t msg;
@@ -1078,8 +1335,9 @@ void handle_mission (uint16_t seq, uint64_t now)
 	    	ready_to_continue = true;
 	    	break;
 	    }
+	    */
 
-	    case MAV_CMD_DO_SWEEP:
+	    case MAV_CMD_NAV_SWEEP:
 	    {
 	    	if (sweep_state == PX_WPP_SWEEP_IDLE)
 	    	{
@@ -1097,20 +1355,27 @@ void handle_mission (uint16_t seq, uint64_t now)
 		    	}
 		    	if (verbose) printf("Sweep thread created!\n");
 	    	}
+	    	else if (sweep_state == PX_WPP_SWEEP_RUNNING)
+	    	{
+	    		set_destination(next_sweep_wp);
+	    	}
 	    	else if (sweep_state == PX_WPP_SWEEP_FINISHED)
 	    	{
 	    		sweep_state = PX_WPP_SWEEP_IDLE;
 		    	next_wp_id = seq + 1;
 		    	ready_to_continue = true;
-		    	break;
 	    	}
-	    	else if (sweep_state == PX_WPP_SWEEP_RUNNING)
-	    	{
-	    		set_destination(next_sweep_wp);
-	    	}
+	    	break;
 	    }
-	    break;
-
+#endif
+	    default:
+	    {
+	    	printf("Unsupported MAV_CMD_ID (#%u). Removing Autocontinue. Change CURRENT manually to proceed.\n",cur_wp->command);
+	    	cur_wp->autocontinue = false;
+	    	next_wp_id = seq + 1;
+	    	ready_to_continue = true;
+	    	break;
+	    }
 	    }} //end switch, end if
 
 		if (ready_to_continue == true)
@@ -1149,9 +1414,9 @@ void handle_mission (uint16_t seq, uint64_t now)
 	}
 	else // wpp_state != PX_WPP_RUNNING
 	{
-		//if (verbose) printf("Waypoint not executed, waypointplanner not in running state.\n");
+		if (debug) printf("Waypoint not executed, waypointplanner not in running state.\n");
 	}
-	//if (debug) printf("Finished executing waypoint(%u)...\n",seq);
+	if (debug) printf("Finished executing waypoint(%u)...\n",seq);
 	timestamp_last_handle_mission = now;
 
 }
@@ -1167,18 +1432,35 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 	            mavlink_mission_ack_t wpa;
 	            mavlink_msg_mission_ack_decode(msg, &wpa);
 
-	            if((msg->sysid == protocol_current_partner_systemid && msg->compid == protocol_current_partner_compid) && (wpa.target_system == systemid && wpa.target_component == compid))
+	            if((msg->sysid == protocol_current_partner_systemid && msg->compid == protocol_current_partner_compid) && (wpa.target_system == systemid && (wpa.target_component == compid || wpa.target_component == MAV_COMP_ID_ALL)))
 	            {
 	                protocol_timestamp_lastaction = now;
 
 	                if (comm_state == PX_WPP_COMM_SENDLIST || comm_state == PX_WPP_COMM_SENDLIST_SENDWPS)
 	                {
-	                    if (protocol_current_wp_id == waypoints->size()-1)
-	                    {
-	                        if (verbose) printf("Received Ack after having sent last waypoint, going to state PX_WPP_COMM_IDLE\n");
+	                	//FIXME: Different reactions on different wpa->types
+	                	switch (wpa.type)
+	                	{
+	                	case MAV_MISSION_ACCEPTED:
+		                    if (protocol_current_wp_id == waypoints->size()-1)
+		                    {
+		                        if (verbose) printf("Received Ack after having sent last waypoint, going to state PX_WPP_COMM_IDLE\n");
+		                        comm_state = PX_WPP_COMM_IDLE;
+		                        protocol_current_wp_id = 0;
+		                    }
+		                    else
+		                    {
+		                        if (verbose) printf("Missionplanner: Received Ack too early!!! Going to state PX_WPP_COMM_IDLE\n");
+		                        comm_state = PX_WPP_COMM_IDLE;
+		                        protocol_current_wp_id = 0;
+		                    }
+		                    break;
+	                	default:
+	                        printf("Missionplanner: Received Ack with an error (%u).Going to state PX_WPP_COMM_IDLE\n",wpa.type);
 	                        comm_state = PX_WPP_COMM_IDLE;
 	                        protocol_current_wp_id = 0;
-	                    }
+	                		break;
+	                	}
 	                }
 	            }
 	            break;
@@ -1189,7 +1471,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 	            mavlink_mission_set_current_t wpc;
 	            mavlink_msg_mission_set_current_decode(msg, &wpc);
 
-	            if(wpc.target_system == systemid && wpc.target_component == compid)
+	            if(wpc.target_system == systemid && (wpc.target_component == compid || wpc.target_component == MAV_COMP_ID_ALL))
 	            {
 	                protocol_timestamp_lastaction = now;
 
@@ -1217,6 +1499,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 	                        handle_mission(current_active_wp_id,now);
 	                        send_setpoint();
 	                        timestamp_firstinside_orbit = 0;
+	                        timestamp_delay_started = 0;
 	                    }
 	                    else
 	                    {
@@ -1231,7 +1514,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 	        {
 	            mavlink_mission_request_list_t wprl;
 	            mavlink_msg_mission_request_list_decode(msg, &wprl);
-	            if(wprl.target_system == systemid && wprl.target_component == compid)
+	            if(wprl.target_system == systemid && (wprl.target_component == compid || wprl.target_component == MAV_COMP_ID_ALL))
 	            {
 	                protocol_timestamp_lastaction = now;
 
@@ -1265,7 +1548,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 	        {
 	            mavlink_mission_request_t wpr;
 	            mavlink_msg_mission_request_decode(msg, &wpr);
-	            if(msg->sysid == protocol_current_partner_systemid && msg->compid == protocol_current_partner_compid && wpr.target_system == systemid && wpr.target_component == compid)
+	            if(msg->sysid == protocol_current_partner_systemid && msg->compid == protocol_current_partner_compid && wpr.target_system == systemid && (wpr.target_component == compid || wpr.target_component == MAV_COMP_ID_ALL))
 	            {
 	                protocol_timestamp_lastaction = now;
 
@@ -1301,7 +1584,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 	            else
 	            {
 	                //we we're target but already communicating with someone else
-	                if((wpr.target_system == systemid && wpr.target_component == compid) && !(msg->sysid == protocol_current_partner_systemid && msg->compid == protocol_current_partner_compid))
+	                if((wpr.target_system == systemid && (wpr.target_component == compid || wpr.target_component == MAV_COMP_ID_ALL)) && !(msg->sysid == protocol_current_partner_systemid && msg->compid == protocol_current_partner_compid))
 	                {
 	                    if (verbose) printf("Ignored MAVLINK_MSG_ID_MISSION_REQUEST from ID %u because i'm already talking to ID %u.\n", msg->sysid, protocol_current_partner_systemid);
 	                }
@@ -1313,7 +1596,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 	        {
 	            mavlink_mission_count_t wpc;
 	            mavlink_msg_mission_count_decode(msg, &wpc);
-	            if(wpc.target_system == systemid && wpc.target_component == compid)
+	            if(wpc.target_system == systemid && (wpc.target_component == compid || wpc.target_component == MAV_COMP_ID_ALL))
 	            {
 	                protocol_timestamp_lastaction = now;
 
@@ -1348,6 +1631,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 	                            waypoints->pop_back();
 	                        }
 	                        //terminate_all_threads();
+	                        valid_destination_available = false;
 	                        current_active_wp_id = -1;
 	                        break;
 
@@ -1372,7 +1656,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 	            mavlink_mission_item_t wp;
 	            mavlink_msg_mission_item_decode(msg, &wp);
 
-	            if((msg->sysid == protocol_current_partner_systemid && msg->compid == protocol_current_partner_compid) && (wp.target_system == systemid && wp.target_component == compid))
+	            if((msg->sysid == protocol_current_partner_systemid && msg->compid == protocol_current_partner_compid) && (wp.target_system == systemid && (wp.target_component == compid || wp.target_component == MAV_COMP_ID_ALL)))
 	            {
 	                protocol_timestamp_lastaction = now;
 	                printf("Received WP %3u%s: Frame: %u\tCommand: %3u\tparam1: %6.2f\tparam2: %7.2f\tparam3: %6.2f\tparam4: %7.2f\tX: %7.2f\tY: %7.2f\tZ: %7.2f\tAuto-Cont: %u\t\n", wp.seq, (wp.current?"*":" "), wp.frame, wp.command, wp.param1, wp.param2, wp.param3, wp.param4, wp.x, wp.y, wp.z, wp.autocontinue);
@@ -1394,7 +1678,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 	                    {
 	                        if (verbose) printf("Got all %u waypoints, changing state to PX_WPP_COMM_IDLE\n", protocol_current_count);
 
-	                        send_mission_ack(protocol_current_partner_systemid, protocol_current_partner_compid, 0);
+	                        send_mission_ack(protocol_current_partner_systemid, protocol_current_partner_compid, MAV_MISSION_ACCEPTED);
 
 	                        if (current_active_wp_id > waypoints_receive_buffer->size()-1)
 	                        {
@@ -1419,6 +1703,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 	                                handle_mission(current_active_wp_id,now);
 	                                send_setpoint();
 	                                timestamp_firstinside_orbit = 0;
+	                                timestamp_delay_started = 0;
 	                                break;
 	                            }
 	                        }
@@ -1427,6 +1712,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 	                        {
 	                            current_active_wp_id = -1;
 	                            timestamp_firstinside_orbit = 0;
+	                            timestamp_delay_started = 0;
 	                        }
 
 	                        comm_state = PX_WPP_COMM_IDLE;
@@ -1441,20 +1727,33 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 	                    if (comm_state == PX_WPP_COMM_IDLE)
 	                    {
 	                        //we're done receiving waypoints, answer with ack.
-	                        send_mission_ack(protocol_current_partner_systemid, protocol_current_partner_compid, 0);
+	                        send_mission_ack(protocol_current_partner_systemid, protocol_current_partner_compid, MAV_MISSION_ACCEPTED);
 	                        printf("Received MAVLINK_MSG_ID_MISSION while state=PX_WPP_COMM_IDLE, answered with WAYPOINT_ACK.\n");
 	                    }
 	                    if (verbose)
 	                    {
-	                        if (!(comm_state == PX_WPP_COMM_GETLIST || comm_state == PX_WPP_COMM_GETLIST_GETWPS)) { printf("Ignored MAVLINK_MSG_ID_MISSION %u because i'm doing something else already (state=%i).\n", wp.seq, comm_state); break; }
+	                        if (!(comm_state == PX_WPP_COMM_GETLIST || comm_state == PX_WPP_COMM_GETLIST_GETWPS))
+	                        {
+	                        	printf("Ignored MAVLINK_MSG_ID_MISSION %u because i'm doing something else already (state=%i).\n", wp.seq, comm_state);
+	                        	send_mission_ack(protocol_current_partner_systemid, protocol_current_partner_compid, MAV_MISSION_ERROR);
+	                        	break;
+	                        }
 	                        else if (comm_state == PX_WPP_COMM_GETLIST)
 	                        {
-	                            if(!(wp.seq == 0)) printf("Ignored MAVLINK_MSG_ID_MISSION because the first waypoint ID (%u) was not 0.\n", wp.seq);
+	                            if(!(wp.seq == 0))
+	                            	{
+	                            		printf("Ignored MAVLINK_MSG_ID_MISSION because the first waypoint ID (%u) was not 0.\n", wp.seq);
+	                            		send_mission_ack(protocol_current_partner_systemid, protocol_current_partner_compid, MAV_MISSION_INVALID_SEQUENCE);
+	                            	}
 	                            else printf("Ignored MAVLINK_MSG_ID_MISSION %u - FIXME: missed error description\n", wp.seq);
 	                        }
 	                        else if (comm_state == PX_WPP_COMM_GETLIST_GETWPS)
 	                        {
-	                            if (!(wp.seq == protocol_current_wp_id)) printf("Ignored MAVLINK_MSG_ID_MISSION because the waypoint ID (%u) was not the expected %u.\n", wp.seq, protocol_current_wp_id);
+	                            if (!(wp.seq == protocol_current_wp_id))
+	                            	{
+	                            		printf("Ignored MAVLINK_MSG_ID_MISSION because the waypoint ID (%u) was not the expected %u.\n", wp.seq, protocol_current_wp_id);
+	                            		send_mission_ack(protocol_current_partner_systemid, protocol_current_partner_compid, MAV_MISSION_INVALID_SEQUENCE);
+	                            	}
 	                            else if (!(wp.seq < protocol_current_count)) printf("Ignored MAVLINK_MSG_ID_MISSION because the waypoint ID (%u) was out of bounds.\n", wp.seq);
 	                            else printf("Ignored MAVLINK_MSG_ID_MISSION %u - FIXME: missed error description\n", wp.seq);
 	                        }
@@ -1465,11 +1764,11 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 	            else
 	            {
 	                //we we're target but already communicating with someone else
-	                if((wp.target_system == systemid && wp.target_component == compid) && !(msg->sysid == protocol_current_partner_systemid && msg->compid == protocol_current_partner_compid) && comm_state != PX_WPP_COMM_IDLE)
+	                if((wp.target_system == systemid && (wp.target_component == compid || wp.target_component == MAV_COMP_ID_ALL)) && !(msg->sysid == protocol_current_partner_systemid && msg->compid == protocol_current_partner_compid) && comm_state != PX_WPP_COMM_IDLE)
 	                {
 	                    if (verbose) printf("Ignored MAVLINK_MSG_ID_MISSION %u from ID %u because i'm already talking to ID %u.\n", wp.seq, msg->sysid, protocol_current_partner_systemid);
 	                }
-	                else if(wp.target_system == systemid && wp.target_component == compid)
+	                else if(wp.target_system == systemid && (wp.target_component == compid || wp.target_component == MAV_COMP_ID_ALL))
 	                {
 	                    if (verbose) printf("Ignored MAVLINK_MSG_ID_MISSION %u from ID %u because i have no idea what to do with it\n", wp.seq, msg->sysid);
 	                }
@@ -1482,7 +1781,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 	            mavlink_mission_clear_all_t wpca;
 	            mavlink_msg_mission_clear_all_decode(msg, &wpca);
 
-	            if(wpca.target_system == systemid && wpca.target_component == compid && comm_state == PX_WPP_COMM_IDLE)
+	            if(wpca.target_system == systemid && (wpca.target_component == compid || wpca.target_component == MAV_COMP_ID_ALL) && comm_state == PX_WPP_COMM_IDLE)
 	            {
 	                protocol_timestamp_lastaction = now;
 
@@ -1493,9 +1792,10 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 	                    waypoints->pop_back();
 	                }
 	                //terminate_all_threads();
+	                valid_destination_available = false;
 	                current_active_wp_id = -1;
 	            }
-	            else if (wpca.target_system == systemid && wpca.target_component == compid && comm_state != PX_WPP_COMM_IDLE)
+	            else if (wpca.target_system == systemid && (wpca.target_component == compid || wpca.target_component == MAV_COMP_ID_ALL) && comm_state != PX_WPP_COMM_IDLE)
 	            {
 	                if (verbose) printf("Ignored MAVLINK_MSG_ID_MISSION_CLEAR_LIST from %u because i'm doing something else already (state=%i).\n", msg->sysid, comm_state);
 	            }
@@ -1504,9 +1804,9 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 
 	    case MAVLINK_MSG_ID_ATTITUDE:
 	        {
-	            if(msg->sysid == systemid && msg->compid == paramClient->getParamValue("IMUID"))
+	            if(msg->sysid == systemid)
 	            {
-	                if(cur_dest.frame == 1)
+	                if(cur_dest.frame ==  MAV_FRAME_LOCAL_NED)
 	                {
 	                    mavlink_msg_attitude_decode(msg, &last_known_att);
 	                    struct timeval tv;
@@ -1523,9 +1823,9 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 
 	    case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
 	        {
-	            if(msg->sysid == systemid && msg->compid == paramClient->getParamValue("IMUID"))
+	            if(msg->sysid == systemid)
 	            {
-	                if(cur_dest.frame == 1)
+	                if(cur_dest.frame == MAV_FRAME_LOCAL_NED)
 	                {
 	                    mavlink_msg_local_position_ned_decode(msg, &last_known_pos);
 
@@ -1547,12 +1847,13 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 			{
 				mavlink_pattern_detected_t pd;
 				mavlink_msg_pattern_detected_decode(msg, &pd);
-				//printf("Pattern - conf: %f, detect: %i, file: %s, type: %i\n",pd.confidence,pd.detected,pd.file,pd.type);
-
+				if (debug) printf("Pattern - conf: %f, detect: %i, file: %s, type: %i\n",pd.confidence,pd.detected,pd.file,pd.type);
+				std::string SEARCH_PIC;
+				SEARCH_PIC = image_list->at(0);
+				if (debug) printf("Searching for file: %s. Result: %i\n",SEARCH_PIC.c_str(), strcmp((char*)pd.file,(char*)SEARCH_PIC.c_str()));
 				if (search_state != PX_WPP_SEARCH_IDLE)
 				{
-					GString* SEARCH_PIC = g_string_new("./media/sweep_images/mona.jpg");
-					if(pd.detected==1 && strcmp((char*)pd.file,SEARCH_PIC->str) == 0 && pd.confidence >= min_conf)
+					if(pd.detected==1 && strcmp((char*)pd.file,SEARCH_PIC.c_str()) == 0 && pd.confidence >= min_conf)
 					{
 						last_detected_pattern = pd;
 						if(verbose) printf("Found it! - confidence: %f, detect: %i, file: %s, type: %i\n",pd.confidence,pd.detected,pd.file,pd.type);
@@ -1567,7 +1868,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 				mavlink_msg_command_long_decode(msg, &command);
 
 
-	            if(command.target_system == systemid && command.target_component == compid)
+	            if(command.target_system == systemid && (command.target_component == compid || command.target_component == MAV_COMP_ID_ALL))
 	            {
 	                protocol_timestamp_lastaction = now;
 
@@ -1575,6 +1876,7 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 	                {
 	    				switch (command.command)
 	    				{
+	    				/*
 	    				case CMD_SET_AUTOCONTINUE:
 	    					{
 	    						uint8_t wp_id = (uint8_t) command.param1;
@@ -1605,31 +1907,67 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 
 	    						break;
 	    					}
-
-	    				case CMD_HALT:
+						*/
+	    				case MAV_CMD_OVERRIDE_GOTO:
 	    					{
-	    						if (verbose) printf("Received HALT command.\n");
+	    						switch ((MAV_GOTO) command.param1)
+		    					{
+		    					case MAV_GOTO_DO_HOLD:
+		    					{
+		    						if (verbose) printf("Received HOLD command.\n");
+			    					if (command.param2 == MAV_GOTO_HOLD_AT_CURRENT_POSITION)
+			    					{
+		    						set_destination(get_wp_of_current_position());
+		    						wpp_state = PX_WPP_ON_HOLD;
+		    						send_command_ack(MAV_CMD_OVERRIDE_GOTO,MAV_RESULT_ACCEPTED);
+			    					}
+			    					else
+			    					{
+			    						if (verbose) printf("Warning! param2 of MAV_CMD_OVERRIDE_GOTO command is ignored. Halting at current position.\n");
+			    						send_command_ack(MAV_CMD_OVERRIDE_GOTO,MAV_RESULT_UNSUPPORTED);
+			    					}
 
-	    						set_destination(get_wp_of_current_position());
-	    						wpp_state = PX_WPP_ON_HOLD;
-	    						send_command_ack(CMD_HALT,0);
-	    						break;
-	    					}
+		    						break;
+		    					}
 
-	    				case CMD_CONTINUE:
-	    					{
-	    						if (verbose) printf("Received CONTINUE command.\n");
-	    						wpp_state = PX_WPP_RUNNING;
-	    						handle_mission(current_active_wp_id,now);
-	    						send_command_ack(CMD_CONTINUE,0);
+		    					case MAV_GOTO_DO_CONTINUE:
+		    					{
+		    						if (verbose) printf("Received CONTINUE command.\n");
+		    						send_command_ack(MAV_CMD_OVERRIDE_GOTO,MAV_RESULT_ACCEPTED);
+		    						if (wpp_state != PX_WPP_RUNNING)
+		    						{
+	    								wpp_state = PX_WPP_RUNNING;
+	    								handle_mission(current_active_wp_id,now);
+		    						}
+		    						else //Received CONTINUE order while not on hold. Interpret as overruling "autocontinue"
+		    						{
+		    							if(waypoints->at(current_active_wp_id)->autocontinue == false && ready_to_continue == true)
+		    							{
+		    								uint16_t prev_id = current_active_wp_id;
+		    								waypoints->at(current_active_wp_id)->autocontinue = true;
+		    								handle_mission(current_active_wp_id,now);
+		    								waypoints->at(prev_id)->autocontinue = false; //changing autocontinue back to false
+		    							}
+		    						}
+
+
+		    						break;
+		    					}
+
+
+		    					default:
+		    					{
+		    						printf("Received MAV_CMD_OVERRIDE_GOTO command with invalid/unsupported parameters.\n");
+		    						send_command_ack(MAV_CMD_OVERRIDE_GOTO,MAV_RESULT_UNSUPPORTED);
+		    					}
+		    					}
 	    						break;
 	    					}
 
     					default:
     					{
-    		        		//if (debug) std::cerr << "Waypointplanner: received Command message of unknown type " << command.command << std::endl;
-    						std::cerr << "Waypointplanner: received Command message of unknown type " << command.command << std::endl;
-    		        		send_command_ack(0,3);
+    						std::cerr << "Missionplanner: received Command message of unknown type " << command.command << std::endl;
+    		        		send_command_ack(command.command,MAV_RESULT_UNSUPPORTED);
     		            	break;
     		        	}
 	    				}
@@ -1638,49 +1976,10 @@ static void handle_communication (const mavlink_message_t* msg, uint64_t now)
 
 				break;
 			}
-//	    case MAVLINK_MSG_ID_ACTION: // special action from ground station
-//	        {
-//	            mavlink_action_t action;
-//	            mavlink_msg_action_decode(msg, &action);
-//	            if(action.target == systemid)
-//	            {
-//	                if (verbose) std::cerr << "Waypoint: received message with action " << action.action << std::endl;
-//	                switch (action.action)
-//	                {
-//	                    //				case MAV_ACTION_LAUNCH:
-//	                    //					if (verbose) std::cerr << "Launch received" << std::endl;
-//	                    //					current_active_wp_id = 0;
-//	                    //					if (waypoints->size()>0)
-//	                    //					{
-//	                    //						setActive(waypoints[current_active_wp_id]);
-//	                    //					}
-//	                    //					else
-//	                    //						if (verbose) std::cerr << "No launch, waypointList empty" << std::endl;
-//	                    //					break;
-//
-//	                    //				case MAV_ACTION_CONTINUE:
-//	                    //					if (verbose) std::c
-//	                    //					err << "Continue received" << std::endl;
-//	                    //					idle = false;
-//	                    //					setActive(waypoints[current_active_wp_id]);
-//	                    //					break;
-//
-//	                    //				case MAV_ACTION_HALT:
-//	                    //					if (verbose) std::cerr << "Halt received" << std::endl;
-//	                    //					idle = true;
-//	                    //					break;
-//
-//	                    //				default:
-//	                    //					if (verbose) std::cerr << "Unknown action received with id " << action.action << ", no action taken" << std::endl;
-//	                    //					break;
-//	                }
-//	            }
-//	            break;
-//	        }
 
 		default:
         {
-            if (debug) std::cerr << "Waypoint: received message of unknown type" << std::endl;
+            if (debug) std::cerr << "Missionplanner: received message of unknown type:" << msg->msgid << std::endl;
             break;
         }
 
@@ -1711,6 +2010,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 
         if(waypoints->size() == 0)
         {
+        	valid_destination_available = false;
             current_active_wp_id = -1;
         }
     }
@@ -1737,8 +2037,8 @@ int main(int argc, char* argv[])
 *  The function parses for program options, sets up some example waypoints and connects to IPC
 */
 {
-	int imuid = 200;
 	std::string waypointfile;
+	std::string imagelistfile;
     config::options_description desc("Allowed options");
     desc.add_options()
             ("help", "produce help message")
@@ -1746,7 +2046,8 @@ int main(int argc, char* argv[])
             ("verbose,v", config::bool_switch(&verbose)->default_value(false), "verbose output")
             ("config", config::value<std::string>(&configFile)->default_value("config/parameters_missionplanner.cfg"), "Config file for system parameters")
             ("waypointfile", config::value<std::string>(&waypointfile)->default_value(""), "Config file for waypoint")
-            ("imuid", config::value<int>(&imuid)->default_value(200), "IMU Comp ID that will be the source for local_position_ned and attitude")
+            ("imagelistfile", config::value<std::string>(&imagelistfile)->default_value(""), "List of paths of images, which are used for search")
+            ("nosetpointonhold", config::bool_switch(&nosetpointonhold)->default_value(false), "If true, MP will stop sending last known position as a setpoint while in HOLD state.")
             ;
     config::variables_map vm;
     config::store(config::parse_command_line(argc, argv, desc), vm);
@@ -1760,7 +2061,7 @@ int main(int argc, char* argv[])
 
 
     //initialize current destination as (0,0,0) local coordinates
-    cur_dest.frame = 1; ///< The coordinate system of the waypoint. see MAV_FRAME in mavlink_types.h
+    cur_dest.frame = MAV_FRAME_LOCAL_NED; ///< The coordinate system of the waypoint. see MAV_FRAME in mavlink_types.h
 	cur_dest.x = 0; //local: x position, global: longitude
 	cur_dest.y = 0; //local: y position, global: latitude
 	cur_dest.z = 0; //local: z position, global: altitude
@@ -1790,9 +2091,19 @@ int main(int argc, char* argv[])
     paramClient->setParamValue("PROTDELAY",40);	 //Attention: microseconds!!
     paramClient->setParamValue("PROTTIMEOUT", 2.0);
     paramClient->setParamValue("YAWTOLERANCE", 0.1745f);
-    paramClient->setParamValue("IMUID", imuid);
     paramClient->readParamsFromFile(configFile);
 
+    /**********************************
+    * Read list of images
+    **********************************/
+
+    if (imagelistfile.length())
+    {
+    	if(load_imagelist_from_file(imagelistfile))
+    		{
+    			printf("Error reading image list from file\n");
+    		}
+	}
 
     /**********************************
     * Run the LCM thread
@@ -1826,90 +2137,20 @@ int main(int argc, char* argv[])
 		cond_pattern_detected = g_cond_new();
 		printf("Conditions created\n");
 	}
+
     /**********************************
     * Read waypoints from file and
     * set the new current waypoint
     **********************************/
 	g_mutex_lock(main_mutex);
+	wpp_state = PX_WPP_RUNNING;
     if (waypointfile.length())
     {
-        std::ifstream wpfile;
-        wpfile.open(waypointfile.c_str());
-        if (!wpfile) {
-            printf("Unable to open waypoint file\n");
+        if(load_mission_from_file(waypointfile))
+        {
+            printf("Error reading mission from file\n");
             exit(1); // terminate with error
         }
-
-        if (!wpfile.eof())
-        {
-            std::string check;
-            //			int ver;
-            //			bool good = false;
-            //			wpfile >> check;
-            //			if (!strcmp(check.c_str(),"QGC"))
-            //			{
-            //				wpfile >> check;
-            //				if (!strcmp(check.c_str(),"WPL"))
-            //				{
-            //					wpfile >> ver;
-            //					if (ver == 100)
-            //					{
-            //						char c = (char)wpfile.peek();
-            //						if(c == '\r' || c == '\n')
-            //						{
-            //							good = true;
-            //						}
-            //					}
-            //				}
-            //			}
-
-            printf("Loading waypoint file...\n");
-
-            getline(wpfile,check);
-
-            printf("Version line: %s\n", check.c_str());
-
-            if(!strcmp(check.c_str(),"QGC WPL 120"))
-            {
-                printf("Waypoint file version mismatch\n");
-                exit(1); // terminate with error
-            }
-
-            while (!wpfile.eof())
-            {
-                mavlink_mission_item_t *wp = new mavlink_mission_item_t();
-
-                uint16_t temp;
-
-                wpfile >> wp->seq; //waypoint id
-                wpfile >> temp; wp->current = temp;
-                wpfile >> temp; wp->frame = temp;
-                wpfile >> temp; wp->command = temp;
-                wpfile >> wp->param1;
-                wpfile >> wp->param2;
-                wpfile >> wp->param3; //old "orbit"
-                wpfile >> wp->param4; //old "yaw"
-                wpfile >> wp->x;
-                wpfile >> wp->y;
-                wpfile >> wp->z;
-                wpfile >> temp; wp->autocontinue = temp;
-
-                char c = (char)wpfile.peek();
-                if(c != '\r' && c != '\n')
-                {
-                    delete wp;
-                    break;
-                }
-
-                printf("WP %3u%s: Frame: %u\tCommand: %3u\tparam1: %6.2f\tparam2: %7.2f\tparam3: %6.2f\tparam4: %7.2f\tX: %7.2f\tY: %7.2f\tZ: %7.2f\tAuto-Cont: %u\t\n", wp->seq, (wp->current?"*":" "), wp->frame, wp->command, wp->param1, wp->param2, wp->param3, wp->param4, wp->x, wp->y, wp->z, wp->autocontinue);
-                waypoints->push_back(wp);
-            }
-        }
-        else
-        {
-            printf("Empty waypoint file!\n");
-        }
-        wpfile.close();
 
         struct timeval tv;
         gettimeofday(&tv, NULL);
@@ -1936,7 +2177,6 @@ int main(int argc, char* argv[])
     }
     g_mutex_unlock(main_mutex);
 
-    wpp_state = PX_WPP_RUNNING;
     printf("WAYPOINTPLANNER INITIALIZATION DONE, RUNNING...\n");
 
     /**********************************
@@ -1944,12 +2184,12 @@ int main(int argc, char* argv[])
     **********************************/
     while (1)//need some break condition, e.g. if LCM fails
     {
-    	g_mutex_lock(main_mutex);
-        if(current_active_wp_id != (uint16_t)-1)
+        if(current_active_wp_id != (uint16_t)-1 && (nosetpointonhold==false || wpp_state != PX_WPP_ON_HOLD))
         {
+        	g_mutex_lock(main_mutex);
             send_setpoint();
+            g_mutex_unlock(main_mutex);
         }
-        g_mutex_unlock(main_mutex);
         usleep(paramClient->getParamValue("SETPOINTDELAY")*1000000);
     }
 

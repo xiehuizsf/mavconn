@@ -44,7 +44,7 @@ This file is part of the MAVCONN project
 #include <vector>
 
 // MAVLINK message format includes
-#include <mavlink.h>
+#include <pixhawk/mavlink.h>
 
 // OpenCV types
 //#include <cxtypes.h>

@@ -29,11 +29,13 @@ This file is part of the PIXHAWK project
  *
  */
 
-#include "PxCameraStereoCalibration.h"
 #include <iostream>
 #include <iomanip>
 #include <fstream>
 #include <string>
+
+#include "PxCameraStereoCalibration.h"
+
 using namespace std;
 
 /**
@@ -80,14 +82,14 @@ PxCameraStereoCalibration::PxCameraStereoCalibration(const char *filename, const
     cv::Mat rotationMat;
     cv::Rodrigues(m_rotation, rotationMat);
 
-	cv::stereoRectify(m_calibL->getIntrinsicMatrix(), m_calibL->distortion,
-					  m_calibR->getIntrinsicMatrix(), m_calibR->distortion,
+	cv::stereoRectify(m_calibL->getIntrinsicMatrix(), m_calibL->distortion(),
+					  m_calibR->getIntrinsicMatrix(), m_calibR->distortion(),
 				      frameSize, rotationMat, m_translation,
 				      R1, R2, P1, P2, m_Q, CV_CALIB_ZERO_DISPARITY,
                       -1, cv::Size(), &leftRectROI);
 
-	cv::initUndistortRectifyMap(m_calibL->getIntrinsicMatrix(), m_calibL->distortion, R1, P1, frameSize, CV_32FC1, m_mapxL, m_mapyL);
-	cv::initUndistortRectifyMap(m_calibR->getIntrinsicMatrix(), m_calibR->distortion, R2, P2, frameSize, CV_32FC1, m_mapxR, m_mapyR);
+	cv::initUndistortRectifyMap(m_calibL->getIntrinsicMatrix(), m_calibL->distortion(), R1, P1, frameSize, CV_32FC1, m_mapxL, m_mapyL);
+	cv::initUndistortRectifyMap(m_calibR->getIntrinsicMatrix(), m_calibR->distortion(), R2, P2, frameSize, CV_32FC1, m_mapxR, m_mapyR);
 
 	// create the rectifying transformations (Px * Rx) - this is for undistortion of points
 //	double PP[3][3];
@@ -146,11 +148,11 @@ PxCameraStereoCalibration::~PxCameraStereoCalibration(void)
 void PxCameraStereoCalibration::undistortPointsLeft(const CvPoint2D32f *pSrc, CvPoint2D32f *pDest, int count) const
 {
 	const int iters = 5;
-	const float ifx = 1.f / m_calibL->m_focal[0]; // 1.f / focal_x;
-	const float ify = 1.f / m_calibL->m_focal[1]; // 1.f / focal_y;
-	const float cx = m_calibL->m_cc[0];
-	const float cy = m_calibL->m_cc[1];
-	const float *m_kc = m_calibL->m_kc;
+	const float ifx = 1.f / m_calibL->focalLength()[0]; // 1.f / focal_x;
+	const float ify = 1.f / m_calibL->focalLength()[1]; // 1.f / focal_y;
+	const float cx = m_calibL->principalPoint()[0];
+	const float cy = m_calibL->principalPoint()[1];
+	const std::vector<float>& m_kc = m_calibL->distortionCoeffs();
 
 	for(int i = 0; i < count; i++ )
 	{
@@ -192,11 +194,11 @@ void PxCameraStereoCalibration::undistortPointsLeft(const CvPoint2D32f *pSrc, Cv
 void PxCameraStereoCalibration::undistortPointsRight(const CvPoint2D32f *pSrc, CvPoint2D32f *pDest, int count) const
 {
 	const int iters = 5;
-	const float ifx = 1.f / m_calibR->m_focal[0]; // 1.f / focal_x;
-	const float ify = 1.f / m_calibR->m_focal[1]; // 1.f / focal_y;
-	const float cx = m_calibR->m_cc[0];
-	const float cy = m_calibR->m_cc[1];
-	const float *m_kc = m_calibR->m_kc;
+	const float ifx = 1.f / m_calibR->focalLength()[0]; // 1.f / focal_x;
+	const float ify = 1.f / m_calibR->focalLength()[1]; // 1.f / focal_y;
+	const float cx = m_calibR->principalPoint()[0];
+	const float cy = m_calibR->principalPoint()[1];
+	const std::vector<float>& m_kc = m_calibR->distortionCoeffs();
 
 	for(int i = 0; i < count; i++ )
 	{

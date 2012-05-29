@@ -2,13 +2,11 @@ INCLUDE(FindPackageHandleStandardArgs)
 INCLUDE(HandleLibraryTypes)
 
 SET(MAVLINK_IncludeSearchPaths
-  ./../mavlink/include/v1.0/pixhawk
-  ./../mavlink/include/v1.0/
-  ./../mavlink/include/v1.0/common
+  ./../mavlink/include/mavlink/v1.0/
 )
 
 FIND_PATH(MAVLINK_INCLUDE_DIR
-  NAMES mavlink.h
+  NAMES common/mavlink.h
   PATHS ${MAVLINK_IncludeSearchPaths}
 )
 

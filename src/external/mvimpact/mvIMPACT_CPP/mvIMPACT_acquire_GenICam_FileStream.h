@@ -21,6 +21,14 @@ namespace mvIMPACT {
 	namespace acquire {
 		namespace GenICam {
 
+/// \defgroup GenICamInterfaceFileStream GenICam interface layout(file stream)
+/// This group contains classes that will be available if the device is used
+/// with the <b>mvIMPACT::acquire::dilGenICam</b> interface layout.
+///
+/// \ingroup GenICamInterface
+///
+/// @{
+
 //-----------------------------------------------------------------------------
 /// \brief Adapter between the std::iostreambuf and the SFNC Features representing the device filesystem
 ///
@@ -149,7 +157,7 @@ public:
 			const int64_type writeSize(remain <= maxWriteLen ? remain : maxWriteLen);
 
 			// offset
-			if( offs + bytesWritten > m_ptrFileAccessOffset.read( plMaxValue ) )
+			if( offs + bytesWritten > m_ptrFileAccessOffset.getMaxValue() )
 			{
 				// we cannot move the outbuffer any further
 				break;
@@ -191,7 +199,7 @@ public:
 			// copy xchange buffer to streamdata
 			const std::streamsize readSize = std::min( len - bytesRead, maxReadLen );
 			// offset
-			if( offs + bytesRead > m_ptrFileAccessOffset.read( plMaxValue ) )
+			if( offs + bytesRead > m_ptrFileAccessOffset.getMaxValue() )
 			{
 				// we cannot move the inbuffer any further
 				break;
@@ -233,6 +241,9 @@ public:
 		}
 		return 0;
 	}
+	/// \brief Fetch the size of the file currently selected on the device.
+	///
+	/// \return The size(in bytes) of the file currently selected.
 	std::streamsize size( void ) const
 	{
 		return static_cast<std::streamsize>(m_ptrFileSize.read());
@@ -251,6 +262,11 @@ private:
 };
 
 //-----------------------------------------------------------------------------
+/// \brief An input stream buffer derived from std::basic_streambuf used to
+/// read from a file of a device.
+///
+/// \note See description of the std::basic_streambuf in a STL implementation of
+/// your choice to find out more about how to use this object.
 template<typename CharType, typename Traits>
 class IDevFileStreamBuf : public std::basic_streambuf<CharType, Traits>
 //-----------------------------------------------------------------------------
@@ -270,7 +286,10 @@ class IDevFileStreamBuf : public std::basic_streambuf<CharType, Traits>
 		// set buffer info
 		using std::basic_streambuf<CharType, Traits>::setg;
 public:
+	/// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::IDevFileStreamBuf</b>
+	/// object.
 	IDevFileStreamBuf() : m_file(0), m_pAdapter(0), m_fpos(0) {}
+	/// \brief class destructor.
 	~IDevFileStreamBuf()
 	{
 		// catch and dump all exceptions - we're in a desctructor...
@@ -279,11 +298,15 @@ public:
 			this->close();
 		} catch(...) {}
 	}
+	/// \brief Opens a file on the device.
+	///
+	/// The member function calls rdbuf -> open(_Filename, _Mode | ios_base::in). If open fails,
+	/// the function calls setstate(failbit), which may throw an ios_base::failure exception.
 	filebuf_type* open(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
 						mvIMPACT::acquire::Device* pDev,
 						/// Name of the file to open
 						const char* pFileName,
-						/// File open mode
+						/// File open mode. One of the enumerations in ios_base::openmode
 						std::ios_base::openmode mode = std::ios_base::in )
 	{
 		m_pAdapter = new FileProtocolAdapter();
@@ -313,14 +336,27 @@ public:
 #endif
 		return this;
 	}
+	/// \brief Determines if a file is open.
+	///
+	/// \return
+	/// - true if the file is open
+	/// -false otherwise
 	bool is_open( void ) const
 	{
 		return m_pAdapter != 0;
 	}
+	/// \brief Fetch the size of the file currently selected on the device.
+	///
+	/// \return The size(in bytes) of the file currently selected.
 	std::streamsize size( void ) const
 	{
 		return m_pAdapter ? m_pAdapter->size() : 0;
 	}
+	/// \brief Closes a file on the device.
+	///
+	/// \return
+	/// - A pointer to itself if successful
+	/// - 0 otherwise
 	filebuf_type* close( void )
 	{
 		filebuf_type* ret = 0;
@@ -390,6 +426,11 @@ private:
 };
 
 //-----------------------------------------------------------------------------
+/// \brief An output stream buffer derived from std::basic_streambuf used to
+/// write to a file on a device.
+///
+/// \note See description of the std::basic_streambuf in a STL implementation of
+/// your choice to find out more about how to use this object.
 template<typename CharType, typename Traits>
 class ODevFileStreamBuf : public std::basic_streambuf<CharType, Traits>
 //-----------------------------------------------------------------------------
@@ -409,11 +450,18 @@ class ODevFileStreamBuf : public std::basic_streambuf<CharType, Traits>
 		// increment next pointer
 		using std::basic_streambuf<CharType, Traits>::pbump;
 public:
+	/// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::ODevFileStreamBuf</b>
+	/// object.
 	ODevFileStreamBuf() : m_file(0), m_pAdapter(0), m_fpos(0) {}
+	/// \brief class destructor.
 	~ODevFileStreamBuf()
 	{
 		this->close();
 	}
+	/// \brief Opens a file on the device.
+	///
+	/// The member function calls rdbuf -> open(_Filename, _Mode | ios_base::in). If open fails,
+	/// the function calls setstate(failbit), which may throw an ios_base::failure exception.
 	filebuf_type* open(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
 						mvIMPACT::acquire::Device* pDev,
 						/// Name of the file to open
@@ -444,10 +492,20 @@ public:
 		setp( m_pBuffer, m_pBuffer + bufSize );
 		return this;
 	}
+	/// \brief Determines if a file is open.
+	///
+	/// \return
+	/// - true if the file is open
+	/// -false otherwise
 	bool is_open( void ) const
 	{
 		return m_pAdapter != 0;
 	}
+	/// \brief Closes a file on the device.
+	///
+	/// \return
+	/// - A pointer to itself if successful
+	/// - 0 otherwise
 	filebuf_type* close( void )
 	{
 		filebuf_type * ret = 0;
@@ -529,6 +587,11 @@ private:
 };
 
 //-----------------------------------------------------------------------------
+/// \brief An output stream buffer derived from std::basic_ostream used to
+/// write to a file on a device.
+///
+/// \note See description of the std::basic_ostream in a STL implementation of
+/// your choice to find out more about how to use this object.
 template<typename CharType, typename Traits>
 class ODevFileStreamBase : public std::basic_ostream<CharType, Traits>
 //-----------------------------------------------------------------------------
@@ -542,10 +605,14 @@ private:
 	filebuf_type m_streambuf;
 public:
 #if defined (_MSC_VER)
+	/// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::ODevFileStreamBase</b>
+	/// object.
 	ODevFileStreamBase() : ostream_type(std::_Noinit), m_streambuf()
 	{
 		this->init( &m_streambuf );
 	}
+	/// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::ODevFileStreamBase</b>
+	/// object.
 	ODevFileStreamBase(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
 						mvIMPACT::acquire::Device* pDev,
 						/// Name of the file to open
@@ -557,10 +624,14 @@ public:
 		this->open( pDev, pFileName, mode );
 	}
 #elif defined (__GNUC__)
+	/// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::ODevFileStreamBase</b>
+	/// object.
 	ODevFileStreamBase() : ostream_type(), m_streambuf()
 	{
 		this->init( &m_streambuf );
 	}
+	/// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::ODevFileStreamBase</b>
+	/// object.
 	ODevFileStreamBase(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
 						mvIMPACT::acquire::Device* pDev,
 						/// Name of the file to open
@@ -574,10 +645,18 @@ public:
 #else
 #	error Unknown C++ library
 #endif
+	/// \brief Returns the address of the stored stream buffer.
+	///
+	/// \return The address of the stored stream buffer.
 	filebuf_type *rdbuf( void ) const
 	{
 		return const_cast<filebuf_type*>(&m_streambuf);
 	}
+	/// \brief Determines if a file is open.
+	///
+	/// \return
+	/// - true if the file is open
+	/// -false otherwise
 	bool is_open( void ) const
 	{
 		return m_streambuf.is_open();
@@ -599,7 +678,7 @@ public:
 			this->clear();
 		}
 	}
-	/// \brief Close the file on device
+	/// \brief Close the file on device.
 	void close( void )
 	{
 		if( !m_streambuf.close() )
@@ -610,6 +689,11 @@ public:
 };
 
 //-----------------------------------------------------------------------------
+/// \brief An output stream buffer derived from std::basic_istream used to
+/// read from a file on a device.
+///
+/// \note See description of the std::basic_istream in a STL implementation of
+/// your choice to find out more about how to use this object.
 template<typename CharType, typename Traits>
 class IDevFileStreamBase : public std::basic_istream<CharType, Traits>
 //-----------------------------------------------------------------------------
@@ -623,10 +707,14 @@ private:
 	filebuf_type m_streambuf;
 public:
 #if defined (_MSC_VER)
+	/// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::IDevFileStreamBase</b>
+	/// object.
 	IDevFileStreamBase() : istream_type(std::_Noinit), m_streambuf()
 	{
 		this->init( &m_streambuf );
 	}
+	/// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::IDevFileStreamBase</b>
+	/// object.
 	IDevFileStreamBase(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
 						mvIMPACT::acquire::Device* pDev,
 						/// Name of the file to open
@@ -638,10 +726,14 @@ public:
 		this->open( pDev, pFileName, mode );
 	}
 #elif defined (__GNUC__)
+	/// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::IDevFileStreamBase</b>
+	/// object.
 	IDevFileStreamBase() : istream_type(), m_streambuf()
 	{
 		this->init(&m_streambuf);
 	}
+	/// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::IDevFileStreamBase</b>
+	/// object.
 	IDevFileStreamBase(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
 						mvIMPACT::acquire::Device* pDev,
 						/// Name of the file to open
@@ -655,14 +747,26 @@ public:
 #else
 #	error Unknown C++ library
 #endif
+	/// \brief Returns the address of the stored stream buffer.
+	///
+	/// \return The address of the stored stream buffer.
 	filebuf_type *rdbuf( void ) const
 	{
 		return const_cast<filebuf_type*>(&m_streambuf);
 	}
+	/// \brief Determines if a file is open.
+	///
+	/// \return
+	/// - true if the file is open
+	/// -false otherwise
 	bool is_open( void ) const
 	{
 		return m_streambuf.is_open();
 	}
+	/// \brief Opens a file on the device.
+	///
+	/// The member function calls rdbuf -> open(_Filename, _Mode | ios_base::in). If open fails,
+	/// the function calls setstate(failbit), which may throw an ios_base::failure exception.
 	void open(	/// A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
 				mvIMPACT::acquire::Device* pDev,
 				/// name of the file to open
@@ -694,8 +798,16 @@ public:
 	}
 };
 
+/// \brief A type for <b>char</b> type file access.
+///
+/// Provided for convenience only. This type represents a output file stream for <b>char</b> data.
 typedef ODevFileStreamBase<char, std::char_traits<char> > ODevFileStream;
+/// \brief A type for <b>char</b> type file access.
+///
+/// Provided for convenience only. This type represents a input file stream for <b>char</b> data.
 typedef IDevFileStreamBase<char, std::char_traits<char> > IDevFileStream;
+
+/// @}
 
 		} // namespace GenICam
 	} // namespace acquire

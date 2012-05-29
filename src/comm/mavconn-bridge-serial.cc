@@ -56,9 +56,6 @@ This file is part of the MAVCONN project
 #include <sys/ioctl.h>
 #endif
 
-// MAVLINK includes
-#include <mavlink.h>
-
 // Latency Benchmarking
 #include <sys/time.h>
 #include <time.h>
@@ -86,6 +83,15 @@ bool test;                ///< Enable test mode
 bool pc2serial;			  ///< Enable PC to serial push mode (send more stuff from pc over serial)
 
 lcm_t* lcm;               ///< Reference to LCM bus
+
+/* potentially missing items */
+#ifndef B460800
+#define B460800 460800
+#endif
+
+#ifndef B921600
+#define B921600 921600
+#endif
 
 /**
 * @brief Handle a MAVLINK message received from LCM
@@ -350,6 +356,13 @@ bool setup_port(int fd, int baud, int data_bits, int stop_bits, bool parity, boo
 		break;
 	case 115200:
 		if (cfsetispeed(&config, B115200) < 0 || cfsetospeed(&config, B115200) < 0)
+		{
+			fprintf(stderr, "\nERROR: Could not set desired baud rate of %d Baud\n", baud);
+			return false;
+		}
+		break;
+	case 460800:
+		if (cfsetispeed(&config, B460800) < 0 || cfsetospeed(&config, B460800) < 0)
 		{
 			fprintf(stderr, "\nERROR: Could not set desired baud rate of %d Baud\n", baud);
 			return false;
