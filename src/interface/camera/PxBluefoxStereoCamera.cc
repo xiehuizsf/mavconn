@@ -43,7 +43,7 @@ bool
 PxBluefoxStereoCamera::setConfig(const PxCameraConfig& config)
 {
 	frameRate = config.getFrameRate();
-	timeout_ms = 1.0f / frameRate * 4000.0f;
+	timeout_ms = 1.0f / frameRate * 10000.0f; //10 sec hard-time out limit (with this it is ensured that all threads can be shut off, but no trigger interval can be larger than this!)
 
 	mode = config.getMode();
 
@@ -155,7 +155,7 @@ PxBluefoxStereoCamera::stereoImageHandler(void)
 
 	while (!exitImageThreads)
 	{
-		ssize_t seqL, seqR;
+		ssize_t seqL = 666, seqR = 666;
 		bool requestFailed = false;
 
 		const mvIMPACT::acquire::Request *requestL, *requestR;
@@ -195,7 +195,7 @@ PxBluefoxStereoCamera::stereoImageHandler(void)
 			requestFailed = true;
 		}
 
-//		printf("PreSync: L: %llu\t R: %llu\n", seqL, seqR);
+		printf("PreSync: L: %llu\t R: %llu\treq: %d\n", seqL, seqR, requestFailed);
 
 		while (!requestFailed && seqL > seqR)
 		{
@@ -239,7 +239,7 @@ PxBluefoxStereoCamera::stereoImageHandler(void)
 			}
 		}
 
-//		printf("         L: %llu\t R: %llu\n", seqL, seqR);
+		printf("         L: %llu\t R: %llu\n", seqL, seqR);
 
 		if (!requestFailed)
 		{
