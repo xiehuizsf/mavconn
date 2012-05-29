@@ -195,7 +195,7 @@ PxBluefoxStereoCamera::stereoImageHandler(void)
 			requestFailed = true;
 		}
 
-		printf("PreSync: L: %llu\t R: %llu\treq: %d\n", seqL, seqR, requestFailed);
+		//printf("PreSync: L: %llu\t R: %llu\treq: %d\n", seqL, seqR, requestFailed);
 
 		while (!requestFailed && seqL > seqR)
 		{
@@ -239,7 +239,7 @@ PxBluefoxStereoCamera::stereoImageHandler(void)
 			}
 		}
 
-		printf("         L: %llu\t R: %llu\n", seqL, seqR);
+		//printf("         L: %llu\t R: %llu\n", seqL, seqR);
 
 		if (!requestFailed)
 		{
