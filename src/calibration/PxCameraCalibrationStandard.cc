@@ -31,11 +31,15 @@ This file is part of the PIXHAWK project
  *
  */
 
-#include "PxCameraCalibrationStandard.h"
 #include <iostream>
 #include <iomanip>
 #include <fstream>
 #include <string>
+
+#include <opencv2/imgproc/imgproc.hpp>
+
+#include "PxCameraCalibrationStandard.h"
+
 using namespace std;
 
 /**

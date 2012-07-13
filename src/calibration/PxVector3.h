@@ -36,7 +36,7 @@ This file is part of the PIXHAWK project
 #ifndef _PX_VECTOR3_H_
 #define _PX_VECTOR3_H_
 
-#include <opencv/cv.h>
+#include <opencv2/core/core.hpp>
 
 class PxMatrix3x3;
 

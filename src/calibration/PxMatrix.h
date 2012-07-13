@@ -37,8 +37,9 @@ This file is part of the PIXHAWK project
 #ifndef _PX_MATRIX_H_
 #define _PX_MATRIX_H_
 
-#include <opencv/cv.h>
-#include <PxVector3.h>
+#include <opencv2/core/core.hpp>
+
+#include "PxVector3.h"
 
 static inline void setSize( cv::Mat& m, int _dims, const int* _sz,
                             const size_t* _steps, bool autoSteps=false )
@@ -250,7 +251,7 @@ public:
 		ret.local_data[8] = l.local_data[6]*r.local_data[2]+l.local_data[7]*r.local_data[5]+l.local_data[8]*r.local_data[8];
 		return ret; }
 	/** @brief matrix-matrix subtraction */
-	friend PxMatrix3x3Double operator -(const PxMatrix3x3Double &l, const PxMatrix3x3Double &r) { PxMatrix3x3Double ret; cvSub(&l, &r, &ret); return ret; }
+	friend PxMatrix3x3Double operator -(const PxMatrix3x3Double &l, const PxMatrix3x3Double &r) { PxMatrix3x3Double ret; for (int i=0; i<9; i++) ret[i] = l.local_data[i] - r.local_data[i]; return ret; }
 	/** @brief matrix-matrix multiplication with the possibility to transpose one or both matrices for the operation */
 	friend PxMatrix3x3Double multiplyTransposed(const PxMatrix3x3Double &l, const PxMatrix3x3Double &r)
 	{ PxMatrix3x3Double ret;
@@ -287,14 +288,14 @@ public:
 	/** @name Matrix-Scalar operators */
 	/*@{*/
 	/** @brief multiplies all elements with a scalar value */
-	friend PxMatrix3x3Double operator *(const PxMatrix3x3Double &l, const double r) { PxMatrix3x3Double ret; cvConvertScale(&l, &ret, r); return ret; }
+	friend PxMatrix3x3Double operator *(const PxMatrix3x3Double &l, const double r) { PxMatrix3x3Double ret; for (int i=0; i<9; i++) ret[i] = l.local_data[i] * r; return ret; }
 	/*@}*/
 
 public:
 	/** @name Non-altering operators */
 	/*@{*/
 	/** @brief loads the identity matrix */
-	double getDeterminant(void) const { return (double)(cvDet(this)); }
+	double getDeterminant(void) const { return (double)(cv::determinant(cv::Mat(3, 3, CV_64FC1, const_cast<double*>(local_data)))); }
 	/*@}*/
 
 public:

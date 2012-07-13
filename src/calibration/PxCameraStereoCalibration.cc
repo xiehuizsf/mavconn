@@ -34,6 +34,9 @@ This file is part of the PIXHAWK project
 #include <fstream>
 #include <string>
 
+#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
 #include "PxCameraStereoCalibration.h"
 
 using namespace std;
