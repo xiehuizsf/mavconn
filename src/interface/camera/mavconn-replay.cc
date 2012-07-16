@@ -375,7 +375,7 @@ int main(int argc, char* argv[])
 		}
 
 		//don't publish IMAGE_AVAILABLE messages or if we did not find the right timestamped image yet
-		if (msg.msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE && msg.msgid != 255 && found_correct_timestamp)
+		if (msg.msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE && found_correct_timestamp)
 		{
 			uint64_t usecs_to_wait = 0;
 			uint64_t usecs_gone = current_time - last_current_time;
@@ -387,7 +387,35 @@ int main(int argc, char* argv[])
 					usleep(usecs_to_wait - usecs_gone);
 				}
 			}
-			sendMAVLinkMessage(lcmMavlink, &msg);
+
+			if (msg.msgid == MAVLINK_MSG_ID_EXTENDED_MESSAGE)
+			{
+				// Pack a new container
+				mavconn_mavlink_msg_container_t container;
+				container.link_component_id = 0;
+				container.link_network_source = MAVCONN_LINK_TYPE_LCM;
+
+				memcpy(&(container.msg), &msg, sizeof(container.msg));
+
+				// read extended header
+				uint8_t* payload = reinterpret_cast<uint8_t*>(msg.payload64);
+
+				memcpy(&container.extended_payload_len, payload + 3, 4);
+
+				container.extended_payload = new int8_t[container.extended_payload_len];
+				mavlinkLog.read(reinterpret_cast<char*>(container.extended_payload),
+								container.extended_payload_len);
+
+				// Publish the message on the LCM bus
+				mavconn_mavlink_msg_container_t_publish(lcmMavlink, MAVLINK_MAIN, &container);
+
+				delete [] container.extended_payload;
+			}
+			else
+			{
+				sendMAVLinkMessage(lcmMavlink, &msg);
+			}
+
 			last_time = time;
 			last_current_time = current_time;
 			usleep(3000);
