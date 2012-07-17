@@ -449,14 +449,14 @@ struct timeval tv;
 static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, const mavconn_mavlink_msg_container_t* container, void * user)
 {
 	lcm_t* lcmMavlink = (lcm_t*) user;
-	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
+	const mavlink_message_t* mavlink_msg = getMAVLinkMsgPtr(container);
 
-	switch(msg->msgid)
+	switch(mavlink_msg->msgid)
 	{
 		case MAVLINK_MSG_ID_COMMAND_LONG:
 		{
 			mavlink_command_long_t command;
-			mavlink_msg_command_long_decode(msg, &command);
+			mavlink_msg_command_long_decode(mavlink_msg, &command);
 			if (command.target_system != sysid && command.target_system != 0) break;
 			if (command.command == MAV_CMD_DO_CONTROL_VIDEO)
 			{
@@ -547,7 +547,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 		case MAVLINK_MSG_ID_GPS_RAW_INT:
 		{
 			mavlink_gps_raw_int_t gps;
-			mavlink_msg_gps_raw_int_decode(msg, &gps);
+			mavlink_msg_gps_raw_int_decode(mavlink_msg, &gps);
 			lat = gps.lat/(double)1E7;
 			lon = gps.lon/(double)1E7;
 			alt = gps.alt/(double)1E3;
@@ -558,10 +558,10 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 		break;
 		case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
 		{
-			if (msg->compid == imuid)
+			if (mavlink_msg->compid == imuid)
 			{
 				mavlink_local_position_ned_t pos;
-				mavlink_msg_local_position_ned_decode(msg, &pos);
+				mavlink_msg_local_position_ned_decode(mavlink_msg, &pos);
 				local_x = pos.x;
 				local_y = pos.y;
 				local_z = pos.z;
@@ -574,10 +574,10 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 			
 		case MAVLINK_MSG_ID_ATTITUDE:
 		{
-			if (msg->compid == imuid)
+			if (mavlink_msg->compid == imuid)
 			{
 				mavlink_attitude_t att;
-				mavlink_msg_attitude_decode(msg, &att);
+				mavlink_msg_attitude_decode(mavlink_msg, &att);
 				backupRoll = att.roll;
 				backupPitch = att.pitch;
 				backupYaw = att.yaw;
@@ -596,10 +596,10 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 		uint8_t buf[len];
 		uint64_t time = getSystemTimeUsecs();
 		memcpy(buf, (void*)&time, sizeof(uint64_t));
-		mavlink_msg_to_send_buffer(buf+sizeof(uint64_t), msg);
+		mavlink_msg_to_send_buffer(buf+sizeof(uint64_t), mavlink_msg);
 		mavlinkFile.write((char *)buf, len);
 
-		if (msg->msgid == MAVLINK_MSG_ID_EXTENDED_MESSAGE)
+		if (mavlink_msg->msgid == MAVLINK_MSG_ID_EXTENDED_MESSAGE)
 		{
 			mavlinkFile.write(reinterpret_cast<char*>(container->extended_payload),
 							  container->extended_payload_len);
