@@ -301,13 +301,9 @@ int main(int argc, char* argv[])
 		uint64_t time;
 		memcpy((void*)&time, buf, sizeof(uint64_t));
 
-		// Quickly parse the message and break at message end
 		mavlink_message_t msg;
-		mavlink_status_t status;
-		for (int i = sizeof(uint64_t); i<MAVLINK_MAX_PACKET_LEN; ++i)
-		{
-			if (mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status)) break;
-		}
+		memcpy(&(msg.magic), buf + sizeof(uint64_t), MAVLINK_MAX_PACKET_LEN);
+
 		//the checksums follow directly after the payload, so copy them to their fields in mavlink_message_t
 		//msg.ck_a = *(sizeof(uint64_t) + buf + msg.len + MAVLINK_CORE_HEADER_LEN + 1);
 		//msg.ck_b = *(sizeof(uint64_t) + buf + msg.len + MAVLINK_CORE_HEADER_LEN + 2);
