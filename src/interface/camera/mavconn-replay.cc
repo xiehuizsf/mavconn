@@ -402,11 +402,13 @@ int main(int argc, char* argv[])
 				// read extended header
 				uint8_t* payload = reinterpret_cast<uint8_t*>(msg.payload64);
 
-				memcpy(&container.extended_payload_len, payload + 3, 4);
+				unsigned int extended_payload_len;
+				memcpy(&extended_payload_len, payload + 3, 4);
 
-				container.extended_payload = new int8_t[container.extended_payload_len];
+				container.extended_payload_len = extended_payload_len;
+				container.extended_payload = new int8_t[extended_payload_len];
 				mavlinkLog.read(reinterpret_cast<char*>(container.extended_payload),
-								container.extended_payload_len);
+								extended_payload_len);
 
 				// Publish the message on the LCM bus
 				mavconn_mavlink_msg_container_t_publish(lcmMavlink, MAVLINK_MAIN, &container);
