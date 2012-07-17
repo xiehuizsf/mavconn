@@ -16,7 +16,6 @@
 namespace config = boost::program_options;
 namespace bfs = boost::filesystem;
 
-std::ifstream mavlinkLog;
 std::string logfile;
 std::string imagepath_left;
 std::string imagepath_right;
@@ -116,6 +115,7 @@ int main(int argc, char* argv[])
 		camid_right = idright;
 		uint64_t startTimestamp = strtoull(fromTimestampString.c_str(), NULL, 0);
 
+	std::ifstream mavlinkLog;
 	mavlinkLog.open(logfile.c_str(), std::ios::binary | std::ios::in);
 	if (!mavlinkLog)
 	{
@@ -274,9 +274,6 @@ int main(int argc, char* argv[])
 	const int len = MAVLINK_MAX_PACKET_LEN+sizeof(uint64_t);
 	unsigned char buf[len];
 	uint64_t last_time = 0;
-	uint64_t time;
-	mavlink_message_t msg;
-	mavlink_status_t status;
 
 	printf("mavconn-replay: Start playing logfile %s...\n", logfile.c_str());
 
@@ -299,9 +296,14 @@ int main(int argc, char* argv[])
 		bool ir = false;
 
 		mavlinkLog.read((char *)buf, len);
+
 		//first 8 bytes are the timestamp
+		uint64_t time;
 		memcpy((void*)&time, buf, sizeof(uint64_t));
+
 		// Quickly parse the message and break at message end
+		mavlink_message_t msg;
+		mavlink_status_t status;
 		for (int i = sizeof(uint64_t); i<MAVLINK_MAX_PACKET_LEN; ++i)
 		{
 			if (mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status)) break;
@@ -418,7 +420,6 @@ int main(int argc, char* argv[])
 
 			last_time = time;
 			last_current_time = current_time;
-			usleep(3000);
 		}
 	}
 

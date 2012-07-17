@@ -599,8 +599,7 @@ static void mavlink_handler (const lcm_recv_buf_t *rbuf, const char * channel, c
 		mavlink_msg_to_send_buffer(buf+sizeof(uint64_t), msg);
 		mavlinkFile.write((char *)buf, len);
 
-		if (msg->msgid == MAVLINK_MSG_ID_EXTENDED_MESSAGE &&
-			container->extended_payload_len > 0)
+		if (msg->msgid == MAVLINK_MSG_ID_EXTENDED_MESSAGE)
 		{
 			mavlinkFile.write(reinterpret_cast<char*>(container->extended_payload),
 							  container->extended_payload_len);
