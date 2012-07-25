@@ -48,7 +48,7 @@ This file is part of the PIXHAWK project
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include <interface/shared_mem/PxSHMImageClient.h>
+#include "interface/shared_mem/SHMImageClient.h"
 #include "mavconn.h"
 
 namespace config = boost::program_options;
@@ -187,12 +187,12 @@ void image_handler(const lcm_recv_buf_t* rbuf, const char* channel, const mavcon
 		const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
 
 		// Pointer to shared memory data
-		std::vector<PxSHMImageClient>* clientVec = reinterpret_cast< std::vector<PxSHMImageClient>* >(user);
+		std::vector<px::SHMImageClient>* clientVec = reinterpret_cast< std::vector<px::SHMImageClient>* >(user);
 
 		for (size_t i = 0; i < clientVec->size(); ++i)
 		{
-			PxSHMImageClient& client = clientVec->at(i);
-			if ((client.getCameraConfig() & PxSHMImageClient::getCameraNo(msg)) != PxSHMImageClient::getCameraNo(msg))
+			px::SHMImageClient& client = clientVec->at(i);
+			if ((client.getCameraConfig() & px::SHMImageClient::getCameraNo(msg)) != px::SHMImageClient::getCameraNo(msg))
 			{
 				continue;
 			}
@@ -206,7 +206,7 @@ void image_handler(const lcm_recv_buf_t* rbuf, const char* channel, const mavcon
 			{
 				success = true;
 				data->stereo = true;
-				if ((client.getCameraConfig() & PxSHM::CAMERA_FORWARD_LEFT) == PxSHM::CAMERA_FORWARD_LEFT)
+				if ((client.getCameraConfig() & px::SHM::CAMERA_FORWARD_LEFT) == px::SHM::CAMERA_FORWARD_LEFT)
 				{
 					//forward
 					data->direction = 1;
@@ -225,7 +225,7 @@ void image_handler(const lcm_recv_buf_t* rbuf, const char* channel, const mavcon
 				{
 					success = true;
 					data->stereo = false;
-					if ((client.getCameraConfig() & PxSHM::CAMERA_FORWARD_LEFT) == PxSHM::CAMERA_FORWARD_LEFT)
+					if ((client.getCameraConfig() & px::SHM::CAMERA_FORWARD_LEFT) == px::SHM::CAMERA_FORWARD_LEFT)
 					{
 						//forward
 						data->direction = 1;
@@ -654,13 +654,13 @@ int main(int argc, char* argv[])
 	if (!lcmImage || !lcmMavlink)
 		exit(EXIT_FAILURE);
 
-	std::vector<PxSHMImageClient> clientVec;
+	std::vector<px::SHMImageClient> clientVec;
 	clientVec.resize(4);
 
-	clientVec.at(0).init(true, PxSHM::CAMERA_FORWARD_LEFT);
-	clientVec.at(1).init(true, PxSHM::CAMERA_FORWARD_LEFT, PxSHM::CAMERA_FORWARD_RIGHT);
-	clientVec.at(2).init(true, PxSHM::CAMERA_DOWNWARD_LEFT);
-	clientVec.at(3).init(true, PxSHM::CAMERA_DOWNWARD_LEFT, PxSHM::CAMERA_DOWNWARD_RIGHT);
+	clientVec.at(0).init(true, px::SHM::CAMERA_FORWARD_LEFT);
+	clientVec.at(1).init(true, px::SHM::CAMERA_FORWARD_LEFT, px::SHM::CAMERA_FORWARD_RIGHT);
+	clientVec.at(2).init(true, px::SHM::CAMERA_DOWNWARD_LEFT);
+	clientVec.at(3).init(true, px::SHM::CAMERA_DOWNWARD_LEFT, px::SHM::CAMERA_DOWNWARD_RIGHT);
 
 	mavconn_mavlink_msg_container_t_subscription_t* img_sub = mavconn_mavlink_msg_container_t_subscribe(lcmImage, MAVLINK_IMAGES, &image_handler, &clientVec);
 	mavconn_mavlink_msg_container_t_subscription_t * comm_sub = mavconn_mavlink_msg_container_t_subscribe (lcmMavlink, MAVLINK_MAIN, &mavlink_handler, lcmMavlink);

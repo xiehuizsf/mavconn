@@ -25,24 +25,27 @@ This file is part of the PIXHAWK project
 * @file
 *   @brief Shared memory interface for writing images.
 *
-*   This interface is a wrapper around PxSHM.
+*   This interface is a wrapper around px::SHM.
 *
 *   @author Lionel Heng  <hengli@inf.ethz.ch>
 *
 */
 
-#ifndef PXSHMIMAGESERVER_H
-#define PXSHMIMAGESERVER_H
+#ifndef SHMIMAGESERVER_H
+#define SHMIMAGESERVER_H
 
 #include <mavconn.h>
 #include <opencv2/core/core.hpp>
 
-#include "PxSHM.h"
+#include "SHM.h"
 
-class PxSHMImageServer
+namespace px
+{
+
+class SHMImageServer
 {
 public:
-	PxSHMImageServer();
+	SHMImageServer();
 	
 	/**
 	 * Initializes the image server.
@@ -57,7 +60,7 @@ public:
 	 * @return Result of shared memory segment access.
 	 */
 	bool init(int sysid, int compid, lcm_t* lcm,
-			  PxSHM::Camera cam1, PxSHM::Camera cam2 = PxSHM::CAMERA_NONE);
+			  SHM::Camera cam1, SHM::Camera cam2 = SHM::CAMERA_NONE);
 	
 	int getCameraConfig(void) const;
 
@@ -82,10 +85,10 @@ public:
 						const cv::Rect& roi = cv::Rect());
 
 private:
-	bool writeImage(PxSHM::CameraType cameraType, const cv::Mat& img,
+	bool writeImage(SHM::CameraType cameraType, const cv::Mat& img,
 					const cv::Mat& img2 = cv::Mat());
 
-	bool writeImageWithCameraInfo(PxSHM::CameraType cameraType,
+	bool writeImageWithCameraInfo(SHM::CameraType cameraType,
 								  uint64_t timestamp,
 								  float roll, float pitch, float yaw,
 								  float lon, float lat, float alt,
@@ -95,18 +98,20 @@ private:
 								  const cv::Mat& img,
 								  const cv::Mat& img2 = cv::Mat());
 
-	int sysid;
-	int compid;
-	lcm_t* lcm;
-	PxSHM::Camera cam1;
-	PxSHM::Camera cam2;
+	int mSysid;
+	int mCompid;
+	lcm_t* mLCM;
+	SHM::Camera mCam1;
+	SHM::Camera mCam2;
 	
-	PxSHM shm;
-	int key;
+	SHM mSHM;
+	int mKey;
 	
-	std::vector<uint8_t> data;
+	std::vector<uint8_t> mData;
 
-	unsigned int imgSeq;
+	unsigned int mImgSeq;
 };
+
+}
 
 #endif

@@ -21,22 +21,22 @@ Camera::start(void)
 	{
 		if (mUseStereo)
 		{
-			mSHMClient.init(true, PxSHM::CAMERA_FORWARD_LEFT, PxSHM::CAMERA_FORWARD_RIGHT);
+			mSHMClient.init(true, px::SHM::CAMERA_FORWARD_LEFT, px::SHM::CAMERA_FORWARD_RIGHT);
 		}
 		else
 		{
-			mSHMClient.init(true, PxSHM::CAMERA_FORWARD_LEFT);
+			mSHMClient.init(true, px::SHM::CAMERA_FORWARD_LEFT);
 		}
 	}
 	else if (mOrientation.compare("downward") == 0)
 	{
 		if (mUseStereo)
 		{
-			mSHMClient.init(true, PxSHM::CAMERA_DOWNWARD_LEFT, PxSHM::CAMERA_DOWNWARD_RIGHT);
+			mSHMClient.init(true, px::SHM::CAMERA_DOWNWARD_LEFT, px::SHM::CAMERA_DOWNWARD_RIGHT);
 		}
 		else
 		{
-			mSHMClient.init(true, PxSHM::CAMERA_DOWNWARD_LEFT);
+			mSHMClient.init(true, px::SHM::CAMERA_DOWNWARD_LEFT);
 		}
 	}
 	else

@@ -31,48 +31,51 @@ This file is part of the PIXHAWK project
 *
 */
 
-#include "PxSHMImageClient.h"
+#include "SHMImageClient.h"
 
-PxSHMImageClient::PxSHMImageClient()
- : cam1(PxSHM::CAMERA_NONE)
- , cam2(PxSHM::CAMERA_NONE)
+namespace px
+{
+
+SHMImageClient::SHMImageClient()
+ : mCam1(SHM::CAMERA_NONE)
+ , mCam2(SHM::CAMERA_NONE)
 {
 	
 }
 
 bool
-PxSHMImageClient::init(bool subscribeLatest,
-					   PxSHM::Camera cam1, PxSHM::Camera cam2)
+SHMImageClient::init(bool subscribeLatest,
+					 SHM::Camera cam1, SHM::Camera cam2)
 {
-	this->subscribeLatest = subscribeLatest;
-	this->cam1 = cam1;
-	this->cam2 = cam2;
+	mSubscribeLatest = subscribeLatest;
+	mCam1 = cam1;
+	mCam2 = cam2;
 
 	std::string cameras = "";
 
-	if (cam1 == PxSHM::CAMERA_DOWNWARD_LEFT)
+	if (cam1 == SHM::CAMERA_DOWNWARD_LEFT)
 	{
 		cameras += " #1: DOWN LEFT";
 	}
-	if (cam1 == PxSHM::CAMERA_FORWARD_LEFT)
+	if (cam1 == SHM::CAMERA_FORWARD_LEFT)
 	{
 		cameras += " #1: FORWARD LEFT";
 	}
-	if (cam2 == PxSHM::CAMERA_DOWNWARD_RIGHT)
+	if (cam2 == SHM::CAMERA_DOWNWARD_RIGHT)
 	{
 		cameras += " #2: DOWN RIGHT";
 	}
 
-	if (cam2 == PxSHM::CAMERA_FORWARD_RIGHT)
+	if (cam2 == SHM::CAMERA_FORWARD_RIGHT)
 	{
 		cameras += " #2: FORWARD RIGHT";
 	}
 
 	printf("\t # INFO: Shared mem client initialized for cameras:%s\n", cameras.c_str());
 
-	data.reserve(1024 * 1024);
+	mData.reserve(1024 * 1024);
 
-	if (!shm.init(cam1 | cam2, PxSHM::CLIENT_TYPE, 128, 1, 1024 * 1024, 9))
+	if (!mSHM.init(cam1 | cam2, SHM::CLIENT_TYPE, 128, 1, 1024 * 1024, 9))
 	{
 		return false;
 	}
@@ -81,7 +84,7 @@ PxSHMImageClient::init(bool subscribeLatest,
 }
 
 uint64_t
-PxSHMImageClient::getTimestamp(const mavlink_message_t* msg)
+SHMImageClient::getTimestamp(const mavlink_message_t* msg)
 {
 	// Decode message
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
@@ -99,7 +102,7 @@ PxSHMImageClient::getTimestamp(const mavlink_message_t* msg)
 }
 
 uint64_t
-PxSHMImageClient::getValidUntil(const mavlink_message_t* msg)
+SHMImageClient::getValidUntil(const mavlink_message_t* msg)
 {
 	// Decode message
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
@@ -117,7 +120,7 @@ PxSHMImageClient::getValidUntil(const mavlink_message_t* msg)
 }
 
 uint64_t
-PxSHMImageClient::getCameraID(const mavlink_message_t* msg)
+SHMImageClient::getCameraID(const mavlink_message_t* msg)
 {
 	// Decode message
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
@@ -135,7 +138,7 @@ PxSHMImageClient::getCameraID(const mavlink_message_t* msg)
 }
 
 uint32_t
-PxSHMImageClient::getCameraNo(const mavlink_message_t* msg)
+SHMImageClient::getCameraNo(const mavlink_message_t* msg)
 {
 	// Decode message
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
@@ -153,7 +156,7 @@ PxSHMImageClient::getCameraNo(const mavlink_message_t* msg)
 }
 
 bool
-PxSHMImageClient::getRollPitch(const mavlink_message_t* msg, float& roll, float& pitch)
+SHMImageClient::getRollPitch(const mavlink_message_t* msg, float& roll, float& pitch)
 {
 	// Decode message
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
@@ -175,7 +178,7 @@ PxSHMImageClient::getRollPitch(const mavlink_message_t* msg, float& roll, float&
 }
 
 bool
-PxSHMImageClient::getRollPitchYaw(const mavlink_message_t* msg, float& roll, float& pitch, float& yaw)
+SHMImageClient::getRollPitchYaw(const mavlink_message_t* msg, float& roll, float& pitch, float& yaw)
 {
 	// Decode message
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
@@ -198,7 +201,7 @@ PxSHMImageClient::getRollPitchYaw(const mavlink_message_t* msg, float& roll, flo
 }
 
 bool
-PxSHMImageClient::getLocalHeight(const mavlink_message_t* msg, float& height)
+SHMImageClient::getLocalHeight(const mavlink_message_t* msg, float& height)
 {
 	// Decode message
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
@@ -219,7 +222,7 @@ PxSHMImageClient::getLocalHeight(const mavlink_message_t* msg, float& height)
 }
 
 bool
-PxSHMImageClient::getGPS(const mavlink_message_t* msg, float& lon, float& lat, float& alt)
+SHMImageClient::getGPS(const mavlink_message_t* msg, float& lon, float& lat, float& alt)
 {
 	// Decode message
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
@@ -242,7 +245,7 @@ PxSHMImageClient::getGPS(const mavlink_message_t* msg, float& lon, float& lat, f
 }
 
 bool
-PxSHMImageClient::getGroundTruth(const mavlink_message_t* msg, float& ground_x, float& ground_y, float& ground_z)
+SHMImageClient::getGroundTruth(const mavlink_message_t* msg, float& ground_x, float& ground_y, float& ground_z)
 {
 	// Decode message
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
@@ -265,13 +268,13 @@ PxSHMImageClient::getGroundTruth(const mavlink_message_t* msg, float& ground_x, 
 }
 
 int
-PxSHMImageClient::getCameraConfig(void) const
+SHMImageClient::getCameraConfig(void) const
 {
-	return (cam1 | cam2);
+	return (mCam1 | mCam2);
 }
 
 bool
-PxSHMImageClient::readMonoImage(const mavlink_message_t* msg, cv::Mat& img, bool verbose)
+SHMImageClient::readMonoImage(const mavlink_message_t* msg, cv::Mat& img, bool verbose)
 {
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
 	{
@@ -279,7 +282,7 @@ PxSHMImageClient::readMonoImage(const mavlink_message_t* msg, cv::Mat& img, bool
 		return false;
 	}
 	
-	if (!shm.bytesWaiting())
+	if (!mSHM.bytesWaiting())
 	{
 		if (verbose) printf("NO DATA WAITING in MONO IMAGE SHM CLIENT, RETURNING.\n");
 		return false;
@@ -287,16 +290,16 @@ PxSHMImageClient::readMonoImage(const mavlink_message_t* msg, cv::Mat& img, bool
 	
 	do
 	{
-		PxSHM::CameraType cameraType;
+		SHM::CameraType cameraType;
 		if (!readCameraType(cameraType))
 		{
 			if (verbose) printf("\t # ERROR SHM CLIENT: CANNOT READ CAMERA TYPEn");
 			return false;
 		}
 
-//		if (cameraType != PxSHM::CAMERA_MONO_8 && cameraType != PxSHM::CAMERA_MONO_24)
+//		if (cameraType != SHM::CAMERA_MONO_8 && cameraType != SHM::CAMERA_MONO_24)
 //		{
-//			if (verbose) printf("\t # ERROR SHM CLIENT: WRONG IMAGE CHANNEL DEPTH, EXPECTED %d OR %d BUT GOT %d\n", PxSHM::CAMERA_MONO_8, PxSHM::CAMERA_MONO_24, cameraType);
+//			if (verbose) printf("\t # ERROR SHM CLIENT: WRONG IMAGE CHANNEL DEPTH, EXPECTED %d OR %d BUT GOT %d\n", SHM::CAMERA_MONO_8, SHM::CAMERA_MONO_24, cameraType);
 //			return false;
 //		}
 
@@ -306,13 +309,13 @@ PxSHMImageClient::readMonoImage(const mavlink_message_t* msg, cv::Mat& img, bool
 			return false;
 		}
 	}
-	while (shm.bytesWaiting() && subscribeLatest);
+	while (mSHM.bytesWaiting() && mSubscribeLatest);
 	
 	return true;
 }
 
 bool
-PxSHMImageClient::readStereoImage(const mavlink_message_t* msg, cv::Mat& imgLeft, cv::Mat& imgRight)
+SHMImageClient::readStereoImage(const mavlink_message_t* msg, cv::Mat& imgLeft, cv::Mat& imgRight)
 {
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
 	{
@@ -320,20 +323,20 @@ PxSHMImageClient::readStereoImage(const mavlink_message_t* msg, cv::Mat& imgLeft
 		return false;
 	}
 	
-	if (!shm.bytesWaiting())
+	if (!mSHM.bytesWaiting())
 	{
 		return false;
 	}
 	
 	do
 	{
-		PxSHM::CameraType cameraType;
+		SHM::CameraType cameraType;
 		if (!readCameraType(cameraType))
 		{
 			return false;
 		}
 
-		if (cameraType != PxSHM::CAMERA_STEREO_8 && cameraType != PxSHM::CAMERA_STEREO_24)
+		if (cameraType != SHM::CAMERA_STEREO_8 && cameraType != SHM::CAMERA_STEREO_24)
 		{
 			return false;
 		}
@@ -343,13 +346,13 @@ PxSHMImageClient::readStereoImage(const mavlink_message_t* msg, cv::Mat& imgLeft
 			return false;
 		}
 	}
-	while (shm.bytesWaiting() && subscribeLatest);
+	while (mSHM.bytesWaiting() && mSubscribeLatest);
 	
 	return true;
 }
 
 bool
-PxSHMImageClient::readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBayer, cv::Mat& imgDepth)
+SHMImageClient::readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBayer, cv::Mat& imgDepth)
 {
 	if (msg->msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE)
 	{
@@ -357,20 +360,20 @@ PxSHMImageClient::readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBaye
 		return false;
 	}
 
-	if (!shm.bytesWaiting())
+	if (!mSHM.bytesWaiting())
 	{
 		return false;
 	}
 
 	do
 	{
-		PxSHM::CameraType cameraType;
+		SHM::CameraType cameraType;
 		if (!readCameraType(cameraType))
 		{
 			return false;
 		}
 
-		if (cameraType != PxSHM::CAMERA_KINECT)
+		if (cameraType != SHM::CAMERA_KINECT)
 		{
 			return false;
 		}
@@ -380,33 +383,33 @@ PxSHMImageClient::readKinectImage(const mavlink_message_t* msg, cv::Mat& imgBaye
 			return false;
 		}
 	}
-	while (shm.bytesWaiting() && subscribeLatest);
+	while (mSHM.bytesWaiting() && mSubscribeLatest);
 
 	return true;
 }
 
 bool
-PxSHMImageClient::readRGBDImage(cv::Mat& img, cv::Mat& imgDepth,
-								uint64_t& timestamp,
-								float& roll, float& pitch, float& yaw,
-								float& lon, float& lat, float& alt,
-								float& ground_x, float& ground_y, float& ground_z,
-								cv::Mat& cameraMatrix, cv::Rect& roi)
+SHMImageClient::readRGBDImage(cv::Mat& img, cv::Mat& imgDepth,
+							  uint64_t& timestamp,
+							  float& roll, float& pitch, float& yaw,
+							  float& lon, float& lat, float& alt,
+							  float& ground_x, float& ground_y, float& ground_z,
+							  cv::Mat& cameraMatrix, cv::Rect& roi)
 {
-	if (!shm.bytesWaiting())
+	if (!mSHM.bytesWaiting())
 	{
 		return false;
 	}
 
 	do
 	{
-		PxSHM::CameraType cameraType;
+		SHM::CameraType cameraType;
 		if (!readCameraType(cameraType))
 		{
 			return false;
 		}
 
-		if (cameraType != PxSHM::CAMERA_RGBD)
+		if (cameraType != SHM::CAMERA_RGBD)
 		{
 			return false;
 		}
@@ -419,29 +422,29 @@ PxSHMImageClient::readRGBDImage(cv::Mat& img, cv::Mat& imgDepth,
 			return false;
 		}
 	}
-	while (shm.bytesWaiting() && subscribeLatest);
+	while (mSHM.bytesWaiting() && mSubscribeLatest);
 
 	return true;
 }
 
 bool
-PxSHMImageClient::readCameraType(PxSHM::CameraType& cameraType)
+SHMImageClient::readCameraType(SHM::CameraType& cameraType)
 {
-	uint32_t dataLength = shm.readDataPacket(data, 4);
+	uint32_t dataLength = mSHM.readDataPacket(mData, 4);
 	if (dataLength < 4)
 	{
 		return false;
 	}
 
-	memcpy(&cameraType, &(data[0]), 4);
+	memcpy(&cameraType, &(mData[0]), 4);
 
 	return true;
 }
 
 bool
-PxSHMImageClient::readImage(cv::Mat& img)
+SHMImageClient::readImage(cv::Mat& img)
 {
-	uint32_t dataLength = shm.readDataPacket(data);
+	uint32_t dataLength = mSHM.readDataPacket(mData);
 	if (dataLength <= 20)
 	{
 		return false;
@@ -450,11 +453,11 @@ PxSHMImageClient::readImage(cv::Mat& img)
 	int rows, cols, type;
 	uint32_t step;
 
-//	memcpy(&cameraType, &(data[0]), 4);
-	memcpy(&cols, &(data[4]), 4);
-	memcpy(&rows, &(data[8]), 4);
-	memcpy(&step, &(data[12]), 4);
-	memcpy(&type, &(data[16]), 4);
+//	memcpy(&cameraType, &(mData[0]), 4);
+	memcpy(&cols, &(mData[4]), 4);
+	memcpy(&rows, &(mData[8]), 4);
+	memcpy(&step, &(mData[12]), 4);
+	memcpy(&type, &(mData[16]), 4);
 
 	if (dataLength != 20 + rows * step)
 	{
@@ -462,16 +465,16 @@ PxSHMImageClient::readImage(cv::Mat& img)
 		return false;
 	}
 
-	cv::Mat temp(rows, cols, type, &(data[20]), step);
+	cv::Mat temp(rows, cols, type, &(mData[20]), step);
 	temp.copyTo(img);
 
 	return true;
 }
 
 bool
-PxSHMImageClient::readImage(cv::Mat& img, cv::Mat& img2)
+SHMImageClient::readImage(cv::Mat& img, cv::Mat& img2)
 {
-	uint32_t dataLength = shm.readDataPacket(data);
+	uint32_t dataLength = mSHM.readDataPacket(mData);
 	if (dataLength <= 28)
 	{
 		return false;
@@ -480,13 +483,13 @@ PxSHMImageClient::readImage(cv::Mat& img, cv::Mat& img2)
 	int rows, cols, type, type2;
 	uint32_t step, step2;
 
-//	memcpy(&cameraType, &(data[0]), 4);
-	memcpy(&cols, &(data[4]), 4);
-	memcpy(&rows, &(data[8]), 4);
-	memcpy(&step, &(data[12]), 4);
-	memcpy(&type, &(data[16]), 4);
-	memcpy(&step2, &(data[20]), 4);
-	memcpy(&type2, &(data[24]), 4);
+//	memcpy(&cameraType, &(mData[0]), 4);
+	memcpy(&cols, &(mData[4]), 4);
+	memcpy(&rows, &(mData[8]), 4);
+	memcpy(&step, &(mData[12]), 4);
+	memcpy(&type, &(mData[16]), 4);
+	memcpy(&step2, &(mData[20]), 4);
+	memcpy(&type2, &(mData[24]), 4);
 
 	if (dataLength != 28 + rows * step + rows * step2)
 	{
@@ -494,24 +497,24 @@ PxSHMImageClient::readImage(cv::Mat& img, cv::Mat& img2)
 		return false;
 	}
 
-	cv::Mat temp(rows, cols, type, &(data[28]), step);
+	cv::Mat temp(rows, cols, type, &(mData[28]), step);
 	temp.copyTo(img);
 
-	cv::Mat temp2(rows, cols, type2, &(data[28 + rows * step]), step2);
+	cv::Mat temp2(rows, cols, type2, &(mData[28 + rows * step]), step2);
 	temp2.copyTo(img2);
 
 	return true;
 }
 
 bool
-PxSHMImageClient::readImageWithCameraInfo(uint64_t& timestamp,
-										  float& roll, float& pitch, float& yaw,
-										  float& lon, float& lat, float& alt,
-										  float& ground_x, float& ground_y, float& ground_z,
-										  cv::Mat& cameraMatrix, cv::Rect& roi,
-										  cv::Mat& img, cv::Mat& img2)
+SHMImageClient::readImageWithCameraInfo(uint64_t& timestamp,
+										float& roll, float& pitch, float& yaw,
+										float& lon, float& lat, float& alt,
+										float& ground_x, float& ground_y, float& ground_z,
+										cv::Mat& cameraMatrix, cv::Rect& roi,
+										cv::Mat& img, cv::Mat& img2)
 {
-	uint32_t dataLength = shm.readDataPacket(data);
+	uint32_t dataLength = mSHM.readDataPacket(mData);
 	if (dataLength <= 124)
 	{
 		return false;
@@ -520,17 +523,17 @@ PxSHMImageClient::readImageWithCameraInfo(uint64_t& timestamp,
 	int rows, cols, type, type2;
 	uint32_t step, step2;
 
-//	memcpy(&cameraType, &(data[0]), 4);
-	memcpy(&timestamp, &(data[4]), 8);
-	memcpy(&roll, &(data[12]), 4);
-	memcpy(&pitch, &(data[16]), 4);
-	memcpy(&yaw, &(data[20]), 4);
-	memcpy(&lon, &(data[24]), 4);
-	memcpy(&lat, &(data[28]), 4);
-	memcpy(&alt, &(data[32]), 4);
-	memcpy(&ground_x, &(data[36]), 4);
-	memcpy(&ground_y, &(data[40]), 4);
-	memcpy(&ground_z, &(data[44]), 4);
+//	memcpy(&cameraType, &(mData[0]), 4);
+	memcpy(&timestamp, &(mData[4]), 8);
+	memcpy(&roll, &(mData[12]), 4);
+	memcpy(&pitch, &(mData[16]), 4);
+	memcpy(&yaw, &(mData[20]), 4);
+	memcpy(&lon, &(mData[24]), 4);
+	memcpy(&lat, &(mData[28]), 4);
+	memcpy(&alt, &(mData[32]), 4);
+	memcpy(&ground_x, &(mData[36]), 4);
+	memcpy(&ground_y, &(mData[40]), 4);
+	memcpy(&ground_z, &(mData[44]), 4);
 
 	int mark = 48;
 	cameraMatrix = cv::Mat(3, 3, CV_32F);
@@ -538,22 +541,22 @@ PxSHMImageClient::readImageWithCameraInfo(uint64_t& timestamp,
 	{
 		for (int j = 0; j < cameraMatrix.cols; ++j)
 		{
-			memcpy(&(cameraMatrix.at<float>(i,j)), &(data[mark]), 4);
+			memcpy(&(cameraMatrix.at<float>(i,j)), &(mData[mark]), 4);
 			mark += 4;
 		}
 	}
 
-	memcpy(&(roi.x), &(data[mark]), 4);
-	memcpy(&(roi.y), &(data[mark+4]), 4);
-	memcpy(&(roi.width), &(data[mark+8]), 4);
-	memcpy(&(roi.height), &(data[mark+12]), 4);
+	memcpy(&(roi.x), &(mData[mark]), 4);
+	memcpy(&(roi.y), &(mData[mark+4]), 4);
+	memcpy(&(roi.width), &(mData[mark+8]), 4);
+	memcpy(&(roi.height), &(mData[mark+12]), 4);
 
-	memcpy(&cols, &(data[mark+16]), 4);
-	memcpy(&rows, &(data[mark+20]), 4);
-	memcpy(&step, &(data[mark+24]), 4);
-	memcpy(&type, &(data[mark+28]), 4);
-	memcpy(&step2, &(data[mark+32]), 4);
-	memcpy(&type2, &(data[mark+36]), 4);
+	memcpy(&cols, &(mData[mark+16]), 4);
+	memcpy(&rows, &(mData[mark+20]), 4);
+	memcpy(&step, &(mData[mark+24]), 4);
+	memcpy(&type, &(mData[mark+28]), 4);
+	memcpy(&step2, &(mData[mark+32]), 4);
+	memcpy(&type2, &(mData[mark+36]), 4);
 
 	if (dataLength != 124 + rows * step + rows * step2)
 	{
@@ -561,11 +564,13 @@ PxSHMImageClient::readImageWithCameraInfo(uint64_t& timestamp,
 		return false;
 	}
 
-	cv::Mat temp(rows, cols, type, &(data[124]), step);
+	cv::Mat temp(rows, cols, type, &(mData[124]), step);
 	temp.copyTo(img);
 
-	cv::Mat temp2(rows, cols, type2, &(data[124 + rows * step]), step2);
+	cv::Mat temp2(rows, cols, type2, &(mData[124 + rows * step]), step2);
 	temp2.copyTo(img2);
 
 	return true;
+}
+
 }

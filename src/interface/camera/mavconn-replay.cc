@@ -10,7 +10,7 @@
 // OpenCV includes
 #include <opencv2/highgui/highgui.hpp>
 
-#include <interface/shared_mem/PxSHMImageServer.h>
+#include "interface/shared_mem/SHMImageServer.h"
 #include "mavconn.h"
 
 namespace config = boost::program_options;
@@ -145,7 +145,7 @@ int main(int argc, char* argv[])
 
 	bool do_images = false;
 	bool do_stereo = false;
-	PxSHMImageServer cam;
+	px::SHMImageServer cam;
 	std::map<uint64_t, std::string> images_left;
 	std::map<uint64_t, std::string> images_right;
 	typedef std::pair<const uint64_t, std::string> image_type;
@@ -247,12 +247,12 @@ int main(int argc, char* argv[])
 	{
 		if (orientation == "forward")
 		{
-			cam.init(sysid, compid, lcmImage, PxSHM::CAMERA_FORWARD_LEFT, PxSHM::CAMERA_FORWARD_RIGHT);
+			cam.init(sysid, compid, lcmImage, px::SHM::CAMERA_FORWARD_LEFT, px::SHM::CAMERA_FORWARD_RIGHT);
 			printf("mavconn-replay: Initializing stereo FRONT camera replay\n");
 		}
 		else
 		{
-			cam.init(sysid, compid, lcmImage, PxSHM::CAMERA_DOWNWARD_LEFT, PxSHM::CAMERA_DOWNWARD_RIGHT);
+			cam.init(sysid, compid, lcmImage, px::SHM::CAMERA_DOWNWARD_LEFT, px::SHM::CAMERA_DOWNWARD_RIGHT);
 			printf("mavconn-replay: Initializing stereo DOWN camera replay\n");
 		}
 	}
@@ -260,12 +260,12 @@ int main(int argc, char* argv[])
 	{
 		if (orientation == "forward")
 		{
-			cam.init(sysid, compid, lcmImage, PxSHM::CAMERA_FORWARD_LEFT);
+			cam.init(sysid, compid, lcmImage, px::SHM::CAMERA_FORWARD_LEFT);
 			printf("mavconn-replay: Initializing monocular FRONT camera replay\n");
 		}
 		else
 		{
-			cam.init(sysid, compid, lcmImage, PxSHM::CAMERA_DOWNWARD_LEFT);
+			cam.init(sysid, compid, lcmImage, px::SHM::CAMERA_DOWNWARD_LEFT);
 			printf("mavconn-replay: Initializing monocular DOWN camera replay\n");
 		}
 	}

@@ -32,7 +32,7 @@ This file is part of the PIXHAWK project
 *
 */
 
-#include "PxSHM.h"
+#include "SHM.h"
 
 #include <limits.h>
 #include <string.h>
@@ -54,26 +54,29 @@ SBYTE  LEN            DATA             CRC
 
 */
 
-PxSHM::PxSHM()
- : mem(0)
- , key(0)
- , i_size(0)
- , d_size(0)
- , w_off(0)
- , r_off(0)
- , i_off(0)
+namespace px
+{
+
+SHM::SHM()
+ : m_mem(0)
+ , m_key(0)
+ , m_i_size(0)
+ , m_d_size(0)
+ , m_w_off(0)
+ , m_r_off(0)
+ , m_i_off(0)
 {
 
 }
 
-PxSHM::~PxSHM()
+SHM::~SHM()
 {
 
 }
 
 bool
-PxSHM::init(int key, PxSHM::Type type, int infoMaxPacketSize, int infoQueueLength,
-			int dataMaxPacketSize, int dataQueueLength)
+SHM::init(int key, SHM::Type type, int infoMaxPacketSize, int infoQueueLength,
+		  int dataMaxPacketSize, int dataQueueLength)
 {
 	if (infoMaxPacketSize <= 0)
 	{
@@ -96,11 +99,11 @@ PxSHM::init(int key, PxSHM::Type type, int infoMaxPacketSize, int infoQueueLengt
 		return false;
 	}
 
-	i_size = infoMaxPacketSize * infoQueueLength;
-	d_size = dataMaxPacketSize * dataQueueLength;
+	m_i_size = infoMaxPacketSize * infoQueueLength;
+	m_d_size = dataMaxPacketSize * dataQueueLength;
 
 	int m, f;
-	this->type = type;
+	m_type = type;
 	if (type == SERVER_TYPE)
 	{
 		m = IPC_CREAT | 0666;
@@ -119,7 +122,7 @@ PxSHM::init(int key, PxSHM::Type type, int infoMaxPacketSize, int infoQueueLengt
 
 	int shmid;
 	key_t shmkey = key;
-	if ((shmid = shmget(shmkey, i_size + d_size + 16, m)) == -1)
+	if ((shmid = shmget(shmkey, m_i_size + m_d_size + 16, m)) == -1)
 	{
 		fprintf(stderr, "# ERROR: Unable to get a shared memory segment (ERRNO #%d).\n", errno);
 #ifdef __APPLE__
@@ -133,33 +136,33 @@ PxSHM::init(int key, PxSHM::Type type, int infoMaxPacketSize, int infoQueueLengt
 		return false;
 	}
 
-	if ((mem = (unsigned char *)shmat(shmid, NULL, f)) == (unsigned char *)-1)
+	if ((m_mem = (unsigned char *)shmat(shmid, NULL, f)) == (unsigned char *)-1)
 	{
 		fprintf(stderr, "# ERROR: Unable to attach shared memory.\n");
 		return false;
 	}
 
-	r_off = 0;
-	w_off = 0;
+	m_r_off = 0;
+	m_w_off = 0;
 	if (type == SERVER_TYPE)
 	{
 		srand(time(0));
-		this->key = rand();
-		memcpy(mem, &(this->key), 4);
+		m_key = rand();
+		memcpy(m_mem, &(m_key), 4);
 
 		unsigned int num = 0;
-		memcpy(&(mem[4]), &num, 4);
-		memcpy(&(mem[i_size + 8]), &num, 4);
+		memcpy(&(m_mem[4]), &num, 4);
+		memcpy(&(m_mem[m_i_size + 8]), &num, 4);
 
 		fprintf(stderr, "# INFO: allocate %.2f MB of shared memory\n",
-				(i_size + d_size + 16) / (1024.0 * 1024.0));
+				(m_i_size + m_d_size + 16) / (1024.0 * 1024.0));
 	}
 
 	return true;
 }
 
 int
-PxSHM::hashKey(const std::string& str) const
+SHM::hashKey(const std::string& str) const
 {
 	int hash = 0;
 
@@ -174,28 +177,28 @@ PxSHM::hashKey(const std::string& str) const
 const uint8_t __SHM_IDENTIFIER = 0xF;
 
 int
-PxSHM::readInfoPacket(std::vector<uint8_t>& data)
+SHM::readInfoPacket(std::vector<uint8_t>& data)
 {
 	unsigned int o;
-	memcpy(&o, &(mem[4]), 4);
-	if (o != i_off)
+	memcpy(&o, &(m_mem[4]), 4);
+	if (o != m_i_off)
 	{
 		// check packet magic ID
-		if (mem[i_off + 8] == __SHM_IDENTIFIER)
+		if (m_mem[m_i_off + 8] == __SHM_IDENTIFIER)
 		{
 			// read packet size
 			unsigned int payloadSizeInBytes;
-			memcpy(&payloadSizeInBytes, &(mem[i_off + 9]), 4);
+			memcpy(&payloadSizeInBytes, &(m_mem[m_i_off + 9]), 4);
 
 			data.resize(payloadSizeInBytes);
 
 			// read packet payload
-			memcpy(&(data[0]), mem + i_off + 13, payloadSizeInBytes);
+			memcpy(&(data[0]), m_mem + m_i_off + 13, payloadSizeInBytes);
 
 			// validate packet CRC
-			if (mem[i_off + 13 + payloadSizeInBytes] == crc(data))
+			if (m_mem[m_i_off + 13 + payloadSizeInBytes] == crc(data))
 			{
-				i_off += payloadSizeInBytes + 6;
+				m_i_off += payloadSizeInBytes + 6;
 				return payloadSizeInBytes;
 			}
 			else
@@ -214,62 +217,62 @@ PxSHM::readInfoPacket(std::vector<uint8_t>& data)
 }
 
 int
-PxSHM::writeInfoPacket(const std::vector<uint8_t>& data)
+SHM::writeInfoPacket(const std::vector<uint8_t>& data)
 {
-	if (i_off + data.size() + 6 > i_size)
+	if (m_i_off + data.size() + 6 > m_i_size)
 	{
 		return 0;
 	}
 
 	// write packet magic ID
-	mem[pos(0,WRITE_INFO)] = __SHM_IDENTIFIER;
+	m_mem[pos(0,WRITE_INFO)] = __SHM_IDENTIFIER;
 
 	// write packet payload size
 	char bytes[4];
 	size_t num = data.size();
 	memcpy(bytes, &num, 4);
-	mem[pos(1,WRITE_INFO)] = bytes[0];
-	mem[pos(2,WRITE_INFO)] = bytes[1];
-	mem[pos(3,WRITE_INFO)] = bytes[2];
-	mem[pos(4,WRITE_INFO)] = bytes[3];
+	m_mem[pos(1,WRITE_INFO)] = bytes[0];
+	m_mem[pos(2,WRITE_INFO)] = bytes[1];
+	m_mem[pos(3,WRITE_INFO)] = bytes[2];
+	m_mem[pos(4,WRITE_INFO)] = bytes[3];
 
 	// write packet payload data
 	for (size_t i = 0; i < num; i++)
 	{
-		mem[pos(5 + i,WRITE_INFO)] = data[i];
+		m_mem[pos(5 + i,WRITE_INFO)] = data[i];
 	}
 
 	// write packet CRC
-	mem[pos(5 + num,WRITE_INFO)] = crc(data);
-	i_off += num + 6;
+	m_mem[pos(5 + num,WRITE_INFO)] = crc(data);
+	m_i_off += num + 6;
 
 	// update offset
-	memcpy(&(mem[4]), &i_off, 4);
+	memcpy(&(m_mem[4]), &m_i_off, 4);
 
 	return num;
 }
 
 int
-PxSHM::readDataPacket(std::vector<uint8_t>& data, uint32_t length)
+SHM::readDataPacket(std::vector<uint8_t>& data, uint32_t length)
 {
 	unsigned int shmkey, off;
-	memcpy(&shmkey, mem, 4);
-	memcpy(&off, &(mem[i_size + 8]), 4);
-	if (key != shmkey)
+	memcpy(&shmkey, m_mem, 4);
+	memcpy(&off, &(m_mem[m_i_size + 8]), 4);
+	if (m_key != shmkey)
 	{
-		r_off = off;
-		key = shmkey;
+		m_r_off = off;
+		m_key = shmkey;
 		return 0;
 	}
 	if (bytesWaiting())
 	{
-		memcpy(&r_off, &(mem[i_size + 12]), 4);
+		memcpy(&m_r_off, &(m_mem[m_i_size + 12]), 4);
 
 		// read packet magic ID
-		if (mem[pos(0,READ_DATA)] != __SHM_IDENTIFIER)
+		if (m_mem[pos(0,READ_DATA)] != __SHM_IDENTIFIER)
 		{
 			fprintf(stderr, "# WARNING: corrupt packet.\n");
-			r_off = off;
+			m_r_off = off;
 			return 0;
 		}
 
@@ -290,26 +293,26 @@ PxSHM::readDataPacket(std::vector<uint8_t>& data, uint32_t length)
 }
 
 int
-PxSHM::readDataPacket(std::vector<uint8_t>& data)
+SHM::readDataPacket(std::vector<uint8_t>& data)
 {
 	unsigned int shmkey, off;
-	memcpy(&shmkey, mem, 4);
-	memcpy(&off, &(mem[i_size + 8]), 4);
-	if (key != shmkey)
+	memcpy(&shmkey, m_mem, 4);
+	memcpy(&off, &(m_mem[m_i_size + 8]), 4);
+	if (m_key != shmkey)
 	{
-		r_off = off;
-		key = shmkey;
+		m_r_off = off;
+		m_key = shmkey;
 		return 0;
 	}
 	if (bytesWaiting())
 	{
-		memcpy(&r_off, &(mem[i_size + 12]), 4);
+		memcpy(&m_r_off, &(m_mem[m_i_size + 12]), 4);
 
 		// read packet magic ID
-		if (mem[pos(0,READ_DATA)] != __SHM_IDENTIFIER)
+		if (m_mem[pos(0,READ_DATA)] != __SHM_IDENTIFIER)
 		{
 			fprintf(stderr, "# WARNING: corrupt packet.\n");
-			r_off = off;
+			m_r_off = off;
 			return 0;
 		}
 
@@ -321,17 +324,17 @@ PxSHM::readDataPacket(std::vector<uint8_t>& data)
 		copyFromSHM(data, payloadSizeInBytes, 5);
 
 		// check packet crc
-		if (mem[pos(5 + payloadSizeInBytes,READ_DATA)] == crc(data))
+		if (m_mem[pos(5 + payloadSizeInBytes,READ_DATA)] == crc(data))
 		{
-			memcpy(&r_off, &(mem[i_size + 8]), 4);
-			//r_off = (r_off + payloadSizeInBytes + 6) % d_size;
+			memcpy(&m_r_off, &(m_mem[m_i_size + 8]), 4);
+			//m_r_off = (r_off + payloadSizeInBytes + 6) % d_size;
 			return payloadSizeInBytes;
 		}
 		else
 		{
 			fprintf(stderr, "# WARNING: packet CRC error.\n");
 			// reset
-			r_off = off;
+			m_r_off = off;
 			return -1;
 		}
 	}
@@ -339,47 +342,47 @@ PxSHM::readDataPacket(std::vector<uint8_t>& data)
 }
 
 uint32_t
-PxSHM::writeDataPacket(const std::vector<uint8_t>& data)
+SHM::writeDataPacket(const std::vector<uint8_t>& data)
 {
 	return writeDataPacket(&(data[0]), data.size());
 }
 
 uint32_t
-PxSHM::writeDataPacket(const uint8_t* data, uint32_t length)
+SHM::writeDataPacket(const uint8_t* data, uint32_t length)
 {
 	// write packet magic ID (1 byte)
-	mem[pos(0,WRITE_DATA)] = __SHM_IDENTIFIER;
+	m_mem[pos(0,WRITE_DATA)] = __SHM_IDENTIFIER;
 	// write size of packet (4 bytes)
 	copyToSHM(reinterpret_cast<uint8_t *>(&length), 4, 1);
 	// write packet payload (num bytes)
 	copyToSHM(data, length, 5);
 	// write packet CRC (1 byte)
-	mem[pos(5 + length,WRITE_DATA)] = crc(data, length);
+	m_mem[pos(5 + length,WRITE_DATA)] = crc(data, length);
 
 	//set read offset to the current write offset
-	memcpy(&(mem[i_size + 12]), &w_off, 4);
+	memcpy(&(m_mem[m_i_size + 12]), &m_w_off, 4);
 
 	//set write offset to the next free area
-	w_off = (w_off + length + 6) % d_size;
+	m_w_off = (m_w_off + length + 6) % m_d_size;
 
 	// update write offset
-	memcpy(&(mem[i_size + 8]), &w_off, 4);
+	memcpy(&(m_mem[m_i_size + 8]), &m_w_off, 4);
 
 	return length;
 }
 
 bool
-PxSHM::bytesWaiting(void) const
+SHM::bytesWaiting(void) const
 {
 	unsigned int off;
-	memcpy(&off, &(mem[i_size + 8]), 4);
-	return (off != r_off);
+	memcpy(&off, &(m_mem[m_i_size + 8]), 4);
+	return (off != m_r_off);
 }
 
 const char PROC_SHM_MAX[] = "/proc/sys/kernel/shmmax";
 
 long long
-PxSHM::getMax(void) const
+SHM::getMax(void) const
 {
 	FILE* fp = NULL;
 	long long max = -1;
@@ -407,7 +410,7 @@ PxSHM::getMax(void) const
 }
 
 bool
-PxSHM::setMax(long long max) const
+SHM::setMax(long long max) const
 {
 	FILE *fp = NULL;
 
@@ -425,20 +428,20 @@ PxSHM::setMax(long long max) const
 	return true;
 }
 
-PxSHM::Type
-PxSHM::getType(void) const
+SHM::Type
+SHM::getType(void) const
 {
-	return type;
+	return m_type;
 }
 
 uint8_t
-PxSHM::crc(const std::vector<uint8_t>& data) const
+SHM::crc(const std::vector<uint8_t>& data) const
 {
 	return crc(&(data[0]), data.size());
 }
 
 uint8_t
-PxSHM::crc(const uint8_t* data, uint32_t length) const
+SHM::crc(const uint8_t* data, uint32_t length) const
 {
 	uint8_t c = 0;
 	for (uint32_t i = 0; i < length; i++)
@@ -449,64 +452,64 @@ PxSHM::crc(const uint8_t* data, uint32_t length) const
 }
 
 int
-PxSHM::pos(int num, PxSHM::Mode mode) const
+SHM::pos(int num, SHM::Mode mode) const
 {
 	if (mode == WRITE_INFO)
 	{
-		return (i_off + num + 8);
+		return (m_i_off + num + 8);
 	}
 	if (mode == WRITE_DATA)
 	{
-		return (((w_off + num) % d_size) + i_size + 16);
+		return (((m_w_off + num) % m_d_size) + m_i_size + 16);
 	}
 	if (mode == READ_DATA)
 	{
-		return (((r_off + num) % d_size) + i_size + 16);
+		return (((m_r_off + num) % m_d_size) + m_i_size + 16);
 	}
 
 	return 0;
 }
 
 void
-PxSHM::copyToSHM(const uint8_t* data, int len, int off)
+SHM::copyToSHM(const uint8_t* data, int len, int off)
 {
-	if (w_off + off + len > d_size)
+	if (m_w_off + off + len > m_d_size)
 	{
-		int part1 = d_size - w_off - off;
+		int part1 = m_d_size - m_w_off - off;
 		int part2 = len - part1;
-		memcpy(&(mem[pos(off,WRITE_DATA)]), data, part1);
-		memcpy(&(mem[i_size + 16]), &(data[part1]), part2);
+		memcpy(&(m_mem[pos(off,WRITE_DATA)]), data, part1);
+		memcpy(&(m_mem[m_i_size + 16]), &(data[part1]), part2);
 	}
 	else
 	{
-		memcpy(&(mem[pos(off,WRITE_DATA)]), data, len);
+		memcpy(&(m_mem[pos(off,WRITE_DATA)]), data, len);
 	}
 }
 
 void
-PxSHM::copyToSHM(const std::vector<uint8_t>& data, int off)
+SHM::copyToSHM(const std::vector<uint8_t>& data, int off)
 {
 	copyToSHM(&(data[0]), data.size(), off);
 }
 
 void
-PxSHM::copyFromSHM(uint8_t* data, int len, int off) const
+SHM::copyFromSHM(uint8_t* data, int len, int off) const
 {
-	if (r_off + off + len > d_size)
+	if (m_r_off + off + len > m_d_size)
 	{
-		int part1 = d_size - r_off - off;
+		int part1 = m_d_size - m_r_off - off;
 		int part2 = len - part1;
-		memcpy(data, &(mem[pos(off,READ_DATA)]), part1);
-		memcpy(&(data[part1]), &(mem[i_size + 16]), part2);
+		memcpy(data, &(m_mem[pos(off,READ_DATA)]), part1);
+		memcpy(&(data[part1]), &(m_mem[m_i_size + 16]), part2);
 	}
 	else
 	{
-		memcpy(data, &(mem[pos(off,READ_DATA)]), len);
+		memcpy(data, &(m_mem[pos(off,READ_DATA)]), len);
 	}
 }
 
 void
-PxSHM::copyFromSHM(std::vector<uint8_t>& data, int len, int off) const
+SHM::copyFromSHM(std::vector<uint8_t>& data, int len, int off) const
 {
 	if (data.capacity() < static_cast<size_t>(len))
 	{
@@ -515,4 +518,6 @@ PxSHM::copyFromSHM(std::vector<uint8_t>& data, int len, int off) const
 	data.resize(len);
 
 	copyFromSHM(&(data[0]), len, off);
+}
+
 }

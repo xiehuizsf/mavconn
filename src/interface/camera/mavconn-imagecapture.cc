@@ -43,7 +43,8 @@ This file is part of the PIXHAWK project
 // OpenCV includes
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <interface/shared_mem/PxSHMImageClient.h>
+
+#include "interface/shared_mem/SHMImageClient.h"
 #include "mavconn.h"
 
 namespace config = boost::program_options;
@@ -155,7 +156,7 @@ static void image_handler (const lcm_recv_buf_t *rbuf, const char * channel, con
 			const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
 
 			// Pointer to shared memory data
-			PxSHMImageClient* client = static_cast<PxSHMImageClient*>(user);
+			px::SHMImageClient* client = static_cast<px::SHMImageClient*>(user);
 
 			if (verbose)
 			{
@@ -492,10 +493,10 @@ int main(int argc, char* argv[])
 	if (!lcmImage || !lcmMavlink)
 		exit(EXIT_FAILURE);
 
-	PxSHMImageClient* cam = new PxSHMImageClient();
+	px::SHMImageClient* cam = new px::SHMImageClient();
 	if(stereo_front)
 	{
-		if (!cam->init(true, PxSHM::CAMERA_FORWARD_LEFT, PxSHM::CAMERA_FORWARD_RIGHT))
+		if (!cam->init(true, px::SHM::CAMERA_FORWARD_LEFT, px::SHM::CAMERA_FORWARD_RIGHT))
 		{
 			printf("ERROR!\n");
 			return -7;
@@ -503,7 +504,7 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		if (!cam->init(true, PxSHM::CAMERA_DOWNWARD_LEFT))
+		if (!cam->init(true, px::SHM::CAMERA_DOWNWARD_LEFT))
 		{
 			printf("ERROR!\n");
 			return -7;

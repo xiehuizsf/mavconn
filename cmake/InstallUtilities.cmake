@@ -58,9 +58,9 @@ FUNCTION(PIXHAWK_INSTALL)
   SET(MAVCONNIMG_HEADERS
 	${CMAKE_SOURCE_DIR}/src/interface/shared_mem/PxSharedMemClient.h
 	${CMAKE_SOURCE_DIR}/src/interface/shared_mem/PxSharedMemServer.h
-	${CMAKE_SOURCE_DIR}/src/interface/shared_mem/PxSHM.h
-	${CMAKE_SOURCE_DIR}/src/interface/shared_mem/PxSHMImageServer.h
-	${CMAKE_SOURCE_DIR}/src/interface/shared_mem/PxSHMImageClient.h
+	${CMAKE_SOURCE_DIR}/src/interface/shared_mem/SHM.h
+	${CMAKE_SOURCE_DIR}/src/interface/shared_mem/SHMImageServer.h
+	${CMAKE_SOURCE_DIR}/src/interface/shared_mem/SHMImageClient.h
   )
   INSTALL(FILES ${MAVCONNIMG_HEADERS} DESTINATION ${PIXHAWK_INCLUDE_INSTALL_PATH}/interface/shared_mem/)
 

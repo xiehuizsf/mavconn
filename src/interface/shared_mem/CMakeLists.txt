@@ -1,7 +1,7 @@
 PIXHAWK_LIBRARY(mavconn_shm SHARED
-  PxSHM.cc
-  PxSHMImageClient.cc
-  PxSHMImageServer.cc
+  SHM.cc
+  SHMImageClient.cc
+  SHMImageServer.cc
 )
 PIXHAWK_LINK_LIBRARIES(mavconn_shm
   ${OPENCV_CORE_LIBRARY}

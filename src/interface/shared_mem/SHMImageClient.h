@@ -25,24 +25,27 @@ This file is part of the PIXHAWK project
 * @file
 *   @brief Shared memory interface for reading images.
 *
-*   This interface is a wrapper around PxSHM.
+*   This interface is a wrapper around px::SHM.
 *
 *   @author Lionel Heng  <hengli@inf.ethz.ch>
 *
 */
 
-#ifndef PXSHMIMAGECLIENT_H
-#define PXSHMIMAGECLIENT_H
+#ifndef SHMIMAGECLIENT_H
+#define SHMIMAGECLIENT_H
 
 #include <mavconn.h>
 #include <opencv2/core/core.hpp>
 
-#include "PxSHM.h"
+#include "SHM.h"
 
-class PxSHMImageClient
+namespace px
+{
+
+class SHMImageClient
 {
 public:
-	PxSHMImageClient();
+	SHMImageClient();
 	
 	/**
 	 * Initializes the image client.
@@ -59,7 +62,7 @@ public:
 	 * @return Result of shared memory segment access.
 	 */
 	bool init(bool subscribeLatest,
-			  PxSHM::Camera cam1, PxSHM::Camera cam2 = PxSHM::CAMERA_NONE);
+			  SHM::Camera cam1, SHM::Camera cam2 = SHM::CAMERA_NONE);
 	
 	static uint64_t getTimestamp(const mavlink_message_t* msg);
 	static uint64_t getValidUntil(const mavlink_message_t* msg);
@@ -82,7 +85,7 @@ public:
 					   cv::Mat& cameraMatrix, cv::Rect& roi);
 
 private:
-	bool readCameraType(PxSHM::CameraType& cameraType);
+	bool readCameraType(SHM::CameraType& cameraType);
 
 	bool readImage(cv::Mat& img);
 	bool readImage(cv::Mat& img, cv::Mat& img2);
@@ -93,13 +96,15 @@ private:
 								 cv::Mat& cameraMatrix, cv::Rect& roi,
 								 cv::Mat& img, cv::Mat& img2);
 
-	PxSHM::Camera cam1;
-	PxSHM::Camera cam2;
+	SHM::Camera mCam1;
+	SHM::Camera mCam2;
 
-	bool subscribeLatest;
-	std::vector<uint8_t> data;
+	bool mSubscribeLatest;
+	std::vector<uint8_t> mData;
 	
-	PxSHM shm;
+	SHM mSHM;
 };
+
+}
 
 #endif

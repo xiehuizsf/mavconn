@@ -38,8 +38,8 @@ This file is part of the PIXHAWK project
 #include <opencv2/highgui/highgui.hpp>
 #include <signal.h>
 
-#include <mavconn.h>
-#include <interface/shared_mem/PxSHMImageClient.h>
+#include "mavconn.h"
+#include "interface/shared_mem/SHMImageClient.h"
 
 namespace config = boost::program_options;
 
@@ -75,15 +75,15 @@ imageHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
 
 	// Pointer to shared memory data
-	std::vector<PxSHMImageClient>* clientVec =
-			reinterpret_cast< std::vector<PxSHMImageClient>* >(user);
+	std::vector<px::SHMImageClient>* clientVec =
+			reinterpret_cast< std::vector<px::SHMImageClient>* >(user);
 
 	cv::Mat imgToSave;
 
 	for (size_t i = 0; i < clientVec->size(); ++i)
 	{
-		PxSHMImageClient& client = clientVec->at(i);
-		if ((client.getCameraConfig() & PxSHMImageClient::getCameraNo(msg)) != PxSHMImageClient::getCameraNo(msg))
+		px::SHMImageClient& client = clientVec->at(i);
+		if ((client.getCameraConfig() & px::SHMImageClient::getCameraNo(msg)) != px::SHMImageClient::getCameraNo(msg))
 		{
 			continue;
 		}
@@ -92,7 +92,7 @@ imageHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 		if (client.readStereoImage(msg, imgLeft, imgRight))
 		{
 #ifndef NO_DISPLAY
-			if ((client.getCameraConfig() & PxSHM::CAMERA_FORWARD_LEFT) == PxSHM::CAMERA_FORWARD_LEFT)
+			if ((client.getCameraConfig() & px::SHM::CAMERA_FORWARD_LEFT) == px::SHM::CAMERA_FORWARD_LEFT)
 			{
 				cv::namedWindow("Left Image (Forward Camera)");
 				cv::imshow("Left Image (Forward Camera)", imgLeft);
@@ -131,7 +131,7 @@ imageHandler(const lcm_recv_buf_t* rbuf, const char* channel,
 
 				// Display if switched on
 	#ifndef NO_DISPLAY
-				if ((client.getCameraConfig() & PxSHM::CAMERA_FORWARD_LEFT) == PxSHM::CAMERA_FORWARD_LEFT)
+				if ((client.getCameraConfig() & px::SHM::CAMERA_FORWARD_LEFT) == px::SHM::CAMERA_FORWARD_LEFT)
 				{
 					cv::namedWindow("Left Image (Forward Camera)");
 					cv::imshow("Left Image (Forward Camera)", img);
@@ -207,13 +207,13 @@ int main(int argc, char* argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	std::vector<PxSHMImageClient> clientVec;
+	std::vector<px::SHMImageClient> clientVec;
 	clientVec.resize(4);
 
-	clientVec.at(0).init(true, PxSHM::CAMERA_FORWARD_LEFT);
-	clientVec.at(1).init(true, PxSHM::CAMERA_FORWARD_LEFT, PxSHM::CAMERA_FORWARD_RIGHT);
-	clientVec.at(2).init(true, PxSHM::CAMERA_DOWNWARD_LEFT);
-	clientVec.at(3).init(true, PxSHM::CAMERA_DOWNWARD_LEFT, PxSHM::CAMERA_DOWNWARD_RIGHT);
+	clientVec.at(0).init(true, px::SHM::CAMERA_FORWARD_LEFT);
+	clientVec.at(1).init(true, px::SHM::CAMERA_FORWARD_LEFT, px::SHM::CAMERA_FORWARD_RIGHT);
+	clientVec.at(2).init(true, px::SHM::CAMERA_DOWNWARD_LEFT);
+	clientVec.at(3).init(true, px::SHM::CAMERA_DOWNWARD_LEFT, px::SHM::CAMERA_DOWNWARD_RIGHT);
 
 	// Ready to roll
 	fprintf(stderr, "# INFO: Image client ready, waiting for images..\n");

@@ -39,7 +39,7 @@ This file is part of the PIXHAWK project
 #include <glibmm.h>
 #include <sys/time.h>
 
-#include <interface/shared_mem/PxSHMImageServer.h>
+#include "interface/shared_mem/SHMImageServer.h"
 #include "mavconn.h"
 #include "core/MAVConnParamClient.h"
 
@@ -389,25 +389,25 @@ int main(int argc, char* argv[])
 	}
 
 	//========= Initialize Shared memory =========
-	PxSHM::Camera cam = PxSHM::CAMERA_NONE;
-	PxSHM::Camera camRight = PxSHM::CAMERA_NONE;
+	px::SHM::Camera cam = px::SHM::CAMERA_NONE;
+	px::SHM::Camera camRight = px::SHM::CAMERA_NONE;
 	if (camOrientation.compare("downward") == 0)
 	{
 		if (useStereo)
 		{
-			camRight = PxSHM::CAMERA_DOWNWARD_RIGHT;
+			camRight = px::SHM::CAMERA_DOWNWARD_RIGHT;
 		}
 
-		cam = PxSHM::CAMERA_DOWNWARD_LEFT;
+		cam = px::SHM::CAMERA_DOWNWARD_LEFT;
 	}
 	else if (camOrientation.compare("forward") == 0)
 	{
 		if (useStereo)
 		{
-			camRight = PxSHM::CAMERA_FORWARD_RIGHT;
+			camRight = px::SHM::CAMERA_FORWARD_RIGHT;
 		}
 
-		cam = PxSHM::CAMERA_FORWARD_LEFT;
+		cam = px::SHM::CAMERA_FORWARD_LEFT;
 	}
 	else
 	{
@@ -415,7 +415,7 @@ int main(int argc, char* argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	PxSHMImageServer server;
+	px::SHMImageServer server;
 	server.init(getSystemID(), PX_COMP_ID_CAMERA, lcm, cam, camRight);
 
 	if(trigger && !triggerslave)

@@ -2,7 +2,8 @@
 #define CAMERA_H
 
 #include <glibmm.h>
-#include <interface/shared_mem/PxSHMImageClient.h>
+
+#include "interface/shared_mem/SHMImageClient.h"
 
 namespace px
 {
@@ -21,13 +22,13 @@ private:
 	void lcmHandler(lcm_t* lcm);
 
 	static void imageHandler(const lcm_recv_buf_t* rbuf, const char* channel,
-						 const mavconn_mavlink_msg_container_t* container, void* user);
+							 const mavconn_mavlink_msg_container_t* container, void* user);
 
 	bool mUseStereo;
 	std::string mOrientation;
 
 	Glib::Thread* mThreadLCM;
-	PxSHMImageClient mSHMClient;
+	SHMImageClient mSHMClient;
 
 	cv::Mat mImage;
 	cv::Mat mImageRight;

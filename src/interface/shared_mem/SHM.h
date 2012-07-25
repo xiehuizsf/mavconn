@@ -32,15 +32,18 @@ This file is part of the PIXHAWK project
 *
 */
 
-#ifndef PXSHM_H
-#define PXSHM_H
+#ifndef SHM_H
+#define SHM_H
 
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <string>
 #include <vector>
 
-class PxSHM
+namespace px
+{
+
+class SHM
 {
 public:
 	typedef enum
@@ -70,8 +73,8 @@ public:
 		CLIENT_TYPE = 1
 	} Type;
 
-	PxSHM();
-	~PxSHM();
+	SHM();
+	~SHM();
 
 	bool init(int key, Type type, int infoMaxPacketSize, int infoQueueLength,
 			  int dataMaxPacketSize, int dataQueueLength);
@@ -131,14 +134,16 @@ private:
 	void copyFromSHM(uint8_t* data, int len, int off) const;
 	void copyFromSHM(std::vector<uint8_t>& data, int len, int off) const;
 
-	Type              type;      /* server/client type */
-	unsigned char   * mem;       /* shared memory segment */
-	unsigned int      key;       /* shared memory key */
-	unsigned int      i_size;    /* size of the (static) info buffer */
-	unsigned int      d_size;    /* size of the (ringbuffer) data buffer */
-	unsigned int      w_off;     /* write offset */
-	unsigned int      r_off;     /* read offset */
-	unsigned int      i_off;     /* info offset */
+	Type              m_type;      /* server/client type */
+	unsigned char   * m_mem;       /* shared memory segment */
+	unsigned int      m_key;       /* shared memory key */
+	unsigned int      m_i_size;    /* size of the (static) info buffer */
+	unsigned int      m_d_size;    /* size of the (ringbuffer) data buffer */
+	unsigned int      m_w_off;     /* write offset */
+	unsigned int      m_r_off;     /* read offset */
+	unsigned int      m_i_off;     /* info offset */
 };
+
+}
 
 #endif
