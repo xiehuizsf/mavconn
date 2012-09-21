@@ -22,7 +22,7 @@ public:
 				   uint32_t _gain = 120,
 				   uint32_t _gamma = 0,
 				   uint32_t _brightness = 2047,
-				   uint32_t _pixelClockKHz = 12500)
+				   uint32_t _pixelClockKHz = 12000)
 	 : mode(_mode)
 	 , frameRate(_frameRate)
 	 , externalTrigger(_externalTrigger)
@@ -73,7 +73,7 @@ public:
 	virtual bool init(void) = 0;
 	virtual void destroy(void) = 0;
 
-	virtual bool setConfig(const PxCameraConfig& config) = 0;
+	virtual bool setConfig(const PxCameraConfig& config, bool master = true) = 0;
 
 	virtual bool start(void) = 0;
 	virtual bool stop(void) = 0;

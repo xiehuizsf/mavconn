@@ -65,7 +65,7 @@ PxOpenCVCamera::destroy(void)
 }
 
 bool
-PxOpenCVCamera::setConfig(const PxCameraConfig& config)
+PxOpenCVCamera::setConfig(const PxCameraConfig& config, bool master)
 {
 	if (!setMode(config.getMode()))
 	{

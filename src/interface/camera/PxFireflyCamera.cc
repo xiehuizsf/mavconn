@@ -290,7 +290,7 @@ PxFireflyCamera::destroy(void)
 }
 
 bool
-PxFireflyCamera::setConfig(const PxCameraConfig& config)
+PxFireflyCamera::setConfig(const PxCameraConfig& config, bool master)
 {
 	if (!setExposureTime(config.getExposureTime()))
 	{

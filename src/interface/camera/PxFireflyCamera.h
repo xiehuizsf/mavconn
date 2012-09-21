@@ -46,7 +46,7 @@ public:
 	bool init(void);
 	void destroy(void);
 
-	bool setConfig(const PxCameraConfig& config);
+	bool setConfig(const PxCameraConfig& config, bool master = true);
 
 	bool start(void);
 	bool stop(void);

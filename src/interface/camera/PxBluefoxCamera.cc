@@ -32,6 +32,10 @@ PxBluefoxCamera::init(void)
 	io.reset(new mvIMPACT::acquire::IOSubSystemBlueFOX(dev));
 	stats.reset(new mvIMPACT::acquire::Statistics(dev));
 
+	// allow other cameras to synchronize exposure settings with this camera
+	cameraSettings->flashType.write(mvIMPACT::acquire::cftStandard);
+	cameraSettings->flashMode.write(mvIMPACT::acquire::cfmDigout0);
+
 	imageAvailable = false;
 
 	return true;
@@ -50,7 +54,7 @@ PxBluefoxCamera::destroy(void)
 }
 
 bool
-PxBluefoxCamera::setConfig(const PxCameraConfig& config)
+PxBluefoxCamera::setConfig(const PxCameraConfig& config, bool master)
 {
 	if (!setMode(config.getMode()))
 	{
@@ -58,12 +62,17 @@ PxBluefoxCamera::setConfig(const PxCameraConfig& config)
 	}
 	frameRate = config.getFrameRate();
 	timeout_ms = 1.0f / frameRate * 4000.0f;
-	if (!setFrameRate(frameRate))
+	if (master && !setFrameRate(frameRate))
 	{
 		return false;
 	}
 
-	if (config.getExternalTrigger())
+	if (!setGain(config.getGain()))
+	{
+		return false;
+	}
+
+	if (master && config.getExternalTrigger())
 	{
 		if (!setExternalTrigger())
 		{
@@ -71,13 +80,14 @@ PxBluefoxCamera::setConfig(const PxCameraConfig& config)
 		}
 	}
 
-	if (config.getMode() != PxCameraConfig::AUTO_MODE)
+	if (!master && !setSlave())
+	{
+		return false;
+	}
+
+	if (master && config.getMode() != PxCameraConfig::AUTO_MODE)
 	{
 		if (!setExposureTime(config.getExposureTime()))
-		{
-			return false;
-		}
-		if (!setGain(config.getGain()))
 		{
 			return false;
 		}
@@ -166,29 +176,21 @@ PxBluefoxCamera::grabFrame(cv::Mat& image, uint32_t& skippedFrames,
 }
 
 bool
-PxBluefoxCamera::setExternalTrigger(void)
+PxBluefoxCamera::setSlave(void)
 {
-	mvIMPACT::acquire::CameraSettingsBlueFOX triggerSettings(dev);
-
-	// use hardware real-time controller to define image frequency
-	triggerSettings.triggerSource.write(mvIMPACT::acquire::ctsRTCtrl);
+	// use hardware real-time controller to synchronize to master camera
+	cameraSettings->triggerSource.write(mvIMPACT::acquire::ctsRTCtrl);
 
 	// ctmOnRisingEdge is not available with the CMOS sensor.
 	// ctmOnHighLevel is the next best alternative.
-	triggerSettings.triggerMode.write(mvIMPACT::acquire::ctmOnHighLevel);
+	cameraSettings->triggerMode.write(mvIMPACT::acquire::ctmOnHighLevel);
 
 	if (io->RTCtrProgramCount() == 0)
 	{
-		fprintf(stderr, "# ERROR: setExternalTrigger() only works if a HRTC controller is available.\n");
+		fprintf(stderr, "# ERROR: setSlave() only works if a HRTC controller is available.\n");
 		return false;
 	}
 
-	// write program to wait for input to reach logical value 1, and trigger immediately
-	// 0. WaitDigin On
-	// 1. TriggerSet 1
-	// 2. WaitClocks( <trigger pulse width in us> )
-	// 3. TriggerReset
-	// 4. Jump 0
 	mvIMPACT::acquire::RTCtrProgram* program = io->getRTCtrProgram(0);
 	if (!program)
 	{
@@ -197,10 +199,91 @@ PxBluefoxCamera::setExternalTrigger(void)
 	}
 
 	program->mode.write(mvIMPACT::acquire::rtctrlModeStop);
+
+	// write program to wait for input to reach logical value 1,
+	// start exposure until input reaches logical value 0,
+	// and trigger immediately
+	// 0. WaitDigin On
+	// 1. ExposeSet
+	// 2. WaitDigin Off
+	// 3. TriggerSet 1
+	// 4. WaitClocks( <trigger pulse width in us> )
+	// 5. TriggerReset
+	// 6. ExposeReset
+	// 7. Jump 0
+
+	program->setProgramSize(8);
+
+	int i = 0;
+	mvIMPACT::acquire::RTCtrProgramStep* step = program->programStep(i++);
+	step->opCode.write(mvIMPACT::acquire::rtctrlProgWaitDigin);
+	step->digitalInputs.write(mvIMPACT::acquire::digioOn);
+
+	step = program->programStep(i++);
+	step->opCode.write(mvIMPACT::acquire::rtctrlProgExposeSet);
+
+	step = program->programStep(i++);
+	step->opCode.write(mvIMPACT::acquire::rtctrlProgWaitDigin);
+	step->digitalInputs.write(mvIMPACT::acquire::digioOff);
+
+	step = program->programStep(i++);
+	step->opCode.write(mvIMPACT::acquire::rtctrlProgTriggerSet);
+	step->frameID.write(1);
+
+	step = program->programStep(i++);
+	step->opCode.write(mvIMPACT::acquire::rtctrlProgWaitClocks);
+	step->clocks_us.write(100);
+
+	step = program->programStep(i++);
+	step->opCode.write(mvIMPACT::acquire::rtctrlProgTriggerReset);
+
+	step = program->programStep(i++);
+	step->opCode.write(mvIMPACT::acquire::rtctrlProgExposeReset);
+
+	step = program->programStep(i++);
+	step->opCode.write(mvIMPACT::acquire::rtctrlProgJumpLoc);
+
+	program->mode.write(mvIMPACT::acquire::rtctrlModeRun);
+
+	return true;
+}
+
+bool
+PxBluefoxCamera::setExternalTrigger(void)
+{
+	// use hardware real-time controller to define image frequency
+	cameraSettings->triggerSource.write(mvIMPACT::acquire::ctsRTCtrl);
+
+	// ctmOnRisingEdge is not available with the CMOS sensor.
+	// ctmOnHighLevel is the next best alternative.
+	cameraSettings->triggerMode.write(mvIMPACT::acquire::ctmOnHighLevel);
+
+	if (io->RTCtrProgramCount() == 0)
+	{
+		fprintf(stderr, "# ERROR: setExternalTrigger() only works if a HRTC controller is available.\n");
+		return false;
+	}
+
+	mvIMPACT::acquire::RTCtrProgram* program = io->getRTCtrProgram(0);
+	if (!program)
+	{
+		// this should only happen if the system is short of memory
+		return false;
+	}
+
+	program->mode.write(mvIMPACT::acquire::rtctrlModeStop);
+
+	// write program to wait for input to reach logical value 1, and trigger immediately
+	// 0. WaitDigin On
+	// 1. TriggerSet 1
+	// 2. WaitClocks( <trigger pulse width in us> )
+	// 3. TriggerReset
+	// 4. Jump 0
+
 	program->setProgramSize(5);
 
 	int i = 0;
-	mvIMPACT::acquire::RTCtrProgramStep* step =	program->programStep(i++);
+	mvIMPACT::acquire::RTCtrProgramStep* step = program->programStep(i++);
 	step->opCode.write(mvIMPACT::acquire::rtctrlProgWaitDigin);
 	step->digitalInputs.write(mvIMPACT::acquire::digioOn);
 
@@ -229,14 +312,14 @@ PxBluefoxCamera::setFrameRate(float frameRate)
 	// frame rate may fall below specified frame rate if scene requires long
 	// exposure time, etc.
 
-	mvIMPACT::acquire::CameraSettingsBlueFOX triggerSettings(dev);
+	// this function should only be called by the master camera
 
 	// use hardware real-time controller to define image frequency
-	triggerSettings.triggerSource.write(mvIMPACT::acquire::ctsRTCtrl);
+	cameraSettings->triggerSource.write(mvIMPACT::acquire::ctsRTCtrl);
 
 	// ctmOnRisingEdge is not available with the CMOS sensor.
 	// ctmOnHighLevel is the next best alternative.
-	triggerSettings.triggerMode.write(mvIMPACT::acquire::ctmOnHighLevel);
+	cameraSettings->triggerMode.write(mvIMPACT::acquire::ctmOnHighLevel);
 
 	if (io->RTCtrProgramCount() == 0)
 	{
@@ -261,7 +344,7 @@ PxBluefoxCamera::setFrameRate(float frameRate)
 	program->setProgramSize(5);
 
 	int i = 0;
-	mvIMPACT::acquire::RTCtrProgramStep* step =	program->programStep(i++);
+	mvIMPACT::acquire::RTCtrProgramStep* step = program->programStep(i++);
 	step->opCode.write(mvIMPACT::acquire::rtctrlProgWaitClocks);
 	step->clocks_us.write(static_cast<int>(1000000.0 / frameRate) - 100);
 
