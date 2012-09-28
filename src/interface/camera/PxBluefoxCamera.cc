@@ -85,7 +85,7 @@ PxBluefoxCamera::setConfig(const PxCameraConfig& config, bool master)
 		return false;
 	}
 
-	if (master && config.getMode() != PxCameraConfig::AUTO_MODE)
+	if (config.getMode() != PxCameraConfig::AUTO_MODE)
 	{
 		if (!setExposureTime(config.getExposureTime()))
 		{
@@ -212,19 +212,21 @@ PxBluefoxCamera::setSlave(void)
 	// 6. ExposeReset
 	// 7. Jump 0
 
-	program->setProgramSize(8);
+	// TODO: Find out why ExposeSet does not work
+
+	program->setProgramSize(5);
 
 	int i = 0;
 	mvIMPACT::acquire::RTCtrProgramStep* step = program->programStep(i++);
 	step->opCode.write(mvIMPACT::acquire::rtctrlProgWaitDigin);
 	step->digitalInputs.write(mvIMPACT::acquire::digioOn);
 
-	step = program->programStep(i++);
-	step->opCode.write(mvIMPACT::acquire::rtctrlProgExposeSet);
+//	step = program->programStep(i++);
+//	step->opCode.write(mvIMPACT::acquire::rtctrlProgExposeSet);
 
-	step = program->programStep(i++);
-	step->opCode.write(mvIMPACT::acquire::rtctrlProgWaitDigin);
-	step->digitalInputs.write(mvIMPACT::acquire::digioOff);
+//	step = program->programStep(i++);
+//	step->opCode.write(mvIMPACT::acquire::rtctrlProgWaitDigin);
+//	step->digitalInputs.write(mvIMPACT::acquire::digioOff);
 
 	step = program->programStep(i++);
 	step->opCode.write(mvIMPACT::acquire::rtctrlProgTriggerSet);
@@ -237,8 +239,8 @@ PxBluefoxCamera::setSlave(void)
 	step = program->programStep(i++);
 	step->opCode.write(mvIMPACT::acquire::rtctrlProgTriggerReset);
 
-	step = program->programStep(i++);
-	step->opCode.write(mvIMPACT::acquire::rtctrlProgExposeReset);
+//	step = program->programStep(i++);
+//	step->opCode.write(mvIMPACT::acquire::rtctrlProgExposeReset);
 
 	step = program->programStep(i++);
 	step->opCode.write(mvIMPACT::acquire::rtctrlProgJumpLoc);
@@ -372,11 +374,11 @@ PxBluefoxCamera::setMode(PxCameraConfig::Mode mode)
 {
 	try
 	{
+		// turn off automatic gain control
+		cameraSettings->autoGainControl.write(mvIMPACT::acquire::agcOff);
+
 		if (mode == PxCameraConfig::MANUAL_MODE)
 		{
-			// turn off automatic gain control
-			cameraSettings->autoGainControl.write(mvIMPACT::acquire::agcOff);
-
 			// turn off automatic exposure control
 			cameraSettings->autoExposeControl.write(mvIMPACT::acquire::aecOff);
 		}
@@ -390,12 +392,12 @@ PxBluefoxCamera::setMode(PxCameraConfig::Mode mode)
 				cameraSettings->autoControlParameters.controllerIntegralTime_ms.write(1000.0);
 				cameraSettings->autoControlParameters.controllerDerivativeTime_ms.write(0.0);
 				cameraSettings->autoControlParameters.controllerDelay_Images.write(0);
+				cameraSettings->autoControlParameters.exposeLowerLimit_us.write(100);
+				cameraSettings->autoControlParameters.exposeUpperLimit_us.write(15000);
+				cameraSettings->autoControlParameters.desiredAverageGreyValue.write(128);
 			}
 
 			cameraSettings->autoControlMode.write(mvIMPACT::acquire::acmStandard);
-
-			// turn on automatic gain control
-			cameraSettings->autoGainControl.write(mvIMPACT::acquire::agcOn);
 
 			// turn on automatic exposure control
 			cameraSettings->autoExposeControl.write(mvIMPACT::acquire::aecOn);
@@ -525,7 +527,7 @@ PxBluefoxCamera::imageHandler(void)
 		if (functionInterface->isRequestNrValid(requestNr))
 		{
 			const mvIMPACT::acquire::Request* request = functionInterface->getRequest(requestNr);
-			if (functionInterface->isRequestOK(request))
+			if (request->isOK())
 			{
 				convertToCvMat(request, image);
 

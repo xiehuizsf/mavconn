@@ -1,6 +1,5 @@
 #include "PxBluefoxStereoCamera.h"
 
-#include <iostream>
 #include <sys/time.h>
 
 PxBluefoxStereoCamera::PxBluefoxStereoCamera(mvIMPACT::acquire::Device* _cameraLeft,
@@ -56,6 +55,15 @@ PxBluefoxStereoCamera::setConfig(const PxCameraConfig& config)
 		return false;
 	}
 
+	// TODO: Remove this if statement once ExposeSet issue is resolved
+	// manually set exposure for right camera based on those with
+	// which latest image from left camera was taken
+	if (mode == PxCameraConfig::AUTO_MODE &&
+	   !cameraRight->setMode(PxCameraConfig::MANUAL_MODE))
+	{
+		return false;
+	}
+	
 	return true;
 }
 
@@ -239,6 +247,13 @@ PxBluefoxStereoCamera::stereoImageHandler(void)
 			cameraRight->convertToCvMat(requestR, cameraRight->image);
 			cameraLeft->imageSequenceNr = seqL;
 			cameraRight->imageSequenceNr = seqR;
+
+			// TODO: Remove this if statement once ExposeSet issue is resolved
+			if (mode == PxCameraConfig::AUTO_MODE)
+			{
+				// set exposure of right camera based on image from left camera
+				cameraRight->setExposureTime(requestL->infoExposeTime_us.read());
+			}
 
 			imageAvailable = ALL_IMAGES_AVAILABLE;
 			imageAvailableCond->signal();
