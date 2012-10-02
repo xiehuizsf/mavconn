@@ -214,7 +214,7 @@ PxBluefoxCamera::setSlave(void)
 
 	// TODO: Find out why ExposeSet does not work
 
-	program->setProgramSize(5);
+	program->setProgramSize(6);
 
 	int i = 0;
 	mvIMPACT::acquire::RTCtrProgramStep* step = program->programStep(i++);
@@ -238,6 +238,10 @@ PxBluefoxCamera::setSlave(void)
 
 	step = program->programStep(i++);
 	step->opCode.write(mvIMPACT::acquire::rtctrlProgTriggerReset);
+
+	step = program->programStep(i++);
+	step->opCode.write(mvIMPACT::acquire::rtctrlProgWaitDigin);
+	step->digitalInputs.write(mvIMPACT::acquire::digioOff);
 
 //	step = program->programStep(i++);
 //	step->opCode.write(mvIMPACT::acquire::rtctrlProgExposeReset);
