@@ -13,7 +13,7 @@ public:
 	bool init(void);
 	void destroy(void);
 
-	bool setConfig(const PxCameraConfig& config);
+	bool setConfig(const PxCameraConfig& config, bool master = true);
 
 	bool start(void);
 	bool stop(void);
@@ -22,6 +22,7 @@ public:
 				   uint32_t& sequenceNum);
 
 private:
+	bool setSlave(void);
 	bool setExternalTrigger(void);
 	bool setFrameRate(float frameRate);
 	bool setMode(PxCameraConfig::Mode mode);
@@ -38,7 +39,7 @@ private:
 
 	mvIMPACT::acquire::Device* dev;
 	std::tr1::shared_ptr<mvIMPACT::acquire::FunctionInterface> functionInterface;
-	std::tr1::shared_ptr<mvIMPACT::acquire::CameraSettingsBlueDevice> cameraSettings;
+	std::tr1::shared_ptr<mvIMPACT::acquire::CameraSettingsBlueFOX> cameraSettings;
 	std::tr1::shared_ptr<mvIMPACT::acquire::IOSubSystemBlueFOX> io;
 	std::tr1::shared_ptr<mvIMPACT::acquire::Statistics> stats;
 

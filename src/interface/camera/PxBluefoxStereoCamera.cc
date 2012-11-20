@@ -5,7 +5,6 @@
 PxBluefoxStereoCamera::PxBluefoxStereoCamera(mvIMPACT::acquire::Device* _cameraLeft,
 											 mvIMPACT::acquire::Device* _cameraRight)
  : lastSequenceNum(0)
- , externalTrigger(false)
  , maxRequests(4)
 {
 	cameraLeft = std::tr1::shared_ptr<PxBluefoxCamera>(new PxBluefoxCamera(_cameraLeft));
@@ -47,25 +46,24 @@ PxBluefoxStereoCamera::setConfig(const PxCameraConfig& config)
 
 	mode = config.getMode();
 
-	if (!cameraLeft->setConfig(config))
+	if (!cameraLeft->setConfig(config, true))
 	{
 		return false;
 	}
-	if (!cameraRight->setConfig(config))
+	if (!cameraRight->setConfig(config, false))
 	{
 		return false;
 	}
 
-	// manually set gain and exposure for right camera based on those with
+	// TODO: Remove this if statement once ExposeSet issue is resolved
+	// manually set exposure for right camera based on those with
 	// which latest image from left camera was taken
 	if (mode == PxCameraConfig::AUTO_MODE &&
-		!cameraRight->setMode(PxCameraConfig::MANUAL_MODE))
+	   !cameraRight->setMode(PxCameraConfig::MANUAL_MODE))
 	{
 		return false;
 	}
-
-	externalTrigger = config.getExternalTrigger();
-
+	
 	return true;
 }
 
@@ -250,12 +248,11 @@ PxBluefoxStereoCamera::stereoImageHandler(void)
 			cameraLeft->imageSequenceNr = seqL;
 			cameraRight->imageSequenceNr = seqR;
 
+			// TODO: Remove this if statement once ExposeSet issue is resolved
 			if (mode == PxCameraConfig::AUTO_MODE)
 			{
-				// set gain & exposure of right camera based on image
-				// from left camera
+				// set exposure of right camera based on image from left camera
 				cameraRight->setExposureTime(requestL->infoExposeTime_us.read());
-				cameraRight->setGainDB(requestL->infoGain_dB.read());
 			}
 
 			imageAvailable = ALL_IMAGES_AVAILABLE;

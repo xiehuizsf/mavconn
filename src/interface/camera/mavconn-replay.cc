@@ -20,6 +20,7 @@ std::string logfile;
 std::string imagepath_left;
 std::string imagepath_right;
 Glib::ustring orientation;
+bool publishExtended = false;
 uint64_t camid_left = 0;  ///< Left Camera unique id
 uint64_t camid_right = 0; ///< Right camera unique id
 bool silent, verbose;
@@ -72,6 +73,10 @@ int main(int argc, char* argv[])
 		optOrientation.set_long_name("orientation");
 		optOrientation.set_description("Orientation of the camera (forward|downward)");
 
+		Glib::OptionEntry optPublishExtended;
+		optPublishExtended.set_long_name("publish_extended");
+		optPublishExtended.set_description("Publish extended MAVLINK messages");
+
 		bool verbose = false;
 		optGroup.add_entry_filename(optClassifierFile, logfile);
 		optGroup.add_entry_filename(optLeft, imagepath_left);
@@ -85,6 +90,7 @@ int main(int argc, char* argv[])
 		optGroup.add_entry(optVerbose, verbose);
 		optGroup.add_entry(optSilent, silent);
 		optGroup.add_entry(optOrientation, orientation);
+		optGroup.add_entry(optPublishExtended, publishExtended);
 
 		Glib::OptionContext optContext("");
 		optContext.set_help_enabled(true);
@@ -270,6 +276,8 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	std::map<uint64_t, std::string>::iterator sync_image_left_it = images_left.begin();
+	std::map<uint64_t, std::string>::iterator sync_image_right_it = images_right.begin();
 
 	const int len = MAVLINK_MAX_PACKET_LEN+sizeof(uint64_t);
 	unsigned char buf[len];
@@ -371,6 +379,54 @@ int main(int argc, char* argv[])
 				}
 			}
 		}
+		else if (do_images)
+		{
+			if (sync_image_left_it != images_left.end() && sync_image_right_it != images_right.end() &&
+				(sync_image_left_it->first >= startTimestamp || sync_image_right_it->first >= startTimestamp))
+			{
+				if (found_correct_timestamp == false)
+				{
+					printf("Found starting timestamp, start replaying now from here...\n");
+					found_correct_timestamp = true;
+				}
+
+				uint64_t timestamp = sync_image_left_it->first;
+				if (sync_image_left_it->first < time)
+				{
+					// Image found
+					if (verbose) printf("[%llu] loading left image %s\n", (long long unsigned) camid_left, sync_image_left_it->second.c_str());
+					image_left = cv::imread(sync_image_left_it->second.c_str(), -1);
+					il = true;
+					++sync_image_left_it;
+				}
+
+				if (do_stereo)
+				{
+					if (sync_image_right_it->first < time)
+					{
+						// Image found
+						if (verbose) printf("[%llu] loading right image %s\n", (long long unsigned) camid_right, sync_image_right_it->second.c_str());
+						image_right = cv::imread(sync_image_right_it->second.c_str(), -1);
+						ir = true;
+						++sync_image_right_it;
+					}
+				}
+
+				//publish images (write to shared memory and send message on IMAGES channel)
+				if(il)
+				{
+					mavlink_image_triggered_t itrg;
+					if(ir)
+					{
+						cam.writeStereoImage(image_left, camid_left, image_right, camid_right, timestamp, itrg, 0);
+					}
+					else
+					{
+						cam.writeMonoImage(image_left, camid_left, timestamp, itrg, 0);
+					}
+				}
+			}
+		}
 
 		//don't publish IMAGE_AVAILABLE messages or if we did not find the right timestamped image yet
 		if (msg.msgid != MAVLINK_MSG_ID_IMAGE_AVAILABLE && found_correct_timestamp)
@@ -407,7 +463,10 @@ int main(int argc, char* argv[])
 								extended_payload_len);
 
 				// Publish the message on the LCM bus
-				mavconn_mavlink_msg_container_t_publish(lcmMavlink, MAVLINK_MAIN, &container);
+				if (publishExtended)
+				{
+					mavconn_mavlink_msg_container_t_publish(lcmMavlink, MAVLINK_MAIN, &container);
+				}
 
 				delete [] container.extended_payload;
 			}

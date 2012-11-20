@@ -46,7 +46,7 @@ PxFireflyStereoCamera::destroy(void)
 bool
 PxFireflyStereoCamera::setConfig(const PxCameraConfig& config)
 {
-	if (!cameraLeft->setConfig(config))
+	if (!cameraLeft->setConfig(config, true))
 	{
 		return false;
 	}
@@ -54,7 +54,7 @@ PxFireflyStereoCamera::setConfig(const PxCameraConfig& config)
 //	PxCameraConfig right_config(config);
 //	right_config.setExternalTrigger(true);
 
-	if (!cameraRight->setConfig(config))
+	if (!cameraRight->setConfig(config, false))
 	{
 		return false;
 	}
