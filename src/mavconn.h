@@ -43,6 +43,8 @@ This file is part of the MAVCONN project
 #include <fstream>
 #include <vector>
 
+#include <unistd.h>
+
 // MAVLINK message format includes
 #include <pixhawk/mavlink.h>
 
