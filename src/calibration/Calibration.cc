@@ -130,7 +130,6 @@ Calibration::computeReprojectionError(const std::vector< std::vector<cv::Point3f
 									  cv::Mat& perViewErrors)
 {
     int imageCount = objectPoints.size();
-    size_t pointsSoFar = 0;
     float totalErr = 0.0;
 
     perViewErrors = cv::Mat(1, imageCount, CV_32F);
@@ -139,19 +138,15 @@ Calibration::computeReprojectionError(const std::vector< std::vector<cv::Point3f
     {
     	size_t pointCount = imagePoints.at(i).size();
 
-        pointsSoFar += pointCount;
-
         std::vector<cv::Point2f> estImagePoints;
-        cv::projectPoints(cv::Mat(objectPoints.at(i)),
-						  rvecs.at(i), tvecs.at(i),
-                          cameraMatrix, distCoeffs,
-                          estImagePoints);
+        cv::projectPoints(cv::Mat(objectPoints.at(i)), rvecs.at(i), tvecs.at(i), cameraMatrix, distCoeffs, estImagePoints);
 
         float err = 0.0;
         for (size_t j = 0; j < imagePoints.at(i).size(); ++j)
         {
-        	err += fabsf(imagePoints.at(i).at(j).x - estImagePoints.at(j).x);
-        	err += fabsf(imagePoints.at(i).at(j).y - estImagePoints.at(j).y);
+		float dx = imagePoints.at(i).at(j).x - estImagePoints.at(j).x;
+		float dy = imagePoints.at(i).at(j).y - estImagePoints.at(j).y;
+        	err += sqrt(dx*dx + dy*dy);
         }
 
         perViewErrors.at<float>(i) = err / pointCount;
@@ -159,7 +154,7 @@ Calibration::computeReprojectionError(const std::vector< std::vector<cv::Point3f
         totalErr += err;
     }
 
-    return totalErr / pointsSoFar;
+    return totalErr / imageCount;
 }
 
 }
