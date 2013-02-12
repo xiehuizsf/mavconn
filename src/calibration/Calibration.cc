@@ -48,9 +48,7 @@ Calibration::calibrateCamera(void)
 
     std::vector<cv::Mat> rvecs;
     std::vector<cv::Mat> tvecs;
-    cv::calibrateCamera(objectPoints, mImagePoints,
-                        mImageSize, mCameraMatrix, mDistCoeffs,
-                        rvecs, tvecs, 0);
+    cv::calibrateCamera(objectPoints, mImagePoints, mImageSize, mCameraMatrix, mDistCoeffs, rvecs, tvecs, 0);
 
     mExtrParams = cv::Mat(imageCount, 6, CV_64F);
     for (int i = 0; i < imageCount; ++i)

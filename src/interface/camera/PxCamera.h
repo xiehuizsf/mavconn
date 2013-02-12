@@ -2,6 +2,7 @@
 #define PXCAMERA_H
 
 #include <stdint.h>
+#include <unistd.h>
 #include <glibmm.h>
 #include <opencv2/core/core.hpp>
 #include <tr1/memory>
