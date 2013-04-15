@@ -1,6 +1,6 @@
 #include "PxCameraManagerFactory.h"
 
-#ifdef __linux
+#ifdef MVIMPACT_ENABLED
 #include "PxBluefoxCameraManager.h"
 #endif
 #include "PxFireflyCameraManager.h"
@@ -14,7 +14,7 @@ PxCameraManagerPtr
 PxCameraManagerFactory::generate(const std::string& type)
 {
 	bool blueFoxSupported = false;
-#ifdef __linux
+#ifdef MVIMPACT_ENABLED
 	blueFoxSupported = true;
 #endif
 
@@ -23,7 +23,7 @@ PxCameraManagerFactory::generate(const std::string& type)
 	{
 		if (bluefoxCameraManager.get() == 0)
 		{
-#ifdef __linux
+#ifdef MVIMPACT_ENABLED
 			bluefoxCameraManager = PxCameraManagerPtr(new PxBluefoxCameraManager);
 #endif
 		}
