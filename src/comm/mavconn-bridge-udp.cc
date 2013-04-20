@@ -123,6 +123,11 @@ static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel,
 		bytes_sent = sendto(link, buf, messageLength, 0, (struct sockaddr*) &gcAddr,
 				sizeof(struct sockaddr_in));
 		bytesToSend = messageLength;
+		if(verbose)
+		{
+			printf("msg->msgid: %d  Packets send to %s:%d\n",msg->msgid,inet_ntoa(gcAddr.sin_addr),ntohs(gcAddr.sin_port));
+		}
+		
 		//	extern int errno;
 	}
 	else if (transmitExtended)
@@ -205,8 +210,21 @@ void* udp_wait(void* lcm_ptr)
 	uint8_t buf[MAVLINK_MAX_PACKET_LEN];
 	while (1)
 	{
+//		int recsize = recvfrom(sock, (void *) buf, MAVLINK_MAX_PACKET_LEN, 0,
+//				(struct sockaddr *) &gcAddr, &fromlen);
 		int recsize = recvfrom(sock, (void *) buf, MAVLINK_MAX_PACKET_LEN, 0,
-				(struct sockaddr *) &gcAddr, &fromlen);
+				(struct sockaddr *) &fromAddr, &fromlen);
+//		int recsize = recvfrom(sock, (void *) buf, MAVLINK_MAX_PACKET_LEN, 0,
+//				NULL, NULL);
+
+
+
+		if (verbose)
+		{
+			printf("Packets received from %s:%d\n",inet_ntoa(fromAddr.sin_addr),ntohs(fromAddr.sin_port));
+		}
+		
+//		printf( "\t%s \n", inet_ntoa( *( struct in_addr*)( hp -> h_addr_list[i])));
 		if (recsize < 1)
 		{
 			// An error occured
@@ -230,7 +248,7 @@ void* udp_wait(void* lcm_ptr)
 				}
 				sendMAVLinkMessage(lcm, &msg);
 			}
-		}
+		}	
 
 	}
 	return NULL;
@@ -279,7 +297,8 @@ int main(int argc, char* argv[])
 	memset(&locAddr, 0, sizeof(locAddr));
 	locAddr.sin_family = AF_INET;
 	locAddr.sin_addr.s_addr = INADDR_ANY;
-	locAddr.sin_port = htons(0);//htons(14551);
+//	locAddr.sin_addr.s_addr = inet_addr("10.1.1.162");
+	locAddr.sin_port = htons(14551);//htons(14551);
 
 	/* Bind the socket to port 14551 - necessary to receive packets from qgroundcontrol */
 	if ((int)-1 == bind(sock, (struct sockaddr *) &locAddr, sizeof(struct sockaddr)))
@@ -287,6 +306,12 @@ int main(int argc, char* argv[])
 		perror("error bind failed");
 		close(sock);
 		exit(EXIT_FAILURE);
+	}
+	else
+	{
+
+		printf("Bind the address %s:%d\n",inet_ntoa(locAddr.sin_addr),ntohs(locAddr.sin_port));
+
 	}
 
 	/* Attempt to make it non blocking */
@@ -329,6 +354,16 @@ int main(int argc, char* argv[])
 	gcAddr.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;//inet_addr("127.0.0.1");//inet_addr(host.c_str());
 	gcAddr.sin_port = htons(atoi(port->str));
 
+	memset(&fromAddr, 0, sizeof(fromAddr));
+	fromAddr.sin_family = hp->h_addrtype;
+	fromAddr.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;//inet_addr("127.0.0.1");//inet_addr(host.c_str());
+	fromAddr.sin_port = htons(atoi(port->str));
+
+
+	if (verbose)
+	{
+		printf("Now the host address is %s:%d\n",inet_ntoa(gcAddr.sin_addr),ntohs(gcAddr.sin_port));
+	}
 	lcm = lcm_create ("udpm://");
 	if (!lcm)
 	{
