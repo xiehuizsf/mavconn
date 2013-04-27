@@ -25,6 +25,7 @@
  * @file
  *   @brief UDPLink
  *
+ *   @author Hui Xie	<xie1@ualberta.ca>
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *   @author Bryan Godbolt <godbolt@ualberta.ca>
  *
@@ -97,7 +98,8 @@ static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel,
 		const mavconn_mavlink_msg_container_t* container, void * user)
 {
 	const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
-
+	
+	mavlink_message_t msg_t;
 	// Send message over UDP
 	int link = *(static_cast<int*>(user));
 	int bytes_sent = 0;
@@ -123,10 +125,10 @@ static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel,
 		bytes_sent = sendto(link, buf, messageLength, 0, (struct sockaddr*) &gcAddr,
 				sizeof(struct sockaddr_in));
 		bytesToSend = messageLength;
-		if(verbose)
-		{
-			printf("msg->msgid: %d  Packets send to %s:%d\n",msg->msgid,inet_ntoa(gcAddr.sin_addr),ntohs(gcAddr.sin_port));
-		}
+//		if(msg->msgid!=0&&msg->msgid!=2)
+//		{
+//			printf("msg->msgid: %d  Packets send to %s:%d\n",msg->msgid,inet_ntoa(gcAddr.sin_addr),ntohs(gcAddr.sin_port));
+//		}
 		
 		//	extern int errno;
 	}
@@ -141,16 +143,16 @@ static void mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel,
 		// copy extended message data
 		memcpy(extended_buf + messageLength, container->extended_payload, container->extended_payload_len);
 
-		if (verbose)
-		{
-			printf("(SYS: %d/COMP: %d/LCM->UDP) Received message with ID %u from LCM with %d payload bytes and %u total length\n",
-					msg->sysid, msg->compid, msg->msgid, msg->len + container->extended_payload_len, extendedMessageLength);
-			for (int i = 0; i < messageLength; i++)
-			{
-				fprintf(stderr, "%02x ", buf[i]);
-			}
-			fprintf(stderr, "\n");
-		}
+//		if (verbose)
+//		{
+//			printf("(SYS: %d/COMP: %d/LCM->UDP) Received message with ID %u from LCM with %d payload bytes and %u total length\n",
+//					msg->sysid, msg->compid, msg->msgid, msg->len + container->extended_payload_len, extendedMessageLength);
+//			for (int i = 0; i < messageLength; i++)
+//			{
+//				fprintf(stderr, "%02x ", buf[i]);
+//			}
+//			fprintf(stderr, "\n");
+//		}
 
 		// Send over UDP
 		bytes_sent = sendto(link, extended_buf, extendedMessageLength, 0, (struct sockaddr*) &gcAddr,
@@ -246,6 +248,14 @@ void* udp_wait(void* lcm_ptr)
 					printf("\n(SYS: %d/COMP: %d/UDP) Received message with ID %u from UDP with %i payload bytes and %i total length\n",
 							msg.sysid, msg.compid, msg.msgid, msg.len, recsize);
 				}
+
+//				if(msg.msgid == 164)
+//				{
+//					mavlink_vicon_velocity_estimate_t vel;
+//					mavlink_msg_vicon_velocity_estimate_decode(&msg, &vel);
+//					printf("vel.vx: %f, vel.vy: %f, vel.vz: %f\n",vel.vx,vel.vy,vel.vz);
+
+//				}
 				sendMAVLinkMessage(lcm, &msg);
 			}
 		}	

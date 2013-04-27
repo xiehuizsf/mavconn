@@ -99,4 +99,6 @@ ADD_SUBDIRECTORY(planning)
 ADD_SUBDIRECTORY(interface)
 ADD_SUBDIRECTORY(calibration)
 ADD_SUBDIRECTORY(examples)
+# AUTO PILOT Code
+ADD_SUBDIRECTORY(autopilot)
 
