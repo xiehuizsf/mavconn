@@ -3,16 +3,38 @@
 #ADD_SUBDIRECTORY(messenger)
 
 INCLUDE_DIRECTORIES(.
-  ${GLIB2_MAIN_INCLUDE_DIR}
-  ${GLIB2_INTERNAL_INCLUDE_DIR}
-  ${GTHREAD2_MAIN_INCLUDE_DIR}
+./extern
+./control
 )
 
-PIXHAWK_EXECUTABLE(mavconn-autopilot mavconn-autopilot.cc)
+SET_SOURCE_FILES(PID_SRC_FILES
+  ./control/pid_channel.cc
+  ./control/pid_error.cc
+  ./control/pid_gains.cc
+)
+
+#SET_SOURCE_FILES(FACILITY_SRC_FILES
+#  ./Debug.cc
+#  ./LogFile
+#)
+
+SET_SOURCE_FILES(MAIN_SRC_FILES
+  ./MainApp.cc
+)
+
+#SET_SOURCE_FILES(EXTERN_SRC_FILES
+#  ./extern/rapidxml/rapidxml.hpp
+#)
+
+
+#PIXHAWK_EXECUTABLE(mavconn-autopilot ${PID_SRC_FILES} ${FACILITY_SRC_FILES}  mavconn-autopilot.cc)
+#PIXHAWK_EXECUTABLE(mavconn-autopilot  ${FACILITY_SRC_FILES}  mavconn-autopilot.cc)
+PIXHAWK_EXECUTABLE(mavconn-autopilot  ${MAIN_SRC_FILES} mavconn-autopilot.cc)
 PIXHAWK_LINK_LIBRARIES(
-  ${GLIB2_LIBRARY}
-  ${GTHREAD2_LIBRARY}
-  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+ ${Boost_LIBRARIES}
+ ${Boost_PROGRAM_OPTIONS_LIBRARY}
+ ${Boost_THREAD_LIBRARY}
+ ${Boost_THREAD_SYSTEM}
 )
 
 
