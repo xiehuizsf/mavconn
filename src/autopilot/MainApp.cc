@@ -244,7 +244,7 @@ void MainApp::cleanup::operator()()
 	BOOST_FOREACH(ThreadName t, MainApp::threads)
 	{
 //		debug() << "MainApp: Waiting for " << (t.name.empty()?"Unknown Thread":t.name);
-		t.thread->join();
+//		t.thread->join();
 	}
 //	message() << "All registered threads eneded.";
 }

@@ -26,10 +26,16 @@
 
 /* Project Headers */
 #include "MainApp.h"
+/* Test: Later can be deleted */
+#include "Debug.h"
+#include "pid_channel.h"
+#include "attitude_pid.h"
 using namespace std;
 int main()
 {
 	cout<<"Welcome to Mavconn-autopilot"<<endl;
-	MainApp m;
-//	pid_channel roll;
+	debug()<<"Just try to debug";
+	pid_channel roll;
+	attitude_pid orientation;
+//	message()<<roll;
 }

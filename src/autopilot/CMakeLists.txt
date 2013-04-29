@@ -7,30 +7,27 @@ INCLUDE_DIRECTORIES(.
 ./control
 )
 
-SET_SOURCE_FILES(PID_SRC_FILES
+SET_SOURCE_FILES(CONTROL_SRC_FILES
   ./control/pid_channel.cc
   ./control/pid_error.cc
   ./control/pid_gains.cc
+  ./control/attitude_pid.cc
 )
 
-#SET_SOURCE_FILES(FACILITY_SRC_FILES
-#  ./Debug.cc
+SET_SOURCE_FILES(FACILITY_SRC_FILES
+  ./Debug.cc
 #  ./LogFile
-#)
+)
 
 SET_SOURCE_FILES(MAIN_SRC_FILES
   ./MainApp.cc
 )
 
-#SET_SOURCE_FILES(EXTERN_SRC_FILES
-#  ./extern/rapidxml/rapidxml.hpp
-#)
-
 
 #PIXHAWK_EXECUTABLE(mavconn-autopilot ${PID_SRC_FILES} ${FACILITY_SRC_FILES}  mavconn-autopilot.cc)
 #PIXHAWK_EXECUTABLE(mavconn-autopilot  ${FACILITY_SRC_FILES}  mavconn-autopilot.cc)
-PIXHAWK_EXECUTABLE(mavconn-autopilot  ${MAIN_SRC_FILES} mavconn-autopilot.cc)
-PIXHAWK_LINK_LIBRARIES(
+PIXHAWK_EXECUTABLE(mavconn-autopilot  ${CONTROL_SRC_FILES} ${MAIN_SRC_FILES} ${FACILITY_SRC_FILES} mavconn-autopilot.cc)
+PIXHAWK_LINK_LIBRARIES(mavconn-autopilot
  ${Boost_LIBRARIES}
  ${Boost_PROGRAM_OPTIONS_LIBRARY}
  ${Boost_THREAD_LIBRARY}
