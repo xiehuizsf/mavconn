@@ -31,7 +31,7 @@
 #include <signal.h>
 //#include <sys/netmgr.h>
 //#include <sys/neutrino.h>
-//#include <sched.h>      // for setting thread priorities.
+#include <sched.h>      // for setting thread priorities.
 
 /* Project Headers */
 #include "heli.h"

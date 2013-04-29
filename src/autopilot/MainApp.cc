@@ -74,23 +74,23 @@ const MainApp& MainApp::operator=(const MainApp& other)
 void MainApp::run()
 {
 
-//  struct sigevent         event;
-//  struct itimerspec       itime;
-//  timer_t                 timer_id;
+  struct sigevent         event;
+  struct itimerspec       itime;
+  timer_t                 timer_id;
 
-//  boost::posix_time::ptime startTime(boost::posix_time::microsec_clock::local_time());          // Used during timer-based schedg tests, to create a program start time stamp.
-//  boost::this_thread::at_thread_exit(cleanup());
+  boost::posix_time::ptime startTime(boost::posix_time::microsec_clock::local_time());          // Used during timer-based schedg tests, to create a program start time stamp.
+  boost::this_thread::at_thread_exit(cleanup());
 
 
-//  do_terminate terminate_slot(this);
-//  terminate.connect(terminate_slot);
+  do_terminate terminate_slot(this);
+  terminate.connect(terminate_slot);
 
-//  request_mode.connect(change_mode(this));
+  request_mode.connect(change_mode(this));
 
-//  /** \todo Priority of threads must be decided */
-//  struct sched_param      param;
-//  SchedSet(0, 0, SCHED_RR, &param);     // set Scheduling Policy to Round Robin of current thread in current process.
-//  setprio(getpid(),63);                 // set Scheduling Priority to max possible under Round Robin scheduling.
+  /** \todo Priority of threads must be decided */
+  struct sched_param      param;
+  SchedSet(0, 0, SCHED_RR, &param);     // set Scheduling Policy to Round Robin of current thread in current process.
+  setprio(getpid(),63);                 // set Scheduling Priority to max possible under Round Robin scheduling.
 
 //  signal(SIGINT, heli::shutdown);             // Shutdown program by sending a SIGINT.
 
