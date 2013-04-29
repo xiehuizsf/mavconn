@@ -88,9 +88,9 @@ void MainApp::run()
   request_mode.connect(change_mode(this));
 
   /** \todo Priority of threads must be decided */
-  struct sched_param      param;
-  SchedSet(0, 0, SCHED_RR, &param);     // set Scheduling Policy to Round Robin of current thread in current process.
-  setprio(getpid(),63);                 // set Scheduling Priority to max possible under Round Robin scheduling.
+//  struct sched_param      param;
+//  SchedSet(0, 0, SCHED_RR, &param);     // set Scheduling Policy to Round Robin of current thread in current process.
+//  setprio(getpid(),63);                 // set Scheduling Priority to max possible under Round Robin scheduling.
 
 //  signal(SIGINT, heli::shutdown);             // Shutdown program by sending a SIGINT.
 
@@ -99,8 +99,8 @@ void MainApp::run()
 
 //  event.sigev_notify = SIGEV_PULSE;
 
-//  /* Threads wishing to connect to the channel identified by 'chid'(channel id) by ConnectAttach() func.
-//	 Once attached thread can MsgSendv() & MsgSendPulse() to enqueue messages & pulses on the channel in priority order. */
+  /* Threads wishing to connect to the channel identified by 'chid'(channel id) by ConnectAttach() func.
+	 Once attached thread can MsgSendv() & MsgSendPulse() to enqueue messages & pulses on the channel in priority order. */
 //  event.sigev_coid = ConnectAttach(ND_LOCAL_NODE, 0,
 //                                   chid,
 //                                   _NTO_SIDE_CHANNEL, 0);

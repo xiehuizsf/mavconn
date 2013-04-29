@@ -26,10 +26,12 @@
 
 /* Project Headers */
 #include "MainApp.h"
+
+#include "Debug.h"
 using namespace std;
 int main()
 {
 	cout<<"Welcome to Mavconn-autopilot"<<endl;
-	MainApp m;
+	debug()<<"I just try debug here";
 //	pid_channel roll;
 }

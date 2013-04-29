@@ -51,19 +51,19 @@ Debug::~Debug()
 	if (debug_level == WARNING)
 	{
 		message += ss.str();
-		LogFile::getInstance()->logMessage("messages.log", message);
+//		LogFile::getInstance()->logMessage("messages.log", message);
 		Debug::warning(message);
 	}
 	else if (debug_level == CRITICAL)
 	{
 		message += ss.str();
-		LogFile::getInstance()->logMessage("messages.log", message);
+//		LogFile::getInstance()->logMessage("messages.log", message);
 		Debug::critical(message);
 	}
 	else if(debug_level == MESSAGE)
 	{
 		message += ss.str();
-		LogFile::getInstance()->logMessage("messages.log", message);
+//		LogFile::getInstance()->logMessage("messages.log", message);
 	}
 }
 

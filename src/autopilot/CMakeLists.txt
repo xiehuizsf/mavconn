@@ -13,13 +13,14 @@ SET_SOURCE_FILES(PID_SRC_FILES
   ./control/pid_gains.cc
 )
 
-#SET_SOURCE_FILES(FACILITY_SRC_FILES
-#  ./Debug.cc
+SET_SOURCE_FILES(FACILITY_SRC_FILES
+  ./Debug.cc
 #  ./LogFile
-#)
+)
 
 SET_SOURCE_FILES(MAIN_SRC_FILES
   ./MainApp.cc
+#  ./heli.cc
 )
 
 #SET_SOURCE_FILES(EXTERN_SRC_FILES
@@ -29,9 +30,8 @@ SET_SOURCE_FILES(MAIN_SRC_FILES
 
 #PIXHAWK_EXECUTABLE(mavconn-autopilot ${PID_SRC_FILES} ${FACILITY_SRC_FILES}  mavconn-autopilot.cc)
 #PIXHAWK_EXECUTABLE(mavconn-autopilot  ${FACILITY_SRC_FILES}  mavconn-autopilot.cc)
-PIXHAWK_EXECUTABLE(mavconn-autopilot  ${MAIN_SRC_FILES} mavconn-autopilot.cc)
+PIXHAWK_EXECUTABLE(mavconn-autopilot  ${MAIN_SRC_FILES} ${FACILITY_SRC_FILES} mavconn-autopilot.cc)
 PIXHAWK_LINK_LIBRARIES(mavconn-autopilot
-# ${Boost_LIBRARIES}
  ${Boost_PROGRAM_OPTIONS_LIBRARY}
  ${Boost_THREAD_LIBRARY}
  ${Boost_SYSTEM_LIBRARY}
