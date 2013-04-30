@@ -117,22 +117,33 @@ LogFile::LogFileWrite::LogFileWrite(LogFile* parent)
 
 void LogFile::LogFileWrite::write_thread()
 {
-		int chid = ChannelCreate(0);
-		sigevent event;
-		event.sigev_notify = SIGEV_PULSE;
-		event.sigev_coid = ConnectAttach(ND_LOCAL_NODE, 0, chid, _NTO_SIDE_CHANNEL, 0);
-		event.sigev_priority = getprio(0);
-		event.sigev_code = LogFile_Pulse_Code;
+		struct sigaction sa;
+		struct sigevent event;		
 		timer_t timer_id;
-		timer_create(CLOCK_REALTIME, &event, &timer_id);
 		itimerspec itime;
+
+		sa.sa_flags = SA_SIGINFO;
+		sa.sa_sigaction = handler;
+		sigemptyset(&sa.sa_mask);
+		if(sigaction(SIGUSR1, &sa, NULL)==-1)
+			perror("sigaction fails")
+
+//		TO DO LIST
+//		Which way is best? Signal or thread
+		event.sigev_notify = SIGEV_SIGNAL; //Notification Method now is signal
+		event.sigev_signo = SIGUSR1;
+		event.sigev_value.sival_ptr = &timer_id;
+		if(timer_create(CLOCK_REALTIME, &event, &timer_id)==-1)
+			perror("timer_create fails")
+
+
 		itime.it_value.tv_sec = 1;
 		itime.it_value.tv_nsec = 500000000;
 		itime.it_interval.tv_sec = 2;
 		itime.it_interval.tv_nsec = 0;
 		timer_settime(timer_id, 0, &itime, NULL);
 
-		_pulse pulse;
+//		_pulse pulse;
 	while(check_terminate())
 	{
 		int rcvid = MsgReceivePulse(chid, &pulse, sizeof(pulse), NULL);

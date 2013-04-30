@@ -27,8 +27,7 @@
 /* Project Headers */
 #include "MainApp.h"
 /* Test: Later can be deleted */
-#include "Debug.h"
-#include "pid_channel.h"
+#include "LogFile.h"
 #include "attitude_pid.h"
 using namespace std;
 int main()
@@ -36,6 +35,7 @@ int main()
 	cout<<"Welcome to Mavconn-autopilot"<<endl;
 	debug()<<"Just try to debug";
 	pid_channel roll;
-	attitude_pid orientation;
+	LogFile *log = LogFile::getInstance();
+//	attitude_pid orientation;
 //	message()<<roll;
 }

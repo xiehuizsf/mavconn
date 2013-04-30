@@ -45,8 +45,8 @@
 #include <time.h>
 
 /* Project headers */
-//#include "MainApp.h"
-//#include "heli.h"
+#include "MainApp.h"
+#include "heli.h"
 #include "Debug.h"
 
 /**

@@ -11,12 +11,12 @@ SET_SOURCE_FILES(CONTROL_SRC_FILES
   ./control/pid_channel.cc
   ./control/pid_error.cc
   ./control/pid_gains.cc
-  ./control/attitude_pid.cc
+#  ./control/attitude_pid.cc
 )
 
 SET_SOURCE_FILES(FACILITY_SRC_FILES
   ./Debug.cc
-#  ./LogFile
+  ./LogFile.cc
 )
 
 SET_SOURCE_FILES(MAIN_SRC_FILES
