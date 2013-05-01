@@ -32,6 +32,7 @@ PIXHAWK_LINK_LIBRARIES(mavconn-autopilot
  ${Boost_PROGRAM_OPTIONS_LIBRARY}
  ${Boost_THREAD_LIBRARY}
  ${Boost_THREAD_SYSTEM}
+ rt
 )
 
 

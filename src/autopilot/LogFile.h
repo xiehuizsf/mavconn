@@ -199,6 +199,13 @@ class LogFile
 	   * function which actually performs the disk write.
 	   */
 	  void write_thread();
+
+	  /** This function behaves as a handler to the timer, It empties the log buffers 
+ 	   *and writes sends their contents to the  LogFileWrite::write function 
+ 	   *which actually performs the disk write.
+	 */
+	  static void handler(int sig, siginfo_t *si, void *uc);
+
 	  /** Write data out to disk
 	   * @param log pointer to new data to log
 	   * @param headers header to put at top of file.  This paramter is only used
@@ -209,7 +216,7 @@ class LogFile
 	  /// Pointer to LogFile class which instantiated LogFileWrite
 	  LogFile *parent;
 	  /// Pulse code used to identify when logfile should write
-	  const short LogFile_Pulse_Code;
+//	  const short LogFile_Pulse_Code;
 	  /** mutex used to protect the terminate flag, LogFile::LogFileWrite::terminate
 	   * this member must be static because LogFileWrite gets constructed and destructed
 	   * several times when LogFile::data_out is initialized, but the copy constructor
@@ -219,6 +226,9 @@ class LogFile
 	  static boost::recursive_mutex terminate_mutex;
 	  /// terminate flag (static for the same reason as terminate_mutex
 	  static bool terminate;
+	static bool run_write;
+	static boost::mutex run_write_lock;
+	bool check_run_write();
 	  /// function to determine if LogFile::LogFileWrite::terminate is true
 	  bool check_terminate();
 	  /// keep track of open files

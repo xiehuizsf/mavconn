@@ -103,10 +103,12 @@ void LogFile::logHeader(const std::string& name, const std::string& header)
 boost::recursive_mutex LogFile::LogFileWrite::terminate_mutex;
 bool LogFile::LogFileWrite::terminate = false;
 
+boost::mutex LogFile::LogFileWrite::run_write_lock;
+bool LogFile::LogFileWrite::run_write = false;
+
 
 
 LogFile::LogFileWrite::LogFileWrite(LogFile* parent)
-	:LogFile_Pulse_Code(_PULSE_CODE_MINAVAIL + 2)
 {
 	if (parent == NULL)
 		throw(bad_logfile_parent());
@@ -123,10 +125,10 @@ void LogFile::LogFileWrite::write_thread()
 		itimerspec itime;
 
 		sa.sa_flags = SA_SIGINFO;
-		sa.sa_sigaction = handler;
+		sa.sa_sigaction = &LogFile::LogFileWrite::handler;
 		sigemptyset(&sa.sa_mask);
 		if(sigaction(SIGUSR1, &sa, NULL)==-1)
-			perror("sigaction fails")
+			perror("sigaction fails");
 
 //		TO DO LIST
 //		Which way is best? Signal or thread
@@ -134,7 +136,7 @@ void LogFile::LogFileWrite::write_thread()
 		event.sigev_signo = SIGUSR1;
 		event.sigev_value.sival_ptr = &timer_id;
 		if(timer_create(CLOCK_REALTIME, &event, &timer_id)==-1)
-			perror("timer_create fails")
+			perror("timer_create fails");
 
 
 		itime.it_value.tv_sec = 1;
@@ -146,9 +148,16 @@ void LogFile::LogFileWrite::write_thread()
 //		_pulse pulse;
 	while(check_terminate())
 	{
-		int rcvid = MsgReceivePulse(chid, &pulse, sizeof(pulse), NULL);
-		if ((rcvid==0) && (pulse.code == LogFile_Pulse_Code))
+		while (!check_run_write())
 		{
+			boost::thread::yield();
+		}
+		{
+			boost::mutex::scoped_lock lock(run_write_lock);
+			run_write = false;
+		}
+
+
 			std::map<std::string, std::queue<std::string> > *old_log;
 			std::map<std::string, std::string> *old_headers;
 			{
@@ -162,7 +171,7 @@ void LogFile::LogFileWrite::write_thread()
 			write(old_log, old_headers);
 			delete old_log;
 			delete old_headers;
-		}
+
 		boost::thread::yield();
 	}
 	// close open files
@@ -173,6 +182,12 @@ void LogFile::LogFileWrite::write_thread()
 	}
 }
 
+void LogFile::LogFileWrite::handler(int sig, siginfo_t *si, void *uc)
+{
+	boost::mutex::scoped_lock lock(run_write_lock);
+	run_write = true;
+}
+
 bool LogFile::LogFileWrite::check_terminate()
 {
 	bool t = false;
@@ -180,6 +195,12 @@ bool LogFile::LogFileWrite::check_terminate()
 	t = terminate;
 	terminate_mutex.unlock();
 	return !t;
+}
+
+bool LogFile::LogFileWrite::check_run_write()
+{
+	boost::mutex::scoped_lock lock(run_write_lock);
+	return run_write;
 }
 
 
