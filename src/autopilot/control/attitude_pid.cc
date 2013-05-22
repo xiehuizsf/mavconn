@@ -20,9 +20,12 @@
 #include "attitude_pid.h"
 
 /* Project Headers */
-#include "RCTrans.h"
-#include "IMU.h"
-#include "Control.h"
+//#include "RCTrans.h"
+#include "IMU_Vicon.h"
+#include "bad_control.h"
+#include "Parameter.h"
+//TODO
+//#include "Control.h"
 
 const std::string attitude_pid::PARAM_ROLL_KP = "PID_ROLL_KP";
 const std::string attitude_pid::PARAM_ROLL_KD = "PID_ROLL_KD";
@@ -90,9 +93,9 @@ void attitude_pid::operator()(const blas::vector<double>& reference) throw(bad_c
 	blas::vector<double> roll_pitch_reference(reference);
 	roll_pitch_reference.resize(2);
 
-	IMU* imu = IMU::getInstance();
-	blas::vector<double> euler(imu->get_euler());
-	blas::vector<double> euler_rate(imu->get_euler_rate());
+	IMU_Vicon* imu = IMU_Vicon::getInstance();
+	blas::vector<double> euler(imu->getAngle());
+	blas::vector<double> euler_rate(imu->getAngleRate());
 	// resize to perform vector subtraction
 	euler.resize(2);
 
@@ -123,7 +126,8 @@ void attitude_pid::operator()(const blas::vector<double>& reference) throw(bad_c
 	pitch_lock.unlock();
 
 	// saturate the controls to [-1, 1]
-	Control::saturate(control_effort);
+//TODO
+//	Control::saturate(control_effort);
 	set_control_effort(control_effort);
 
 	LogFile::getInstance()->logData(heli::LOG_ATTITUDE_CONTROL_EFFORT, control_effort);

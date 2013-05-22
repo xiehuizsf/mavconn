@@ -25,17 +25,20 @@
 #include <boost/thread.hpp>
 
 /* Project Headers */
+#include "autopilot.h"
 #include "MainApp.h"
 /* Test: Later can be deleted */
 #include "LogFile.h"
 #include "attitude_pid.h"
+#include "IMU_Vicon.h"
 using namespace std;
+
 int main()
 {
 	cout<<"Welcome to Mavconn-autopilot"<<endl;
 	debug()<<"Just try to debug";
 	pid_channel roll;
 	LogFile *log = LogFile::getInstance();
-//	attitude_pid orientation;
-//	message()<<roll;
+	IMU_Vicon *vicon = IMU_Vicon::getInstance();
+	while(1);
 }
