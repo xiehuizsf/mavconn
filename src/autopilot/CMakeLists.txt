@@ -1,6 +1,3 @@
-#ADD_SUBDIRECTORY(dds)
-#ADD_SUBDIRECTORY(lcm)
-#ADD_SUBDIRECTORY(messenger)
 
 INCLUDE_DIRECTORIES(.
 ./extern
@@ -11,12 +8,19 @@ SET_SOURCE_FILES(CONTROL_SRC_FILES
   ./control/pid_channel.cc
   ./control/pid_error.cc
   ./control/pid_gains.cc
-#  ./control/attitude_pid.cc
+  ./control/IMU_Vicon.cc
+  ./control/attitude_pid.cc
+  ./control/translation_outer_pid.cc
+#  ./control/tail_sbf.cc
+#  ./control/Control.cc
 )
 
 SET_SOURCE_FILES(FACILITY_SRC_FILES
   ./Debug.cc
   ./LogFile.cc
+  ./bad_control.cc
+  ./Parameter.cc
+  ./PCTx.cc
 )
 
 SET_SOURCE_FILES(MAIN_SRC_FILES
@@ -33,6 +37,8 @@ PIXHAWK_LINK_LIBRARIES(mavconn-autopilot
  ${Boost_THREAD_LIBRARY}
  ${Boost_THREAD_SYSTEM}
  rt
+ usb-1.0
+ mavconn_lcm
 )
 
 

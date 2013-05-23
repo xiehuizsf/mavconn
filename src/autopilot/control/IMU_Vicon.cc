@@ -78,15 +78,15 @@ void IMU_Vicon::mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel
 		
 		{
 			boost::mutex::scoped_lock lock(viconPosition_lock);
-			viconPosition(0) = (double)vicon_estmate.x;
-			viconPosition(1) = (double)vicon_estmate.y;
-			viconPosition(2) = (double)vicon_estmate.z;
+			viconPosition[0]  = (double)vicon_estmate.x;
+			viconPosition[1]  = (double)vicon_estmate.y;
+			viconPosition[2]  = (double)vicon_estmate.z;
 		}
 		{
 			boost::mutex::scoped_lock lock(viconAngle_lock);
-			viconAngle(0) = (double)vicon_estmate.roll;
-			viconAngle(1) = (double)vicon_estmate.yaw;
-			viconAngle(2) = (double)vicon_estmate.pitch;
+			viconAngle[0]  = (double)vicon_estmate.roll;
+			viconAngle[1] = (double)vicon_estmate.yaw;
+			viconAngle[2] = (double)vicon_estmate.pitch;
 		}
 	}
 	else if(msg->msgid ==MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE)
@@ -96,15 +96,15 @@ void IMU_Vicon::mavlink_handler(const lcm_recv_buf_t *rbuf, const char * channel
 		mavlink_msg_vicon_velocity_estimate_decode(msg, &vicon_velocity_esmate);
 		{
 			boost::mutex::scoped_lock lock(viconVelocity_lock);
-			viconVelocity(0) = (double)vicon_velocity_esmate.vx;
-			viconVelocity(1) = (double)vicon_velocity_esmate.vy;
-			viconVelocity(2) = (double)vicon_velocity_esmate.vz;
+			viconVelocity[0] = (double)vicon_velocity_esmate.vx;
+			viconVelocity[1] = (double)vicon_velocity_esmate.vy;
+			viconVelocity[2] = (double)vicon_velocity_esmate.vz;
 		}
 		{
 			boost::mutex::scoped_lock lock(viconAngleRate_lock);
-			viconAngleRate(0) = (double)vicon_velocity_esmate.vroll;
-			viconAngleRate(1) = (double)vicon_velocity_esmate.vyaw;
-			viconAngleRate(2) = (double)vicon_velocity_esmate.vpitch;
+			viconAngleRate[0] = (double)vicon_velocity_esmate.vroll;
+			viconAngleRate[1] = (double)vicon_velocity_esmate.vyaw;
+			viconAngleRate[2] = (double)vicon_velocity_esmate.vpitch;
 		}
 	}	
 }

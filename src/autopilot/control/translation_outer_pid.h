@@ -126,8 +126,8 @@ private:
 	pid_channel y;
 	mutable boost::mutex y_lock;
 
-	boost::array<GPS_Filter, 3> pos_filters;
-	boost::array<GPS_Filter, 3> vel_filters;
+//	boost::array<GPS_Filter, 3> pos_filters;
+//	boost::array<GPS_Filter, 3> vel_filters;
 
 	/// store the current control effort
 	blas::vector<double> control_effort;

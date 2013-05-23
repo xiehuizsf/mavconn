@@ -21,7 +21,7 @@
 
 /* Project Headers */
 #include "IMU_Vicon.h"
-#include "Control.h"
+//#include "Control.h"
 
 translation_outer_pid::translation_outer_pid()
 : x(10),
@@ -59,7 +59,7 @@ void translation_outer_pid::operator()(const blas::vector<double>& reference) th
 	//TODO to solve the fram transformation issue
 	// get ned position/velocity
 	blas::vector<double> position(imu->getPosition());
-	blas::matrix<double> body_rotation(trans(IMU::euler_to_rotation(euler)));
+	blas::matrix<double> body_rotation(trans(IMU_Vicon::angle2rotationMatrix(euler)));
 	blas::vector<double> body_position_error(blas::prod(body_rotation, position - reference));
 	blas::vector<double> body_velocity_error(blas::prod(body_rotation, imu->getVelocity()));
 
@@ -84,7 +84,8 @@ void translation_outer_pid::operator()(const blas::vector<double>& reference) th
 
 	LogFile::getInstance()->logData(heli::LOG_TRANS_PID_ERROR_STATES, error_states);
 
-	Control::saturate(attitude_reference, scaled_travel_radians());
+	//TODO implement the saturation functionality
+//	Control::saturate(attitude_reference, scaled_travel_radians());
 
 	// set the reference to a roll pitch orientation in radians
 	set_control_effort(attitude_reference);
@@ -92,11 +93,6 @@ void translation_outer_pid::operator()(const blas::vector<double>& reference) th
 
 void translation_outer_pid::reset()
 {
-	for (boost::array<GPS_Filter, 3>::iterator it = pos_filters.begin(); it != pos_filters.end(); ++it)
-		(*it).reset();
-	for (boost::array<GPS_Filter, 3>::iterator it = vel_filters.begin(); it != vel_filters.end(); ++it)
-		(*it).reset();
-
 	x.reset();
 	y.reset();
 }

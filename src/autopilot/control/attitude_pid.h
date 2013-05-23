@@ -39,8 +39,10 @@ namespace blas = boost::numeric::ublas;
  * This class computes control signals using PID to track the pilot stick reference.
  * The angular velocity reference is assumed to be zero.
  * @author Bryan Godbolt <godbolt@ece.ualberta.ca>
+ * @author Hui Xie <xie1@ualberta.ca>
  * @date October 26, 2011
  * @date February 10, 2012: Refactored into separate file and cleaned up
+ * @date May 22, 2013: Modified to indoor heli
  */
 class attitude_pid : public ControllerInterface
 {
