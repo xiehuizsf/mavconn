@@ -118,6 +118,7 @@ public:
 
 private:
 
+	bool connected;
 	std::vector<uint8_t> raw_outputs;
 	boost::mutex raw_outputs_lock;
 

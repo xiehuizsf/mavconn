@@ -81,7 +81,12 @@ PCTx::PCTx()
 
 PCTx::~PCTx()
 {
-
+	if (connected)
+	{
+		libusb_release_interface(usb_device_handle, 0);
+		libusb_close(usb_device_handle);
+		libusb_exit(usb_context);
+	}
 }
 
 //TODO to change the return value;
